@@ -5,6 +5,19 @@ import type { UserRole } from "@/generated/prisma/client";
 
 export const SESSION_COOKIE = "critterops_session";
 
+export function sessionCookieOptions(request?: Request) {
+  const forwarded = request?.headers.get("x-forwarded-proto");
+  const urlSecure = request ? new URL(request.url).protocol === "https:" : false;
+  const secure = process.env.NODE_ENV === "production" || forwarded === "https" || urlSecure;
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure,
+    path: "/",
+    maxAge: 60 * 60 * 24 * 14,
+  };
+}
+
 export type SessionUser = {
   id: string;
   email: string;

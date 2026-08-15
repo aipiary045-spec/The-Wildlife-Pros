@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
+import { safeNextPath } from "@/lib/paths";
 
 function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("owner@thewildlifepros.com");
   const [password, setPassword] = useState("demo");
@@ -16,19 +16,24 @@ function LoginForm() {
     event.preventDefault();
     setLoading(true);
     setError("");
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    setLoading(false);
-    if (!response.ok) {
-      const data = (await response.json()) as { error?: string };
-      setError(data.error ?? "Unable to sign in");
-      return;
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) {
+        const data = (await response.json()) as { error?: string };
+        setError(data.error ?? "Unable to sign in");
+        return;
+      }
+      window.location.assign(safeNextPath(params.get("next")));
+    } catch {
+      setError("Unable to reach CritterOps. Refresh and try again.");
+    } finally {
+      setLoading(false);
     }
-    router.push(params.get("next") || "/dashboard");
-    router.refresh();
   }
 
   return (

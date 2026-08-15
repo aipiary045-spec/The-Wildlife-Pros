@@ -54,6 +54,7 @@ export async function getSchedule(from: Date, to: Date) {
     prisma.job.findMany({
       where: {
         scheduledStart: { gte: from, lte: to },
+        status: { not: "CANCELLED" },
       },
       include: { client: true, property: true, technician: true },
       orderBy: { scheduledStart: "asc" },

@@ -1,0 +1,48 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { adjacentDate, dateKey, parseDateParam, parseScheduleView, periodLabel, scheduleRange } from "./dates";
+import { safeNextPath } from "./paths";
+
+test("parseDateParam reads a local calendar day", () => {
+  const date = parseDateParam("2026-08-15");
+  assert.equal(date.getFullYear(), 2026);
+  assert.equal(date.getMonth(), 7);
+  assert.equal(date.getDate(), 15);
+});
+
+test("scheduleRange covers a full Mon-Sun week", () => {
+  const saturday = parseDateParam("2026-08-15");
+  const { from, to, days } = scheduleRange("week", saturday);
+  assert.equal(dateKey(from), "2026-08-10");
+  assert.equal(dateKey(to), "2026-08-16");
+  assert.equal(days.length, 7);
+  assert.equal(dateKey(days[6]), "2026-08-16");
+});
+
+test("scheduleRange day view is a single calendar day", () => {
+  const { from, to, days } = scheduleRange("day", parseDateParam("2026-08-15"));
+  assert.equal(days.length, 1);
+  assert.equal(from.getDate(), 15);
+  assert.equal(to.getDate(), 15);
+});
+
+test("adjacentDate steps by day or week", () => {
+  const date = parseDateParam("2026-08-15");
+  assert.equal(dateKey(adjacentDate("day", date, 1)), "2026-08-16");
+  assert.equal(dateKey(adjacentDate("week", date, -1)), "2026-08-08");
+});
+
+test("periodLabel and view parser", () => {
+  assert.equal(parseScheduleView("week"), "week");
+  assert.equal(parseScheduleView("day"), "day");
+  assert.equal(parseScheduleView("nope"), "day");
+  assert.match(periodLabel("day", parseDateParam("2026-08-15")), /Saturday/);
+  assert.equal(periodLabel("week", parseDateParam("2026-08-15")), "Aug 10 – Aug 16");
+});
+
+test("safeNextPath rejects Chrome DevTools and protocol-relative URLs", () => {
+  assert.equal(safeNextPath("/.well-known/appspecific/com.chrome.devtools.json"), "/dashboard");
+  assert.equal(safeNextPath("//evil.example"), "/dashboard");
+  assert.equal(safeNextPath("/schedule"), "/schedule");
+  assert.equal(safeNextPath("/field?view=week"), "/field?view=week");
+});

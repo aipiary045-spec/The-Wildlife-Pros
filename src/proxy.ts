@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth";
+import { safeNextPath } from "@/lib/paths";
 
 const PUBLIC_PREFIXES = [
   "/login",
@@ -8,6 +9,7 @@ const PUBLIC_PREFIXES = [
   "/api/auth",
   "/api/portal",
   "/api/health",
+  "/.well-known",
 ];
 
 export async function proxy(request: NextRequest) {
@@ -21,7 +23,8 @@ export async function proxy(request: NextRequest) {
 
   if (!isPublic && !session) {
     const login = new URL("/login", request.url);
-    login.searchParams.set("next", pathname);
+    const next = safeNextPath(`${pathname}${request.nextUrl.search}`, "");
+    if (next) login.searchParams.set("next", next);
     return NextResponse.redirect(login);
   }
 
@@ -33,5 +36,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|logo.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|logo.svg|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

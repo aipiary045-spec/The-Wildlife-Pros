@@ -4,33 +4,22 @@ import { addDays, addMinutes, format, startOfWeek } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-
-type JobCard = {
-  id: string;
-  title: string;
-  status: string;
-  scheduledStart: string | Date | null;
-  durationMin: number;
-  technicianId: string | null;
-  client: { firstName: string; lastName: string };
-  property: { address1: string };
-};
-
-type Tech = { id: string; firstName: string; lastName: string; color: string };
+import { dateKey } from "@/lib/dates";
+import type { ScheduleJobCard, ScheduleTech } from "./job-card";
 
 export function WeekBoard({
   jobs,
   technicians,
   weekOf,
 }: {
-  jobs: JobCard[];
-  technicians: Tech[];
+  jobs: ScheduleJobCard[];
+  technicians: ScheduleTech[];
   weekOf: string;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const start = startOfWeek(new Date(weekOf), { weekStartsOn: 1 });
-  const days = useMemo(() => Array.from({ length: 5 }, (_, index) => addDays(start, index)), [start]);
+  const start = startOfWeek(new Date(weekOf.includes("T") ? weekOf : `${weekOf}T12:00:00`), { weekStartsOn: 1 });
+  const days = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(start, index)), [start]);
 
   async function moveJob(jobId: string, technicianId: string, day: Date) {
     const existing = jobs.find((job) => job.id === jobId);
@@ -40,6 +29,7 @@ export function WeekBoard({
     setSaving(true);
     await fetch("/api/schedule", {
       method: "PATCH",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         jobId,
@@ -55,10 +45,11 @@ export function WeekBoard({
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
-        Drag a job onto another technician or day to reschedule. {saving ? "Saving…" : "Changes save immediately."}
+        Full week including Saturday and Sunday. Drag a job onto another technician or day to reschedule.{" "}
+        {saving ? "Saving…" : "Changes save immediately."}
       </p>
       <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
-        <table className="min-w-[900px] w-full border-collapse text-sm">
+        <table className="min-w-[1100px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-background">
               <th className="w-40 px-3 py-3 text-left">Technician</th>
@@ -79,11 +70,12 @@ export function WeekBoard({
                   </div>
                 </td>
                 {days.map((day) => {
-                  const cellJobs = jobs.filter((job) => {
-                    if (job.technicianId !== tech.id || !job.scheduledStart) return false;
-                    const when = new Date(job.scheduledStart);
-                    return format(when, "yyyy-MM-dd") === format(day, "yyyy-MM-dd");
-                  });
+                  const cellJobs = jobs
+                    .filter((job) => {
+                      if (job.technicianId !== tech.id || !job.scheduledStart) return false;
+                      return dateKey(new Date(job.scheduledStart)) === dateKey(day);
+                    })
+                    .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
                   return (
                     <td
                       key={`${tech.id}-${day.toISOString()}`}
@@ -102,6 +94,9 @@ export function WeekBoard({
                             onDragStart={(event) => event.dataTransfer.setData("text/job-id", job.id)}
                             className="cursor-grab rounded-lg border border-line bg-white px-2 py-2 shadow-sm"
                           >
+                            <p className="text-xs font-semibold text-orange">
+                              {format(new Date(job.scheduledStart!), "h:mm a")}
+                            </p>
                             <p className="font-medium leading-tight">{job.title}</p>
                             <p className="text-xs text-stone-500">
                               {job.client.lastName} · {job.property.address1}

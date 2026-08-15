@@ -90,7 +90,7 @@ Everything else requires a session (`src/proxy.ts`).
 | POST | `/api/payments` | Record Terminal / cash / check (staff only) |
 | GET | `/api/payments/square/config` | Public Square app/location flags |
 | POST | `/api/payments/square` | Charge a Square payment token (staff only) |
-| GET/PATCH | `/api/schedule` | Week board + drag-drop reschedule |
+| GET/PATCH | `/api/schedule` | Day or Mon–Sun week board + drag-drop reschedule |
 | GET/POST | `/api/routes/optimize` | Preview or persist optimized routes |
 | GET/POST | `/api/traps` | Serialized inventory |
 | GET/POST/PATCH | `/api/deployments` | Place / retrieve gear |
