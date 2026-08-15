@@ -71,6 +71,13 @@ export function hourLabel(hour: number) {
   return `${display} ${period}`;
 }
 
+export function formatClockDuration(totalMin: number) {
+  const safe = Math.max(0, Math.round(totalMin));
+  const hours = Math.floor(safe / 60);
+  const minutes = safe % 60;
+  return `${hours}:${String(minutes).padStart(2, "0")}`;
+}
+
 export function snapMinutes(totalMinutes: number, snap = DAY_TIMELINE_SNAP_MIN) {
   return Math.round(totalMinutes / snap) * snap;
 }

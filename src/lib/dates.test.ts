@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { adjacentDate, dateKey, hourLabel, jobTimelinePlacement, parseDateParam, parseScheduleView, periodLabel, scheduleRange, timeFromTimelineRatio, tripStartOnDay } from "./dates";
+import { adjacentDate, dateKey, formatClockDuration, hourLabel, jobTimelinePlacement, parseDateParam, parseScheduleView, periodLabel, scheduleRange, timeFromTimelineRatio, tripStartOnDay } from "./dates";
 import { homePath, safeNextPath } from "./paths";
 
 test("parseDateParam reads a local calendar day", () => {
@@ -87,4 +87,10 @@ test("hourLabel uses 12-hour clock", () => {
   assert.equal(hourLabel(7), "7 AM");
   assert.equal(hourLabel(12), "12 PM");
   assert.equal(hourLabel(17), "5 PM");
+});
+
+test("formatClockDuration shows hours and minutes like a timesheet", () => {
+  assert.equal(formatClockDuration(0), "0:00");
+  assert.equal(formatClockDuration(90), "1:30");
+  assert.equal(formatClockDuration(270), "4:30");
 });

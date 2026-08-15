@@ -1,12 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { addDays, format, startOfWeek } from "date-fns";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { JobVisitControls } from "@/components/jobs/JobVisitControls";
-import { JOB_TYPE_BAR } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 import { dateKey } from "@/lib/dates";
+import { AppointmentChip } from "./AppointmentChip";
 import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
 import { useScheduleBoard } from "./useScheduleBoard";
@@ -44,6 +40,16 @@ export function WeekBoard({
           : "Tap + Job on a square, or drag a stop onto a tech and day. Check in on site. Check out asks follow-up vs complete."}{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
+      {unscheduled.length > 0 ? (
+        <section className="rounded-2xl border border-dashed border-line bg-panel p-3">
+          <h2 className="mb-2 text-sm font-semibold">Unscheduled — drag onto a tech</h2>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {unscheduled.map((job) => (
+              <AppointmentChip key={job.id} job={job} technicians={technicians} onDragStart={onDragStart} />
+            ))}
+          </div>
+        </section>
+      ) : null}
       <div className="space-y-3 md:hidden">
         {days.map((day) => {
           const dayJobs = jobs
@@ -69,35 +75,27 @@ export function WeekBoard({
               {dayJobs.length === 0 ? (
                 <p className="py-3 text-center text-xs text-stone-500">No stops</p>
               ) : (
-                <div className="space-y-2">
-                  {dayJobs.map((job) => {
-                    const tech = technicians.find((item) => item.id === job.technicianId);
+                <div className="space-y-3">
+                  {technicians.map((tech) => {
+                    const techJobs = dayJobs.filter((job) => job.technicianId === tech.id);
+                    if (techJobs.length === 0) return null;
                     return (
-                      <article key={job.id} className="rounded-lg border border-line bg-white px-3 py-2">
-                        <p className="text-xs font-semibold text-orange">
-                          {format(new Date(job.scheduledStart!), "h:mm a")}
-                          {tech ? ` · ${tech.firstName} ${tech.lastName}` : ""}
-                          {job.sourceJobId ? " · Trip" : ""}
+                      <div key={tech.id}>
+                        <p className="mb-1 text-xs font-semibold text-stone-600">
+                          {tech.firstName} {tech.lastName}
                         </p>
-                        <Link href={`/jobs/${job.id}`} className="font-medium leading-tight hover:underline">
-                          {job.title}
-                        </Link>
-                        <p className="text-xs text-stone-500">
-                          {job.client.lastName} · {job.property.address1}
-                        </p>
-                        <div className="mt-1">
-                          <StatusBadge status={job.status} />
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {techJobs.map((job) => (
+                            <AppointmentChip
+                              key={job.id}
+                              job={job}
+                              technicians={technicians}
+                              showVisit
+                              onDragStart={onDragStart}
+                            />
+                          ))}
                         </div>
-                        <div className="mt-2">
-                          <JobVisitControls
-                            jobId={job.id}
-                            status={job.status}
-                            technicianId={job.technicianId}
-                            technicians={technicians}
-                            compact
-                          />
-                        </div>
-                      </article>
+                      </div>
                     );
                   })}
                 </div>
@@ -141,48 +139,23 @@ export function WeekBoard({
                     })
                     .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
                   return (
-                    <td
-                      key={`${tech.id}-${day.toISOString()}`}
-                      className="h-36 px-2 py-2"
-                      onDragOver={onDragOver}
-                      onDrop={(event) => onDrop(event, tech.id, day)}
-                    >
-                      <div className="min-h-28 space-y-2 rounded-xl bg-background/70 p-1">
+                    <td key={`${tech.id}-${day.toISOString()}`} className="h-36 px-2 py-2">
+                      <div
+                        className="flex min-h-28 gap-2 overflow-x-auto rounded-xl bg-background/70 p-1"
+                        onDragOver={onDragOver}
+                        onDrop={(event) => onDrop(event, tech.id, day)}
+                      >
                         {cellJobs.map((job) => (
-                          <article
+                          <AppointmentChip
                             key={job.id}
-                            draggable
-                            onDragStart={(event) => onDragStart(event, job.id)}
-                            className={cn(
-                              "cursor-grab rounded-lg border border-line border-l-4 bg-white px-2 py-2 shadow-sm",
-                              JOB_TYPE_BAR[job.type ?? ""] ?? "border-l-orange",
-                            )}
-                          >
-                            <p className="text-xs font-semibold text-orange">
-                              {format(new Date(job.scheduledStart!), "h:mm a")}
-                              {job.sourceJobId ? " · Trip" : ""}
-                            </p>
-                            <Link href={`/jobs/${job.id}`} className="font-medium leading-tight hover:underline">
-                              {job.title}
-                            </Link>
-                            <p className="text-xs text-stone-500">
-                              {job.client.lastName} · {job.property.address1}
-                            </p>
-                            <div className="mt-1">
-                              <StatusBadge status={job.status} />
-                            </div>
-                            <JobVisitControls
-                              jobId={job.id}
-                              status={job.status}
-                              technicianId={job.technicianId}
-                              technicians={technicians}
-                              compact
-                            />
-                          </article>
+                            job={job}
+                            technicians={technicians}
+                            onDragStart={onDragStart}
+                          />
                         ))}
                         <button
                           type="button"
-                          className="w-full rounded-lg border border-dashed border-line py-1 text-[11px] font-semibold text-stone-500 hover:border-orange hover:text-orange"
+                          className="w-16 shrink-0 rounded-lg border border-dashed border-line text-[11px] font-semibold text-stone-500 hover:border-orange hover:text-orange"
                           onClick={() => onNewJob?.(tech.id, day, "09:00")}
                         >
                           + Job

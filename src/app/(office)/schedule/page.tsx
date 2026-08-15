@@ -29,7 +29,7 @@ export default async function SchedulePage({
   searchParams: Promise<{ view?: string; date?: string }>;
 }) {
   const params = await searchParams;
-  const view = parseScheduleView(params.view ?? "week");
+  const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
   const { from, to } = scheduleRange(view, date);
   const { jobs, unscheduled, technicians, clients } = await getSchedule(from, to);
@@ -40,7 +40,7 @@ export default async function SchedulePage({
         <div>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
           <p className="text-stone-600">
-            Tap + Job on a square. Drag to move. Check in on site; check out asks if they need a follow-up.
+            Tap a tech row or + Job. Each person has their own line; jobs sit left to right in order. Drag to move.
           </p>
         </div>
         <Link

@@ -120,32 +120,32 @@ export function HomeDashboard(props: DashboardProps) {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-3">
-        <div className="space-y-3 xl:col-span-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-semibold">Today&apos;s appointments</h2>
-            <Link href="/schedule?view=day" className="text-sm font-medium text-orange">
-              Open calendar
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <TodayStat label="Total" value={props.today.total} money={props.today.totalMoney} />
-            <TodayStat label="To go" value={props.today.toGo} money={props.today.toGoMoney} />
-            <TodayStat label="Active" value={props.today.active} money={props.today.activeMoney} />
-            <TodayStat label="Completed" value={props.today.completed} money={props.today.completedMoney} />
-          </div>
-          <ScheduleWorkspace
-            view="day"
-            date={toDateKey(todayKey)}
-            weekOf={toDateKey(todayKey)}
-            technicians={props.technicians}
-            jobs={props.jobsToday}
-            unscheduled={props.unscheduled}
-            clients={props.clients}
-          />
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">Today&apos;s appointments</h2>
+          <Link href="/schedule?view=day" className="text-sm font-medium text-orange">
+            Open calendar
+          </Link>
         </div>
-        <aside className="space-y-4">
-          <article className="rounded-2xl border border-line bg-panel p-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <TodayStat label="Total" value={props.today.total} money={props.today.totalMoney} />
+          <TodayStat label="To go" value={props.today.toGo} money={props.today.toGoMoney} />
+          <TodayStat label="Active" value={props.today.active} money={props.today.activeMoney} />
+          <TodayStat label="Completed" value={props.today.completed} money={props.today.completedMoney} />
+        </div>
+        <ScheduleWorkspace
+          view="day"
+          date={toDateKey(todayKey)}
+          weekOf={toDateKey(todayKey)}
+          technicians={props.technicians}
+          jobs={props.jobsToday}
+          unscheduled={props.unscheduled}
+          clients={props.clients}
+          compact
+        />
+      </section>
+      <section className="grid gap-4 md:grid-cols-2">
+        <article className="rounded-2xl border border-line bg-panel p-5">
             <h2 className="font-semibold">Square collections</h2>
             <p className="mt-3 text-sm text-stone-600">Collected this week</p>
             <p className="font-display text-3xl">{formatMoney(props.payments.collectedWeek)}</p>
@@ -175,7 +175,6 @@ export function HomeDashboard(props: DashboardProps) {
               Open field view
             </Link>
           </article>
-        </aside>
       </section>
     </div>
   );
