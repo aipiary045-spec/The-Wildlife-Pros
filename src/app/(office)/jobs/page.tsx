@@ -16,10 +16,31 @@ export default async function JobsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-3xl tracking-wide">Jobs</h1>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Jobs</h1>
         <p className="text-stone-600">Work orders, visits, and field documentation.</p>
       </div>
-      <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+      <div className="space-y-2 md:hidden">
+        {jobs.map((job) => (
+          <Link key={job.id} href={`/jobs/${job.id}`} className="block rounded-2xl border border-line bg-panel p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs text-orange">{job.number}</p>
+                <p className="font-semibold">{job.title}</p>
+                <p className="text-sm text-stone-600">
+                  {clientName(job.client)} · {job.property.address1}
+                </p>
+                <p className="text-xs text-stone-500">
+                  {job.scheduledStart ? format(job.scheduledStart, "MMM d, h:mm a") : "Unscheduled"} ·{" "}
+                  {job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned"} ·{" "}
+                  {formatMoney(job.total)}
+                </p>
+              </div>
+              <StatusBadge status={job.status} />
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="hidden overflow-hidden rounded-2xl border border-line bg-panel md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-background text-xs uppercase tracking-wider text-stone-500">
             <tr>

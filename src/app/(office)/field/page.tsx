@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FieldJobList } from "@/components/field/FieldJobList";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
@@ -34,23 +33,17 @@ export default async function FieldPage({
   });
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-background pb-10">
-      <header className="sunset-panel px-5 pb-8 pt-10 text-ink">
-        <p className="text-xs font-bold uppercase tracking-[0.25em]">The Wildlife Pros</p>
-        <h1 className="mt-2 font-display text-3xl">Field app</h1>
-        <p>
-          {session.firstName}, {jobs.length} stop{jobs.length === 1 ? "" : "s"}{" "}
-          {view === "week" ? "this week" : "today"}.
-        </p>
-      </header>
-      <div className="-mt-4 space-y-3 px-4">
-        <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
-        <ScheduleToolbar view={view} date={date} basePath="/field" />
-        <FieldJobList jobs={jobs} days={days} showTech={session.role !== "TECHNICIAN"} />
-        <Link href="/dashboard" className="block pt-4 text-center text-sm font-medium text-orange">
-          Back to office
-        </Link>
+    <div className="mx-auto max-w-lg space-y-4">
+      <div className="sunset-panel rounded-2xl px-5 py-6 text-ink">
+        <p className="text-xs font-bold uppercase tracking-[0.25em]">Field route</p>
+        <h1 className="mt-1 font-display text-3xl">
+          {jobs.length} stop{jobs.length === 1 ? "" : "s"} {view === "week" ? "this week" : "today"}
+        </h1>
+        <p>{session.firstName}, run them in order and clock the day.</p>
       </div>
+      <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
+      <ScheduleToolbar view={view} date={date} basePath="/field" />
+      <FieldJobList jobs={jobs} days={days} showTech={session.role !== "TECHNICIAN"} />
     </div>
   );
 }

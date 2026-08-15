@@ -48,8 +48,8 @@ Do not introduce a second framework. Prefer server components for reads, route h
 ## Architecture
 
 ```
-src/app/(office)     staff UI (sidebar)
-src/app/field        technician phone UI
+src/app/(office)     staff + field UI (desktop sidebar, mobile app shell / PWA)
+src/app/field        technician route (same app, /field)
 src/app/portal       customer hub (token auth)
 src/app/api          REST used by UI, field app, future mobile
 src/lib              prisma, auth, routing, money helpers

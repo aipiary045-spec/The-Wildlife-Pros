@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { adjacentDate, dateKey, parseDateParam, parseScheduleView, periodLabel, scheduleRange } from "./dates";
-import { safeNextPath } from "./paths";
+import { homePath, safeNextPath } from "./paths";
 
 test("parseDateParam reads a local calendar day", () => {
   const date = parseDateParam("2026-08-15");
@@ -45,4 +45,6 @@ test("safeNextPath rejects Chrome DevTools and protocol-relative URLs", () => {
   assert.equal(safeNextPath("//evil.example"), "/dashboard");
   assert.equal(safeNextPath("/schedule"), "/schedule");
   assert.equal(safeNextPath("/field?view=week"), "/field?view=week");
+  assert.equal(homePath("TECHNICIAN"), "/field");
+  assert.equal(homePath("OWNER"), "/dashboard");
 });

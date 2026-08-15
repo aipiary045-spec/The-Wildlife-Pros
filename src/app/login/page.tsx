@@ -16,7 +16,7 @@ export default async function LoginPage({
   const error = params.error ? (ERRORS[params.error] ?? "Unable to sign in") : "";
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid min-h-dvh lg:grid-cols-2">
       <section className="sunset-panel relative hidden items-center justify-center lg:flex">
         <div className="absolute inset-0 bg-black/20" />
         <div className="relative max-w-md px-8 text-center text-ink">
@@ -28,7 +28,7 @@ export default async function LoginPage({
           </p>
         </div>
       </section>
-      <section className="flex items-center justify-center px-6 py-12">
+      <section className="flex items-center justify-center px-6 py-12" style={{ paddingTop: "max(3rem, env(safe-area-inset-top))" }}>
         <div className="w-full max-w-md rounded-2xl border border-line bg-panel p-8 shadow-sm">
           <div className="mb-6 flex items-center gap-3 lg:hidden">
             <Logo size={56} />

@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { BottomNav } from "@/components/layout/BottomNav";
+import { InstallHint } from "@/components/layout/InstallHint";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
@@ -10,30 +12,27 @@ export default async function OfficeLayout({ children }: { children: React.React
   const myTime = await getMyTimesheet(session.id);
 
   return (
-    <div className="flex min-h-screen">
-      <div className="hidden md:block">
+    <div className="flex min-h-dvh">
+      <div className="sticky top-0 hidden h-dvh md:block">
         <Sidebar />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-line bg-panel px-4 py-3 md:px-6">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-orange">The Wildlife Pros</p>
-            <p className="text-sm text-stone-600">
+      <div className="flex min-w-0 flex-1 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <header
+          className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-panel/95 px-4 py-3 backdrop-blur md:px-6"
+          style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+        >
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-orange md:text-xs">The Wildlife Pros</p>
+            <p className="truncate text-sm text-stone-600">
               {session.firstName} {session.lastName} · {session.role.toLowerCase()}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
-            <a
-              href="/field"
-              className="rounded-full bg-ink px-3 py-1.5 text-xs font-semibold text-white md:hidden"
-            >
-              Field app
-            </a>
-          </div>
+          <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
+      <BottomNav role={session.role} />
+      <InstallHint />
     </div>
   );
 }

@@ -45,10 +45,51 @@ export function WeekBoard({
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
-        Full week including Saturday and Sunday. Drag a job onto another technician or day to reschedule.{" "}
-        {saving ? "Saving…" : "Changes save immediately."}
+        Full week including Saturday and Sunday. On a phone this is a day-by-day list. On desktop, drag a job to
+        reschedule. {saving ? "Saving…" : "Changes save immediately."}
       </p>
-      <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
+      <div className="space-y-3 md:hidden">
+        {days.map((day) => {
+          const dayJobs = jobs
+            .filter((job) => job.scheduledStart && dateKey(new Date(job.scheduledStart)) === dateKey(day))
+            .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
+          return (
+            <section key={day.toISOString()} className="rounded-2xl border border-line bg-panel p-3">
+              <h2 className="mb-2 text-sm font-semibold">
+                {format(day, "EEEE, MMM d")}
+                <span className="ml-2 text-xs font-normal text-stone-500">
+                  {dayJobs.length} stop{dayJobs.length === 1 ? "" : "s"}
+                </span>
+              </h2>
+              {dayJobs.length === 0 ? (
+                <p className="py-3 text-center text-xs text-stone-500">No stops</p>
+              ) : (
+                <div className="space-y-2">
+                  {dayJobs.map((job) => {
+                    const tech = technicians.find((item) => item.id === job.technicianId);
+                    return (
+                      <article key={job.id} className="rounded-lg border border-line bg-white px-3 py-2">
+                        <p className="text-xs font-semibold text-orange">
+                          {format(new Date(job.scheduledStart!), "h:mm a")}
+                          {tech ? ` · ${tech.firstName} ${tech.lastName}` : ""}
+                        </p>
+                        <p className="font-medium leading-tight">{job.title}</p>
+                        <p className="text-xs text-stone-500">
+                          {job.client.lastName} · {job.property.address1}
+                        </p>
+                        <div className="mt-1">
+                          <StatusBadge status={job.status} />
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-panel md:block">
         <table className="min-w-[1100px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-background">

@@ -14,10 +14,26 @@ export default async function QuotesPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-3xl tracking-wide">Quotes</h1>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Quotes</h1>
         <p className="text-stone-600">Send estimates clients can approve in the hub.</p>
       </div>
-      <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+      <div className="space-y-2 md:hidden">
+        {quotes.map((quote) => (
+          <article key={quote.id} className="rounded-2xl border border-line bg-panel p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold">{quote.number}</p>
+                <p className="text-sm text-stone-600">{clientName(quote.client)}</p>
+                <p className="text-xs text-stone-500">
+                  {formatMoney(quote.total)} · valid {quote.validUntil ? format(quote.validUntil, "MMM d") : "—"}
+                </p>
+              </div>
+              <StatusBadge status={quote.status} />
+            </div>
+          </article>
+        ))}
+      </div>
+      <div className="hidden overflow-hidden rounded-2xl border border-line bg-panel md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-background text-xs uppercase tracking-wider text-stone-500">
             <tr>

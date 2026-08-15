@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { adjacentDate, dateKey, periodLabel, type ScheduleView } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
@@ -17,8 +18,8 @@ export function ScheduleToolbar({
   const today = dateKey(new Date());
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="inline-flex rounded-full border border-line bg-panel p-1">
+    <div className="space-y-3">
+      <div className="flex rounded-full border border-line bg-panel p-1">
         <ViewLink href={`${basePath}?view=day&date=${dateParam}`} active={view === "day"}>
           Day
         </ViewLink>
@@ -29,22 +30,24 @@ export function ScheduleToolbar({
       <div className="flex items-center gap-2">
         <Link
           href={`${basePath}?view=${view}&date=${prev}`}
-          className="rounded-lg border border-line bg-panel px-3 py-1.5 text-sm font-medium"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-panel"
+          aria-label="Previous"
         >
-          Prev
+          <ChevronLeft size={18} />
         </Link>
-        <p className="min-w-40 text-center text-sm font-semibold">{periodLabel(view, date)}</p>
+        <p className="min-w-0 flex-1 text-center text-sm font-semibold">{periodLabel(view, date)}</p>
         <Link
           href={`${basePath}?view=${view}&date=${next}`}
-          className="rounded-lg border border-line bg-panel px-3 py-1.5 text-sm font-medium"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-panel"
+          aria-label="Next"
         >
-          Next
+          <ChevronRight size={18} />
         </Link>
         <Link
           href={`${basePath}?view=${view}&date=${today}`}
-          className="rounded-lg bg-ink px-3 py-1.5 text-sm font-semibold text-white"
+          className="h-11 rounded-xl bg-ink px-3 text-sm font-semibold leading-11 text-white"
         >
-          Today
+          <span className="flex h-11 items-center">Today</span>
         </Link>
       </div>
     </div>
@@ -56,7 +59,7 @@ function ViewLink({ href, active, children }: { href: string; active: boolean; c
     <Link
       href={href}
       className={cn(
-        "rounded-full px-4 py-1.5 text-sm font-semibold",
+        "flex-1 rounded-full py-2.5 text-center text-sm font-semibold",
         active ? "bg-orange text-white" : "text-stone-600",
       )}
     >

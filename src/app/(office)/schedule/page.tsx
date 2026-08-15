@@ -31,7 +31,7 @@ export default async function SchedulePage({
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-3xl tracking-wide">Schedule & dispatch</h1>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
         <p className="text-stone-600">
           Daily and weekly boards for techs with multiple stops. Drag jobs between technicians and days, then
           optimize driving order on Routes.

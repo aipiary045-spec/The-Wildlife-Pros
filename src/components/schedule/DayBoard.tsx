@@ -44,10 +44,10 @@ export function DayBoard({
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
-        Each technician&apos;s stops for the day, in time order. Drag a job onto another tech to reassign.{" "}
+        Stops in time order. On a phone, reassign with the tech menu. On desktop, drag a card onto another column.{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
-      <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {technicians.map((tech) => {
           const techJobs = jobs
             .filter((job) => job.technicianId === tech.id && job.scheduledStart && sameDay(new Date(job.scheduledStart), day))
@@ -73,7 +73,7 @@ export function DayBoard({
                   {techJobs.length} stop{techJobs.length === 1 ? "" : "s"}
                 </p>
               </div>
-              <div className="min-h-40 space-y-2 rounded-xl bg-background/70 p-1">
+              <div className="min-h-24 space-y-2 rounded-xl bg-background/70 p-1 md:min-h-40">
                 {techJobs.length === 0 ? (
                   <p className="px-2 py-6 text-center text-xs text-stone-500">No stops</p>
                 ) : (
@@ -82,7 +82,7 @@ export function DayBoard({
                       key={job.id}
                       draggable
                       onDragStart={(event) => event.dataTransfer.setData("text/job-id", job.id)}
-                      className="cursor-grab rounded-lg border border-line bg-white px-3 py-2 shadow-sm"
+                      className="rounded-lg border border-line bg-white px-3 py-2 shadow-sm md:cursor-grab"
                     >
                       <p className="text-xs font-semibold text-orange">
                         Stop {index + 1} · {format(new Date(job.scheduledStart!), "h:mm a")}
@@ -91,8 +91,23 @@ export function DayBoard({
                       <p className="text-xs text-stone-500">
                         {job.client.lastName} · {job.property.address1}
                       </p>
-                      <div className="mt-1">
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
                         <StatusBadge status={job.status} />
+                        <label className="sr-only" htmlFor={`assign-${job.id}`}>
+                          Reassign
+                        </label>
+                        <select
+                          id={`assign-${job.id}`}
+                          className="rounded-lg border border-line bg-white px-2 py-1 text-xs md:hidden"
+                          value={job.technicianId ?? ""}
+                          onChange={(event) => void moveJob(job.id, event.target.value)}
+                        >
+                          {technicians.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.firstName} {option.lastName}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </article>
                   ))

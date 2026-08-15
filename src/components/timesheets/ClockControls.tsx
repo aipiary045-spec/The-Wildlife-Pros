@@ -60,7 +60,7 @@ export function ClockControls({
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs text-stone-600">
+        <span className="hidden text-xs text-stone-600 min-[400px]:inline">
           {sheet?.open ? `On clock · ${formatDuration(liveMin)}` : "Off clock"}
         </span>
         <button

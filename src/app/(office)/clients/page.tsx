@@ -13,13 +13,32 @@ export default async function ClientsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="font-display text-3xl tracking-wide">Clients</h1>
-          <p className="text-stone-600">CRM with multiple service addresses per customer.</p>
-        </div>
+      <div>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Clients</h1>
+        <p className="text-stone-600">CRM with multiple service addresses per customer.</p>
       </div>
-      <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+      <div className="space-y-2 md:hidden">
+        {clients.map((client) => (
+          <Link
+            key={client.id}
+            href={`/clients/${client.id}`}
+            className="block rounded-2xl border border-line bg-panel p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold">{clientName(client)}</p>
+                <p className="text-sm text-stone-600">{formatPhone(client.phone)}</p>
+                <p className="text-xs text-stone-500">
+                  {client.properties.length} propert{client.properties.length === 1 ? "y" : "ies"} · {client._count.jobs}{" "}
+                  job{client._count.jobs === 1 ? "" : "s"}
+                </p>
+              </div>
+              <StatusBadge status={client.status} />
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="hidden overflow-hidden rounded-2xl border border-line bg-panel md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-background text-xs uppercase tracking-wider text-stone-500">
             <tr>

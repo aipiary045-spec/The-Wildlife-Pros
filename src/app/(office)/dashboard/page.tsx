@@ -12,10 +12,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl tracking-wide">Today&apos;s board</h1>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Today&apos;s board</h1>
         <p className="text-stone-600">Dispatch, trap checks, and money in one sunrise view.</p>
       </div>
-      <section className="grid gap-4 md:grid-cols-5">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4">
         <Stat label="Jobs today" value={String(data.jobsToday.length)} href="/schedule" />
         <Stat label="This week" value={String(data.weekJobs)} href="/jobs" />
         <Stat label="Open quotes" value={String(data.openQuotes)} href="/quotes" />

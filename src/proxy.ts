@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth";
-import { safeNextPath } from "@/lib/paths";
+import { homePath, safeNextPath } from "@/lib/paths";
 
 const PUBLIC_PREFIXES = [
   "/login",
@@ -29,7 +29,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if ((pathname === "/login" || pathname === "/") && session) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(homePath(session.role), request.url));
   }
 
   return NextResponse.next();
@@ -37,6 +37,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|logo.svg|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|logo.svg|sw\\.js|offline\\.html|manifest\\.webmanifest|icons/|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

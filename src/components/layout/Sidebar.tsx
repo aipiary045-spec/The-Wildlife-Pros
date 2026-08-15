@@ -2,47 +2,17 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  CalendarDays,
-  ClipboardList,
-  Clock,
-  FileSpreadsheet,
-  FileText,
-  LayoutDashboard,
-  LogOut,
-  MapPinned,
-  Receipt,
-  ShieldCheck,
-  Smartphone,
-  Squirrel,
-  Users,
-  Warehouse,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { NAV_ITEMS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-
-const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/schedule", label: "Schedule", icon: CalendarDays },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/jobs", label: "Jobs", icon: ClipboardList },
-  { href: "/quotes", label: "Quotes", icon: FileText },
-  { href: "/invoices", label: "Invoices", icon: Receipt },
-  { href: "/routes", label: "Routes", icon: MapPinned },
-  { href: "/timesheets", label: "Timesheets", icon: Clock },
-  { href: "/inventory", label: "Traps & gear", icon: Warehouse },
-  { href: "/activity", label: "Species log", icon: Squirrel },
-  { href: "/compliance", label: "Compliance", icon: ShieldCheck },
-  { href: "/exports", label: "Google Sheets", icon: FileSpreadsheet },
-  { href: "/field", label: "Tech field app", icon: Smartphone },
-];
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     router.push("/login");
     router.refresh();
   }
@@ -57,7 +27,7 @@ export function Sidebar() {
         </div>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {NAV.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
           return (

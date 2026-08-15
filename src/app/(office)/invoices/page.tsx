@@ -15,12 +15,33 @@ export default async function InvoicesPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-3xl tracking-wide">Invoices</h1>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Invoices</h1>
         <p className="text-stone-600">
           Staff collect through Square (Terminal, POS, or keyed card). Clients do not pay inside CritterOps.
         </p>
       </div>
-      <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+      <div className="space-y-2 md:hidden">
+        {invoices.map((invoice) => (
+          <Link
+            key={invoice.id}
+            href={`/invoices/${invoice.id}`}
+            className="block rounded-2xl border border-line bg-panel p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold">{invoice.number}</p>
+                <p className="text-sm text-stone-600">{clientName(invoice.client)}</p>
+                <p className="text-xs text-stone-500">
+                  {formatMoney(invoice.total)} · {formatMoney(invoice.balance)} due{" "}
+                  {invoice.dueOn ? format(invoice.dueOn, "MMM d") : "—"}
+                </p>
+              </div>
+              <StatusBadge status={invoice.status} />
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="hidden overflow-hidden rounded-2xl border border-line bg-panel md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-background text-xs uppercase tracking-wider text-stone-500">
             <tr>

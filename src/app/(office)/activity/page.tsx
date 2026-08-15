@@ -21,7 +21,7 @@ export default async function ActivityPage() {
         <h1 className="font-display text-3xl tracking-wide">Species & activity log</h1>
         <p className="text-stone-600">Captures, disposition, and which trap or entry they came from.</p>
       </div>
-      <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+      <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
         <table className="w-full text-left text-sm">
           <thead className="bg-background text-xs uppercase tracking-wider text-stone-500">
             <tr>
