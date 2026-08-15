@@ -5,10 +5,21 @@ import type { UserRole } from "@/generated/prisma/client";
 
 export const SESSION_COOKIE = "critterops_session";
 
-export function sessionCookieOptions(request?: Request) {
-  const forwarded = request?.headers.get("x-forwarded-proto");
-  const urlSecure = request ? new URL(request.url).protocol === "https:" : false;
-  const secure = process.env.NODE_ENV === "production" || forwarded === "https" || urlSecure;
+export function sessionCookieOptions(source?: Request | Headers) {
+  const headerList = source instanceof Request ? source.headers : source;
+  const forwarded = headerList?.get("x-forwarded-proto") ?? "";
+  const host = headerList?.get("host") ?? "";
+  const cfVisitor = headerList?.get("cf-visitor") ?? "";
+  const viaCloudflare = Boolean(headerList?.get("cf-ray") || headerList?.get("cf-connecting-ip"));
+  const urlSecure = source instanceof Request ? new URL(source.url).protocol === "https:" : false;
+  const localHost = host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  const httpsHint =
+    urlSecure ||
+    viaCloudflare ||
+    forwarded.split(",")[0]?.trim() === "https" ||
+    cfVisitor.includes("https") ||
+    (!localHost && host.length > 0);
+  const secure = process.env.NODE_ENV === "production" || httpsHint;
   return {
     httpOnly: true,
     sameSite: "lax" as const,
