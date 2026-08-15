@@ -73,3 +73,29 @@ export const JOB_TYPE_LABEL: Record<string, string> = {
   FOLLOW_UP: "Follow-up",
   OTHER: "Other",
 };
+
+export const EQUIPMENT_TYPE_LABEL: Record<string, string> = {
+  LIVE_CAGE: "Live cage",
+  ONE_WAY_DOOR: "One-way door",
+  SNAP_TRAP: "Snap trap",
+  GLUE_BOARD: "Glue board",
+  EXCLUSION_FUNNEL: "Exclusion funnel",
+  BAIT_STATION: "Bait station",
+  CAMERA: "Camera",
+  REPELLENT: "Repellent",
+  OTHER: "Other",
+};
+
+export const EQUIPMENT_SERIAL_PREFIX: Record<string, string> = {
+  LIVE_CAGE: "T",
+  ONE_WAY_DOOR: "OWD",
+  SNAP_TRAP: "ST",
+  GLUE_BOARD: "GB",
+  EXCLUSION_FUNNEL: "EF",
+  BAIT_STATION: "BS",
+  CAMERA: "CAM",
+  REPELLENT: "RP",
+  OTHER: "EQ",
+};
+
+export const EQUIPMENT_TYPES = Object.keys(EQUIPMENT_TYPE_LABEL);

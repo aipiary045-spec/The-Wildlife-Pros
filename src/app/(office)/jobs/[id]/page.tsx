@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
+import { NavigateLink } from "@/components/maps/NavigateLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { DISPOSITION_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
-import { NavigateLink } from "@/components/maps/NavigateLink";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,15 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
     },
   });
   if (!job) notFound();
+
+  const [stock, allGear, species] = await Promise.all([
+    prisma.equipment.findMany({
+      where: { status: { in: ["IN_INVENTORY", "RETRIEVED"] } },
+      orderBy: { serialNumber: "asc" },
+    }),
+    prisma.equipment.findMany({ select: { serialNumber: true } }),
+    prisma.species.findMany({ orderBy: { commonName: "asc" }, select: { commonName: true } }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -101,14 +111,19 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             </p>
           ))}
         </Card>
-        <Card title="Traps on this job">
-          {job.deployments.length === 0 ? <p className="text-sm text-stone-500">None deployed.</p> : null}
-          {job.deployments.map((item) => (
-            <p key={item.id} className="py-1 text-sm">
-              {item.equipment.serialNumber} · {item.locationNote} <StatusBadge status={item.status} />
-            </p>
-          ))}
-        </Card>
+        <JobTrapsCard
+          jobId={job.id}
+          stock={stock.map((item) => ({
+            id: item.id,
+            serialNumber: item.serialNumber,
+            name: item.name,
+            type: item.type,
+            status: item.status,
+          }))}
+          deployments={job.deployments}
+          serials={allGear.map((item) => item.serialNumber)}
+          species={species.map((item) => item.commonName)}
+        />
         <Card title="Species activity">
           {job.captures.map((capture) => (
             <p key={capture.id} className="py-1 text-sm">

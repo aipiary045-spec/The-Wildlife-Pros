@@ -66,7 +66,7 @@ Everything else requires a session (`src/proxy.ts`).
 - Quotes and invoices are document records with line items; totals are stored denormalized.
 - Completing a job should make “create invoice” a one-click API (`POST /api/invoices` with `jobId`).
 - Do not add customer self-serve invoice payment. Square is the processor. `POST /api/payments/square` charges a staff-tokenized card; `POST /api/payments` records Terminal/POS/cash/check.
-- Equipment has a global serial number. A live **EquipmentDeployment** is the site-specific status.
+- Equipment has a global serial number. A live **EquipmentDeployment** is the site-specific status. Add inventory on `/inventory`. Deploy and retrieve from the job screen so the trap is attached to the job they are on.
 - Capture events may point at a deployment. Logging a capture should flip that deployment to `ACTIVE_CAPTURE`.
 - Photos must be able to reference job, property, and entry point.
 - Route optimize preview first, then persist. Default mode `reorder` keeps technician assignments and only fixes driving order; `rebalance` may move stops. Persist rewrites `RouteDay` / `RouteStop` and `scheduledStart` from one start-hour clock. Return-to-shop miles are totals only, not a fake stop. Field `/field` shows saved sequence, drive, and ETA when a `RouteDay` exists. Techs navigate by **street address** (Google/Apple Maps); lat/lng is for the optimizer and a fallback pin. Geocode on property save and before optimize when coords are missing. If `MAPBOX_TOKEN` is set, snap the chosen order to road time; otherwise keep Haversine.
@@ -92,8 +92,8 @@ Everything else requires a session (`src/proxy.ts`).
 | POST | `/api/payments/square` | Charge a Square payment token (staff only) |
 | GET/PATCH/POST | `/api/schedule` | Day or Mon–Sun week board; drag to move, POST copies a multi-trip job |
 | GET/POST | `/api/routes/optimize` | Preview (`persist: false`) or apply a day’s routes; `mode=reorder|rebalance` |
-| GET/POST | `/api/traps` | Serialized inventory |
-| GET/POST/PATCH | `/api/deployments` | Place / retrieve gear |
+| GET/POST | `/api/traps` | Serialized inventory; POST adds shop stock |
+| GET/POST/PATCH | `/api/deployments` | Place gear on a job / retrieve to truck |
 | GET/POST | `/api/species-logs` | Captures |
 | GET/POST | `/api/applications` | Pesticide / rodenticide log |
 | GET/POST | `/api/photos` | Tagged documentation |

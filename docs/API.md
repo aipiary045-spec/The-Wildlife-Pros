@@ -46,8 +46,9 @@ Jobs that are on site, in progress, completed, invoiced, cancelled, or on hold a
 
 ## Wildlife field data
 
-`GET|POST /api/traps`  
-`GET|POST|PATCH /api/deployments`  
+`GET|POST /api/traps` `{ serialNumber?, name, type, manufacturer?, notes? }` — add serialized gear to shop stock. Serial is unique; if omitted, CritterOps suggests the next `T-` / `OWD-` / `CAM-` number.  
+`GET|POST /api/deployments` `{ equipmentId, jobId, locationNote, targetSpecies?, baitUsed? }` — place a trap on the job’s property. Rejects if that serial is already in the field.  
+`PATCH /api/deployments` `{ id, status, locationNote? }` — `RETRIEVED` sets `retrievedAt` and returns the gear to `IN_INVENTORY`  
 `GET|POST /api/species-logs`  
 `GET|POST /api/applications`  
 `GET|POST /api/photos`  
