@@ -2,7 +2,7 @@
 
 import { addDays, format, startOfWeek } from "date-fns";
 import { dateKey } from "@/lib/dates";
-import { AppointmentChip } from "./AppointmentChip";
+import { AppointmentChip, DragGhost } from "./AppointmentChip";
 import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
 import { useScheduleBoard } from "./useScheduleBoard";
@@ -24,28 +24,39 @@ export function WeekBoard({
   onCopyRequest?: (request: CopyRequest) => void;
   onNewJob?: (technicianId: string, day: Date, time?: string) => void;
 }) {
-  const { saving, onDragStart, onDragOver, onDrop } = useScheduleBoard(
+  const { saving, error, drag, placeJob, onChipPointerDown } = useScheduleBoard(
     [...jobs, ...unscheduled],
     mode,
     onCopyRequest,
   );
   const start = startOfWeek(new Date(weekOf.includes("T") ? weekOf : `${weekOf}T12:00:00`), { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, index) => addDays(start, index));
+  const draggingJob = drag ? [...jobs, ...unscheduled].find((job) => job.id === drag.jobId) : null;
+
+  function chipProps(job: ScheduleJobCard, day: Date) {
+    return {
+      job,
+      technicians,
+      dragging: drag?.jobId === job.id,
+      onPointerDown: (event: React.PointerEvent, immediate?: boolean) =>
+        onChipPointerDown(event, job.id, immediate),
+      onReassign: (technicianId: string) => void placeJob(job.id, technicianId, day),
+    };
+  }
 
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
-        {mode === "copy"
-          ? "Drop a job on another day to copy it. Check in when you arrive; check out asks if they need a follow-up."
-          : "Tap + Job on a square, or drag a stop onto a tech and day. Check in on site. Check out asks follow-up vs complete."}{" "}
+        Hold a job or drag the grip onto a tech and day. You can also pick a name under the job.{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
+      {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       {unscheduled.length > 0 ? (
         <section className="rounded-2xl border border-dashed border-line bg-panel p-3">
-          <h2 className="mb-2 text-sm font-semibold">Unscheduled — drag onto a tech</h2>
+          <h2 className="mb-2 text-sm font-semibold">Unscheduled — drop onto a tech</h2>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {unscheduled.map((job) => (
-              <AppointmentChip key={job.id} job={job} technicians={technicians} onDragStart={onDragStart} />
+              <AppointmentChip key={job.id} {...chipProps(job, start)} />
             ))}
           </div>
         </section>
@@ -80,19 +91,18 @@ export function WeekBoard({
                     const techJobs = dayJobs.filter((job) => job.technicianId === tech.id);
                     if (techJobs.length === 0) return null;
                     return (
-                      <div key={tech.id}>
+                      <div
+                        key={tech.id}
+                        data-drop-tech={tech.id}
+                        data-drop-day={dateKey(day)}
+                        className={drag?.overTechId === tech.id ? "rounded-xl bg-orange/10 p-1" : ""}
+                      >
                         <p className="mb-1 text-xs font-semibold text-stone-600">
                           {tech.firstName} {tech.lastName}
                         </p>
                         <div className="flex gap-2 overflow-x-auto pb-1">
                           {techJobs.map((job) => (
-                            <AppointmentChip
-                              key={job.id}
-                              job={job}
-                              technicians={technicians}
-                              showVisit
-                              onDragStart={onDragStart}
-                            />
+                            <AppointmentChip key={job.id} showVisit {...chipProps(job, day)} />
                           ))}
                         </div>
                       </div>
@@ -141,17 +151,14 @@ export function WeekBoard({
                   return (
                     <td key={`${tech.id}-${day.toISOString()}`} className="h-36 px-2 py-2">
                       <div
-                        className="flex min-h-28 gap-2 overflow-x-auto rounded-xl bg-background/70 p-1"
-                        onDragOver={onDragOver}
-                        onDrop={(event) => onDrop(event, tech.id, day)}
+                        data-drop-tech={tech.id}
+                        data-drop-day={dateKey(day)}
+                        className={`flex min-h-28 gap-2 overflow-x-auto rounded-xl p-1 ${
+                          drag?.overTechId === tech.id ? "bg-orange/15" : "bg-background/70"
+                        }`}
                       >
                         {cellJobs.map((job) => (
-                          <AppointmentChip
-                            key={job.id}
-                            job={job}
-                            technicians={technicians}
-                            onDragStart={onDragStart}
-                          />
+                          <AppointmentChip key={job.id} {...chipProps(job, day)} />
                         ))}
                         <button
                           type="button"
@@ -169,6 +176,7 @@ export function WeekBoard({
           </tbody>
         </table>
       </div>
+      {draggingJob && drag ? <DragGhost job={draggingJob} x={drag.x} y={drag.y} /> : null}
     </div>
   );
 }
