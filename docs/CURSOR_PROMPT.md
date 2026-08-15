@@ -21,6 +21,7 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 - Client Hub: upcoming appointments, approve/decline quotes, pay invoices
 - Technician field view (phone-first)
 - Route optimization for a day’s stops
+- Daily timesheets: technicians clock in/out (multiple punches per day), office reviews and approves hours
 
 ### Wildlife / pest additions (the differentiator)
 
@@ -67,6 +68,7 @@ Everything else requires a session (`src/proxy.ts`).
 - Capture events may point at a deployment. Logging a capture should flip that deployment to `ACTIVE_CAPTURE`.
 - Photos must be able to reference job, property, and entry point.
 - Route optimize may persist: rewrite `RouteDay` / `RouteStop` and reschedule job start times.
+- A technician has one **Timesheet** per calendar day and one or more **TimePunch** pairs. Clock-in opens a punch; clock-out closes it. Only one punch may be open. Office roles approve sheets.
 
 ## API map
 
@@ -93,6 +95,10 @@ Everything else requires a session (`src/proxy.ts`).
 | GET/POST | `/api/compliance` | Forms + application rollup |
 | GET | `/api/portal/[token]` | Client hub payload |
 | POST | `/api/portal/[token]/actions` | approve quote / pay invoice |
+| GET | `/api/timesheets` | Office/tech timesheet list |
+| GET | `/api/timesheets/me` | Current user today + recent |
+| POST | `/api/timesheets/clock` | `{ action: "in" \| "out" }` |
+| PATCH | `/api/timesheets/[id]` | submit / approve / reject |
 
 ## UI conventions
 
@@ -115,6 +121,7 @@ Client hub: /portal/demo-client-hub
 ## What to build next (in order)
 
 1. Create/edit forms for clients, jobs, quotes, invoices (office UI currently lists + details)
+1b. Job-level timers that attach `TimeEntry` rows to the open daily timesheet
 2. Recurring visit generator from `RecurringSchedule`
 3. File uploads to object storage instead of public SVG placeholders
 4. Stripe (or similar) for real Client Hub card payments

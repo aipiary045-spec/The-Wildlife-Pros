@@ -1,6 +1,6 @@
 # CritterOps
 
-Field-service operations for **The Wildlife Pros** — Jobber-style CRM, dispatch, quotes, invoicing, and a client hub, plus trap inventory, species logs, exclusion photos, and pesticide compliance.
+Field-service operations for **The Wildlife Pros** — Jobber-style CRM, dispatch, quotes, invoicing, timesheets, and a client hub, plus trap inventory, species logs, exclusion photos, and pesticide compliance.
 
 ## Stack
 

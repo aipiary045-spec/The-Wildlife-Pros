@@ -55,6 +55,9 @@ CREATE TYPE "PhotoKind" AS ENUM ('BEFORE', 'AFTER', 'DURING', 'DAMAGE', 'ENTRY_P
 -- CreateEnum
 CREATE TYPE "RouteStatus" AS ENUM ('DRAFT', 'OPTIMIZED', 'DISPATCHED', 'IN_PROGRESS', 'COMPLETED');
 
+-- CreateEnum
+CREATE TYPE "TimesheetStatus" AS ENUM ('CLOCKED_IN', 'CLOCKED_OUT', 'SUBMITTED', 'APPROVED', 'REJECTED');
+
 -- CreateTable
 CREATE TABLE "Organization" (
     "id" TEXT NOT NULL,
@@ -373,10 +376,38 @@ CREATE TABLE "Note" (
 );
 
 -- CreateTable
+CREATE TABLE "Timesheet" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "status" "TimesheetStatus" NOT NULL DEFAULT 'CLOCKED_IN',
+    "breakMin" INTEGER NOT NULL DEFAULT 0,
+    "notes" TEXT,
+    "approvedById" TEXT,
+    "approvedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Timesheet_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TimePunch" (
+    "id" TEXT NOT NULL,
+    "timesheetId" TEXT NOT NULL,
+    "clockInAt" TIMESTAMP(3) NOT NULL,
+    "clockOutAt" TIMESTAMP(3),
+    "note" TEXT,
+
+    CONSTRAINT "TimePunch_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "TimeEntry" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "jobId" TEXT,
+    "timesheetId" TEXT,
     "startedAt" TIMESTAMP(3) NOT NULL,
     "endedAt" TIMESTAMP(3),
     "notes" TEXT,
@@ -642,6 +673,12 @@ CREATE INDEX "Invoice_clientId_status_idx" ON "Invoice"("clientId", "status");
 CREATE INDEX "Invoice_status_dueOn_idx" ON "Invoice"("status", "dueOn");
 
 -- CreateIndex
+CREATE INDEX "Timesheet_date_status_idx" ON "Timesheet"("date", "status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Timesheet_userId_date_key" ON "Timesheet"("userId", "date");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Equipment_serialNumber_key" ON "Equipment"("serialNumber");
 
 -- CreateIndex
@@ -750,10 +787,22 @@ ALTER TABLE "Note" ADD CONSTRAINT "Note_jobId_fkey" FOREIGN KEY ("jobId") REFERE
 ALTER TABLE "Note" ADD CONSTRAINT "Note_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Timesheet" ADD CONSTRAINT "Timesheet_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Timesheet" ADD CONSTRAINT "Timesheet_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TimePunch" ADD CONSTRAINT "TimePunch_timesheetId_fkey" FOREIGN KEY ("timesheetId") REFERENCES "Timesheet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "TimeEntry" ADD CONSTRAINT "TimeEntry_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TimeEntry" ADD CONSTRAINT "TimeEntry_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TimeEntry" ADD CONSTRAINT "TimeEntry_timesheetId_fkey" FOREIGN KEY ("timesheetId") REFERENCES "Timesheet"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "EquipmentDeployment" ADD CONSTRAINT "EquipmentDeployment_equipmentId_fkey" FOREIGN KEY ("equipmentId") REFERENCES "Equipment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function getDashboardData() {
   const today = new Date();
-  const [jobsToday, openQuotes, overdueInvoices, activeTraps, recentCaptures, technicians] =
+  const [jobsToday, openQuotes, overdueInvoices, activeTraps, recentCaptures, technicians, clockedIn] =
     await Promise.all([
       prisma.job.findMany({
         where: {
@@ -26,6 +26,9 @@ export async function getDashboardData() {
       prisma.user.findMany({
         where: { role: { in: ["TECHNICIAN", "OWNER", "DISPATCHER"] }, status: "ACTIVE" },
       }),
+      prisma.timesheet.count({
+        where: { date: startOfDay(today), status: "CLOCKED_IN" },
+      }),
     ]);
 
   const weekJobs = await prisma.job.count({
@@ -34,7 +37,16 @@ export async function getDashboardData() {
     },
   });
 
-  return { jobsToday, openQuotes, overdueInvoices, activeTraps, recentCaptures, technicians, weekJobs };
+  return {
+    jobsToday,
+    openQuotes,
+    overdueInvoices,
+    activeTraps,
+    recentCaptures,
+    technicians,
+    weekJobs,
+    clockedIn,
+  };
 }
 
 export async function getSchedule(from: Date, to: Date) {

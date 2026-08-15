@@ -45,6 +45,15 @@ Optimization uses Haversine miles, nearest-neighbor construction, and 2-opt impr
 `GET|POST /api/photos`  
 `GET|POST /api/compliance`
 
+## Timesheets
+
+`GET /api/timesheets?userId&from&to` — techs see only their own; office sees the team  
+`GET /api/timesheets/me` — today plus the last two weeks  
+`POST /api/timesheets/clock` `{ action: "in" | "out", note? }` — one open punch at a time; clocking in again after lunch starts a new punch  
+`PATCH /api/timesheets/:id` `{ status: "SUBMITTED"|"APPROVED"|"REJECTED", notes?, breakMin? }` — approve/reject is office-only
+
+Worked minutes = sum of punch spans minus `breakMin`.
+
 ## Client hub (public token)
 
 `GET /api/portal/:token`  

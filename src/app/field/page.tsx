@@ -3,7 +3,9 @@ import { format } from "date-fns";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ClockControls } from "@/components/timesheets/ClockControls";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getMyTimesheet } from "@/lib/timesheets";
 import { propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +14,7 @@ export default async function FieldPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
+  const myTime = await getMyTimesheet(session.id);
   const jobs = await prisma.job.findMany({
     where: {
       technicianId: session.role === "TECHNICIAN" ? session.id : undefined,
@@ -31,6 +34,7 @@ export default async function FieldPage() {
         </p>
       </header>
       <div className="-mt-4 space-y-3 px-4">
+        <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
         {jobs.map((job) => (
           <Link
             key={job.id}

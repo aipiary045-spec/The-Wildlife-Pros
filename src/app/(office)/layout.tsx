@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
+import { getMyTimesheet } from "@/lib/timesheets";
 
 export default async function OfficeLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const myTime = await getMyTimesheet(session.id);
 
   return (
     <div className="flex min-h-screen">
@@ -19,12 +22,15 @@ export default async function OfficeLayout({ children }: { children: React.React
               {session.firstName} {session.lastName} · {session.role.toLowerCase()}
             </p>
           </div>
-          <a
-            href="/field"
-            className="rounded-full bg-ink px-3 py-1.5 text-xs font-semibold text-white md:hidden"
-          >
-            Field app
-          </a>
+          <div className="flex items-center gap-3">
+            <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
+            <a
+              href="/field"
+              className="rounded-full bg-ink px-3 py-1.5 text-xs font-semibold text-white md:hidden"
+            >
+              Field app
+            </a>
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>

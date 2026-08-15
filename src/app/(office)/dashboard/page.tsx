@@ -15,11 +15,12 @@ export default async function DashboardPage() {
         <h1 className="font-display text-3xl tracking-wide">Today&apos;s board</h1>
         <p className="text-stone-600">Dispatch, trap checks, and money in one sunrise view.</p>
       </div>
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-5">
         <Stat label="Jobs today" value={String(data.jobsToday.length)} href="/schedule" />
         <Stat label="This week" value={String(data.weekJobs)} href="/jobs" />
         <Stat label="Open quotes" value={String(data.openQuotes)} href="/quotes" />
         <Stat label="Traps in the field" value={String(data.activeTraps)} href="/inventory" />
+        <Stat label="On the clock" value={String(data.clockedIn)} href="/timesheets" />
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-panel p-5 lg:col-span-2">

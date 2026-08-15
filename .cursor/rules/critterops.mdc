@@ -11,4 +11,6 @@ Brand: orange #E85D04, amber #F48C06, gold #F9C74F, ink #111111. Use the hex log
 
 Keep wildlife domain objects (Equipment, EquipmentDeployment, CaptureEvent, EntryPoint, ChemicalApplication, Photo) tied to jobs/properties. Do not genericize them away.
 
+Daily time uses Timesheet + TimePunch (clock in/out). Do not replace that with ad-hoc timestamps on User.
+
 Prefer server components for reads and existing `/api` route handlers for writes. Match current naming and status enums.

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
   ClipboardList,
+  Clock,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/routes", label: "Routes", icon: MapPinned },
+  { href: "/timesheets", label: "Timesheets", icon: Clock },
   { href: "/inventory", label: "Traps & gear", icon: Warehouse },
   { href: "/activity", label: "Species log", icon: Squirrel },
   { href: "/compliance", label: "Compliance", icon: ShieldCheck },

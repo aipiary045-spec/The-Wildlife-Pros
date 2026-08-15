@@ -1,5 +1,5 @@
 import { hash } from "bcryptjs";
-import { addDays, addHours, setHours, startOfDay } from "date-fns";
+import { addDays, addHours, addMinutes, setHours, startOfDay } from "date-fns";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
@@ -28,7 +28,9 @@ async function main() {
   await prisma.quote.deleteMany();
   await prisma.jobLineItem.deleteMany();
   await prisma.visit.deleteMany();
+  await prisma.timePunch.deleteMany();
   await prisma.timeEntry.deleteMany();
+  await prisma.timesheet.deleteMany();
   await prisma.note.deleteMany();
   await prisma.job.deleteMany();
   await prisma.recurringSchedule.deleteMany();
@@ -637,6 +639,44 @@ async function main() {
       title: "Rats in crawlspace",
       details: "Saw droppings near HVAC. Wants quote for exclusion + stations.",
       source: "web",
+    },
+  });
+
+  await prisma.timesheet.create({
+    data: {
+      userId: jordan.id,
+      date: today,
+      status: "CLOCKED_IN",
+      punches: { create: { clockInAt: setHours(today, 7) } },
+    },
+  });
+  await prisma.timesheet.create({
+    data: {
+      userId: alex.id,
+      date: addDays(today, -1),
+      status: "APPROVED",
+      breakMin: 30,
+      approvedById: owner.id,
+      approvedAt: addDays(today, -1),
+      punches: {
+        create: [
+          { clockInAt: setHours(addDays(today, -1), 8), clockOutAt: setHours(addDays(today, -1), 12) },
+          { clockInAt: addMinutes(setHours(addDays(today, -1), 12), 30), clockOutAt: setHours(addDays(today, -1), 17) },
+        ],
+      },
+    },
+  });
+  await prisma.timesheet.create({
+    data: {
+      userId: jordan.id,
+      date: addDays(today, -1),
+      status: "CLOCKED_OUT",
+      punches: {
+        create: {
+          clockInAt: setHours(addDays(today, -1), 7),
+          clockOutAt: setHours(addDays(today, -1), 16),
+        },
+      },
     },
   });
 

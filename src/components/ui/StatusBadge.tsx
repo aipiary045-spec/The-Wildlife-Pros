@@ -28,6 +28,10 @@ const TONES: Record<string, string> = {
   RETRIEVED: "bg-emerald-100 text-emerald-800",
   ACTIVE: "bg-emerald-100 text-emerald-800",
   LEAD: "bg-sky-100 text-sky-800",
+  CLOCKED_IN: "bg-emerald-100 text-emerald-800",
+  CLOCKED_OUT: "bg-stone-200 text-stone-700",
+  SUBMITTED: "bg-sky-100 text-sky-800",
+  REJECTED: "bg-rose-100 text-rose-800",
 };
 
 export function StatusBadge({ status, label }: { status: string; label?: string }) {

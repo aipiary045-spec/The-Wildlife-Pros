@@ -179,6 +179,14 @@ enum RouteStatus {
   COMPLETED
 }
 
+enum TimesheetStatus {
+  CLOCKED_IN
+  CLOCKED_OUT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
 model Organization {
   id              String   @id @default(cuid())
   name            String
@@ -234,6 +242,8 @@ model User {
   quotes         Quote[]    @relation("QuoteCreatedBy")
   invoices       Invoice[]  @relation("InvoiceCreatedBy")
   timeEntries    TimeEntry[]
+  timesheets     Timesheet[]
+  approvedTimesheets Timesheet[] @relation("TimesheetApprover")
   applications   ChemicalApplication[]
   captures       CaptureEvent[]
   photos         Photo[]
@@ -557,16 +567,48 @@ model Note {
   createdAt DateTime @default(now())
 }
 
-model TimeEntry {
-  id           String    @id @default(cuid())
+model Timesheet {
+  id           String          @id @default(cuid())
   userId       String
-  user         User      @relation(fields: [userId], references: [id])
+  user         User            @relation(fields: [userId], references: [id])
+  date         DateTime
+  status       TimesheetStatus @default(CLOCKED_IN)
+  breakMin     Int             @default(0)
+  notes        String?
+  approvedById String?
+  approvedBy   User?           @relation("TimesheetApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  punches      TimePunch[]
+  entries      TimeEntry[]
+
+  @@unique([userId, date])
+  @@index([date, status])
+}
+
+model TimePunch {
+  id           String    @id @default(cuid())
+  timesheetId  String
+  timesheet    Timesheet @relation(fields: [timesheetId], references: [id], onDelete: Cascade)
+  clockInAt    DateTime
+  clockOutAt   DateTime?
+  note         String?
+}
+
+model TimeEntry {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
   jobId        String?
-  job          Job?      @relation(fields: [jobId], references: [id])
+  job          Job?       @relation(fields: [jobId], references: [id])
+  timesheetId  String?
+  timesheet    Timesheet? @relation(fields: [timesheetId], references: [id])
   startedAt    DateTime
   endedAt      DateTime?
   notes        String?
-  billable     Boolean   @default(true)
+  billable     Boolean    @default(true)
 }
 
 model Equipment {
