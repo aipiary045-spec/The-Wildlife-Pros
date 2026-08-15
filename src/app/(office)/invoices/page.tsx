@@ -17,7 +17,7 @@ export default async function InvoicesPage() {
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Invoices</h1>
         <p className="text-stone-600">
-          Staff collect through Square (Terminal, POS, or keyed card). Clients do not pay inside CritterOps.
+          Staff collect through Square (Terminal, POS, or keyed card). Create an invoice from a completed job. Clients do not pay inside CritterOps.
         </p>
       </div>
       <div className="space-y-2 md:hidden">

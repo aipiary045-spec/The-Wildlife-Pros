@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { CollectPayment } from "@/components/billing/CollectPayment";
+import { InvoiceActions } from "@/components/billing/InvoiceActions";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { squarePublicConfig } from "@/lib/square";
@@ -34,7 +35,10 @@ export default async function InvoiceDetailPage({ params }: PageProps<"/invoices
             {invoice.dueOn ? ` · due ${format(invoice.dueOn, "MMM d")}` : ""}
           </p>
         </div>
-        <StatusBadge status={invoice.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={invoice.status} />
+          <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
+        </div>
       </div>
       <section className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-2xl border border-line bg-panel p-5">

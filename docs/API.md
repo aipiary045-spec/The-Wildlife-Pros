@@ -24,10 +24,12 @@ All office endpoints require the `critterops_session` cookie unless noted.
 
 ## Quotes, invoices, payments
 
-`GET|POST /api/quotes`  
-`GET|PATCH /api/quotes/:id`  
+`GET|POST /api/quotes` `{ clientId, propertyId, title, message?, validUntil?, lineItems[] }`  
+`GET|PATCH /api/quotes/:id` — PATCH `{ status: "SENT"|"APPROVED"|"DECLINED" }`  
+`POST /api/quotes/:id/convert` `{ technicianId?, scheduledStart?, durationMin? }` — copies line items onto a job and marks the quote `CONVERTED`  
+`GET /api/services` — active price-list catalog  
 `GET|POST /api/invoices` — `POST` with `jobId` copies job line items and marks the job `INVOICED`  
-`GET /api/invoices/:id`  
+`GET|PATCH /api/invoices/:id` — PATCH `{ status: "SENT"|"VOID" }`  
 `POST /api/payments` `{ invoiceId, amount, method: "SQUARE"|"CASH"|"CHECK", reference }` — staff record of a Terminal/POS/cash/check payment  
 `GET /api/payments/square/config` — application id, location, sandbox, configured  
 `POST /api/payments/square` `{ invoiceId, sourceId, amount, idempotencyKey }` — staff-keyed Square charge
@@ -51,7 +53,8 @@ Jobs that are on site, in progress, completed, invoiced, cancelled, or on hold a
 `GET|POST /api/traps` `{ serialNumber?, name, type, manufacturer?, notes? }` — add serialized gear to shop stock. Serial is unique; if omitted, CritterOps suggests the next `T-` / `OWD-` / `CAM-` number.  
 `GET|POST /api/deployments` `{ equipmentId, jobId, locationNote, targetSpecies?, baitUsed? }` — place a trap on the job’s property. Rejects if that serial is already in the field.  
 `PATCH /api/deployments` `{ id, status, locationNote? }` — `RETRIEVED` sets `retrievedAt` and returns the gear to `IN_INVENTORY`  
-`GET|POST /api/species-logs`  
+`GET|POST /api/species-logs` `{ jobId, speciesId, quantity, disposition, deploymentId?, locationNote? }`  
+`POST /api/recurring` `{ jobId, frequency: "WEEKLY"|"BIWEEKLY"|"MONTHLY"|"QUARTERLY", interval?, count? }` — copies the job forward onto the calendar  
 `GET|POST /api/applications`  
 `GET|POST /api/photos`  
 `GET|POST /api/compliance`

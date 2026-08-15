@@ -18,8 +18,9 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 - Drag-and-drop dispatch calendar: week grid (technician × day) and day timeline (technician × time, 15-minute snap). **New job** / **+ Job** opens a create dialog; unscheduled jobs drag onto a tech.
 - Check in / check out on the job, field route, and calendar. Check-out asks if the customer needs a follow-up visit or if the job is complete. Follow-up creates a new job for the same client.
 - Recurring service visits
-- Digital quotes clients approve in a Client Hub
-- Invoices generated from completed jobs, balances, partial payments
+- Digital quotes: create, send, client hub approve/decline, convert to a job
+- Invoices generated from completed jobs; mark sent; balances and staff Square collection
+- Recurring visits generated from a job (`RecurringSchedule`)
 - **Payments are Square-only and staff-collected.** Clients do not log into CritterOps to pay. Techs/office take Terminal, POS, cash/check, or a staff-keyed Square card charge on the invoice.
 - Optional Client Hub for visit info / quote approval only — never billing
 - Technician field view (phone-first)
@@ -91,7 +92,11 @@ Everything else requires a session (`src/proxy.ts`).
 | POST | `/api/jobs/[id]/check-out` | Leave: complete or schedule follow-up |
 | GET/POST | `/api/quotes` | Estimates |
 | PATCH | `/api/quotes/[id]` | send / approve / decline |
+| POST | `/api/quotes/[id]/convert` | Quote → job |
+| GET | `/api/services` | Price list |
 | GET/POST | `/api/invoices` | Billing; pass `jobId` to copy line items |
+| PATCH | `/api/invoices/[id]` | Mark sent / void |
+| POST | `/api/recurring` | Generate upcoming visits from a job |
 | POST | `/api/payments` | Record Terminal / cash / check (staff only) |
 | GET | `/api/payments/square/config` | Public Square app/location flags |
 | POST | `/api/payments/square` | Charge a Square payment token (staff only) |
@@ -131,15 +136,12 @@ Client hub: /portal/demo-client-hub
 
 ## What to build next (in order)
 
-1. Create/edit forms for quotes and invoices (clients and jobs can already be created from Home / the calendar)
-2. Recurring visit generator from `RecurringSchedule`
-3. File uploads to object storage instead of public SVG placeholders
-4. Square Terminal / Mobile Payments SDK for the field app (cards already go through Square on the invoice page)
-5. Map tiles + in-app turn-by-turn (Navigate already opens Google/Apple Maps by address; Mapbox Directions is optional for road ETAs)
-6. Push notifications / SMS visit reminders
-7. React Native or PWA packaging of `/field`
-8. Multi-state compliance template library
-9. Reports: revenue, capture counts, chemical usage, tech utilization
+1. File uploads to object storage instead of public SVG placeholders
+2. Square Terminal / Mobile Payments SDK for the field app (cards already go through Square on the invoice page)
+3. Map tiles + in-app turn-by-turn (Navigate already opens Google/Apple Maps by address; Mapbox Directions is optional for road ETAs)
+4. Push notifications / SMS visit reminders
+5. React Native or PWA packaging of `/field`
+6. Multi-state compliance template library
 
 ## Guardrails
 

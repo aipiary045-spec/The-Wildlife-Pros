@@ -1,0 +1,102 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { format } from "date-fns";
+import { QuoteActions } from "@/components/quotes/QuoteActions";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { prisma } from "@/lib/prisma";
+import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
+
+export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id]">) {
+  const { id } = await params;
+  const [quote, technicians] = await Promise.all([
+    prisma.quote.findUnique({
+      where: { id },
+      include: {
+        client: true,
+        property: true,
+        lineItems: { orderBy: { sortOrder: "asc" } },
+        jobs: { select: { id: true, number: true, status: true } },
+      },
+    }),
+    prisma.user.findMany({
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
+      orderBy: { firstName: "asc" },
+      select: { id: true, firstName: true, lastName: true, color: true },
+    }),
+  ]);
+  if (!quote) notFound();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-orange">{quote.number}</p>
+          <h1 className="font-display text-3xl tracking-wide">{quote.title}</h1>
+          <p className="text-stone-600">
+            {clientName(quote.client)}
+            {quote.property ? ` · ${propertyAddress(quote.property)}` : ""}
+          </p>
+          <p className="text-sm text-stone-500">
+            Valid {quote.validUntil ? format(quote.validUntil, "PPP") : "—"}
+            {quote.sentAt ? ` · sent ${format(quote.sentAt, "MMM d")}` : ""}
+          </p>
+        </div>
+        <div className="space-y-2">
+          <StatusBadge status={quote.status} />
+          <QuoteActions
+            quoteId={quote.id}
+            status={quote.status}
+            technicians={technicians}
+            portalToken={quote.client.portalToken}
+          />
+        </div>
+      </div>
+      {quote.message ? (
+        <article className="rounded-2xl border border-line bg-panel p-5">
+          <h2 className="mb-2 font-semibold">Message</h2>
+          <p className="text-sm text-stone-600">{quote.message}</p>
+        </article>
+      ) : null}
+      <article className="rounded-2xl border border-line bg-panel p-5">
+        <h2 className="mb-3 font-semibold">Line items</h2>
+        {quote.lineItems.map((item) => (
+          <p key={item.id} className="flex justify-between py-1 text-sm">
+            <span>
+              {item.name} × {Number(item.quantity)}
+            </span>
+            <span>{formatMoney(Number(item.quantity) * Number(item.unitPrice))}</span>
+          </p>
+        ))}
+        <div className="mt-4 border-t border-line pt-3 text-sm">
+          <p className="flex justify-between">
+            <span>Subtotal</span>
+            <span>{formatMoney(quote.subtotal)}</span>
+          </p>
+          <p className="flex justify-between">
+            <span>Tax</span>
+            <span>{formatMoney(quote.taxAmount)}</span>
+          </p>
+          <p className="flex justify-between font-semibold">
+            <span>Total</span>
+            <span>{formatMoney(quote.total)}</span>
+          </p>
+        </div>
+      </article>
+      {quote.jobs.length > 0 ? (
+        <article className="rounded-2xl border border-line bg-panel p-5">
+          <h2 className="mb-3 font-semibold">Jobs from this quote</h2>
+          {quote.jobs.map((job) => (
+            <Link key={job.id} href={`/jobs/${job.id}`} className="block py-1 text-sm font-medium text-orange">
+              {job.number} <StatusBadge status={job.status} />
+            </Link>
+          ))}
+        </article>
+      ) : null}
+      <Link href="/quotes" className="text-sm font-medium text-orange">
+        Back to quotes
+      </Link>
+    </div>
+  );
+}

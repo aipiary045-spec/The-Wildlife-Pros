@@ -1,25 +1,49 @@
+import Link from "next/link";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { NewQuoteButton } from "@/components/quotes/QuoteForm";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { clientName, formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuotesPage() {
-  const quotes = await prisma.quote.findMany({
-    include: { client: true, property: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [quotes, clients, services] = await Promise.all([
+    prisma.quote.findMany({
+      include: { client: true, property: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.client.findMany({
+      include: { properties: { select: { id: true, address1: true, city: true } } },
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    }),
+    prisma.service.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, unitPrice: true, taxable: true },
+    }),
+  ]);
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Quotes</h1>
-        <p className="text-stone-600">Send estimates clients can approve in the hub.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl tracking-wide md:text-3xl">Quotes</h1>
+          <p className="text-stone-600">Send estimates clients can approve in the hub, then convert to a job.</p>
+        </div>
+        <NewQuoteButton
+          clients={clients}
+          services={services.map((item) => ({
+            id: item.id,
+            name: item.name,
+            unitPrice: Number(item.unitPrice),
+            taxable: item.taxable,
+          }))}
+        />
       </div>
       <div className="space-y-2 md:hidden">
         {quotes.map((quote) => (
-          <article key={quote.id} className="rounded-2xl border border-line bg-panel p-4">
+          <Link key={quote.id} href={`/quotes/${quote.id}`} className="block rounded-2xl border border-line bg-panel p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-semibold">{quote.number}</p>
@@ -30,7 +54,7 @@ export default async function QuotesPage() {
               </div>
               <StatusBadge status={quote.status} />
             </div>
-          </article>
+          </Link>
         ))}
       </div>
       <div className="hidden overflow-hidden rounded-2xl border border-line bg-panel md:block">
@@ -48,7 +72,9 @@ export default async function QuotesPage() {
             {quotes.map((quote) => (
               <tr key={quote.id} className="border-t border-line">
                 <td className="px-4 py-3">
-                  <p className="font-medium">{quote.number}</p>
+                  <Link href={`/quotes/${quote.id}`} className="font-medium hover:text-orange">
+                    {quote.number}
+                  </Link>
                   <p className="text-xs text-stone-500">{quote.title}</p>
                 </td>
                 <td className="px-4 py-3">

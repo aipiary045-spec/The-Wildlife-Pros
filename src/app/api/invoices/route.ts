@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { addDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { lineTotals, withAuth } from "@/lib/api";
+import { jsonError, lineTotals, withAuth } from "@/lib/api";
 import { nextNumber } from "@/lib/utils";
 
 export const GET = withAuth(async () => {
@@ -14,7 +14,8 @@ export const GET = withAuth(async () => {
 
 export const POST = withAuth(async (session, request) => {
   const body = await request.json();
-  const count = await prisma.invoice.count();
+  let clientId = body.clientId as string | undefined;
+  let propertyId = body.propertyId as string | undefined;
   let items = (body.lineItems ?? []) as Array<{
     name: string;
     quantity: number;
@@ -23,27 +24,35 @@ export const POST = withAuth(async (session, request) => {
     serviceId?: string;
   }>;
 
-  if (body.jobId && items.length === 0) {
+  if (body.jobId) {
     const job = await prisma.job.findUnique({
       where: { id: body.jobId },
-      include: { lineItems: true },
+      include: { lineItems: true, invoices: { select: { id: true } } },
     });
-    items =
-      job?.lineItems.map((item) => ({
+    if (!job) return jsonError("Job not found", 404);
+    if (job.invoices.length > 0) return jsonError("This job already has an invoice.");
+    clientId = clientId ?? job.clientId;
+    propertyId = propertyId ?? job.propertyId;
+    if (items.length === 0) {
+      items = job.lineItems.map((item) => ({
         name: item.name,
         quantity: Number(item.quantity),
         unitPrice: Number(item.unitPrice),
         taxable: item.taxable,
         serviceId: item.serviceId ?? undefined,
-      })) ?? [];
+      }));
+    }
   }
 
+  if (!clientId) return jsonError("clientId or jobId is required");
+
+  const count = await prisma.invoice.count();
   const totals = lineTotals(items);
   const invoice = await prisma.invoice.create({
     data: {
       number: nextNumber("INV", count),
-      clientId: body.clientId,
-      propertyId: body.propertyId,
+      clientId,
+      propertyId,
       jobId: body.jobId,
       createdById: session.id,
       status: "DRAFT",

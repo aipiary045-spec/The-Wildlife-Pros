@@ -4,6 +4,9 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
+import { JobCaptureForm } from "@/components/jobs/JobCaptureForm";
+import { RecurringForm } from "@/components/jobs/RecurringForm";
+import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { DISPOSITION_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
@@ -39,7 +42,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       orderBy: { serialNumber: "asc" },
     }),
     prisma.equipment.findMany({ select: { serialNumber: true } }),
-    prisma.species.findMany({ orderBy: { commonName: "asc" }, select: { commonName: true } }),
+    prisma.species.findMany({ orderBy: { commonName: "asc" }, select: { id: true, commonName: true } }),
     prisma.user.findMany({
       where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
       orderBy: { firstName: "asc" },
@@ -74,6 +77,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             technicianId={job.technicianId}
             technicians={technicians}
           />
+          <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
         </div>
       </div>
       <section className="grid gap-4 md:grid-cols-3">
@@ -142,6 +146,19 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
               {capture.quantity} {capture.species.commonName} · {DISPOSITION_LABEL[capture.disposition]}
             </p>
           ))}
+          <div className="mt-4 border-t border-line pt-4">
+            <JobCaptureForm
+              jobId={job.id}
+              species={species}
+              deployments={job.deployments.map((item) => ({
+                id: item.id,
+                equipment: { serialNumber: item.equipment.serialNumber },
+              }))}
+            />
+          </div>
+        </Card>
+        <Card title="Recurring visits">
+          <RecurringForm jobId={job.id} />
         </Card>
         <Card title="Exclusion & chemicals">
           {job.exclusions.map((work) => (

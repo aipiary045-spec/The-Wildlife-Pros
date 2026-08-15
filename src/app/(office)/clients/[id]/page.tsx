@@ -62,9 +62,9 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
         </Panel>
         <Panel title="Quotes">
           {client.quotes.map((quote) => (
-            <p key={quote.id} className="py-2 text-sm">
+            <Link key={quote.id} href={`/quotes/${quote.id}`} className="block py-2 text-sm hover:text-orange">
               {quote.number} · {formatMoney(quote.total)} <StatusBadge status={quote.status} />
-            </p>
+            </Link>
           ))}
         </Panel>
         <Panel title="Invoices">
