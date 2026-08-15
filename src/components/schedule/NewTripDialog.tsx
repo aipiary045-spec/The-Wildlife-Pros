@@ -20,7 +20,8 @@ export function NewTripDialog({
   onCreated: () => void;
 }) {
   const job = request?.job;
-  const defaultStart = job && request ? tripStartOnDay(job.scheduledStart, request.day) : new Date();
+  const defaultStart =
+    job && request ? (request.startAt ?? tripStartOnDay(job.scheduledStart, request.day)) : new Date();
   const [date, setDate] = useState(dateKey(defaultStart));
   const [time, setTime] = useState(format(defaultStart, "HH:mm"));
   const [technicianId, setTechnicianId] = useState(request?.technicianId ?? "");
@@ -31,7 +32,7 @@ export function NewTripDialog({
 
   useEffect(() => {
     if (!request) return;
-    const start = tripStartOnDay(request.job.scheduledStart, request.day);
+    const start = request.startAt ?? tripStartOnDay(request.job.scheduledStart, request.day);
     setDate(dateKey(start));
     setTime(format(start, "HH:mm"));
     setTechnicianId(request.technicianId || request.job.technicianId || technicians[0]?.id || "");

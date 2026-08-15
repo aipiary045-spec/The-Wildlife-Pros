@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { addDays, format, startOfWeek } from "date-fns";
-import { useMemo } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { JOB_TYPE_BAR } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { dateKey } from "@/lib/dates";
 import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
@@ -10,27 +12,35 @@ import { useScheduleBoard } from "./useScheduleBoard";
 
 export function WeekBoard({
   jobs,
+  unscheduled = [],
   technicians,
   weekOf,
   mode,
   onCopyRequest,
+  onNewJob,
 }: {
   jobs: ScheduleJobCard[];
+  unscheduled?: ScheduleJobCard[];
   technicians: ScheduleTech[];
   weekOf: string;
   mode: ScheduleMode;
   onCopyRequest?: (request: CopyRequest) => void;
+  onNewJob?: (technicianId: string, day: Date, time?: string) => void;
 }) {
-  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(jobs, mode, onCopyRequest);
+  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(
+    [...jobs, ...unscheduled],
+    mode,
+    onCopyRequest,
+  );
   const start = startOfWeek(new Date(weekOf.includes("T") ? weekOf : `${weekOf}T12:00:00`), { weekStartsOn: 1 });
-  const days = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(start, index)), [start]);
+  const days = Array.from({ length: 7 }, (_, index) => addDays(start, index));
 
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
         {mode === "copy"
           ? "Drop a job on another day to open a new-trip card. Same client and job; new date, tech, and visit notes."
-          : "Drag to move. Hold Alt/Option while dropping — or switch to Copy trip — to add another visit."}{" "}
+          : "Tap + Job on a square, or drag a stop onto a tech and day. Hold Alt/Option to copy a trip."}{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
       <div className="space-y-3 md:hidden">
@@ -40,11 +50,20 @@ export function WeekBoard({
             .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
           return (
             <section key={day.toISOString()} className="rounded-2xl border border-line bg-panel p-3">
-              <h2 className="mb-2 text-sm font-semibold">
-                {format(day, "EEEE, MMM d")}
-                <span className="ml-2 text-xs font-normal text-stone-500">
-                  {dayJobs.length} stop{dayJobs.length === 1 ? "" : "s"}
+              <h2 className="mb-2 flex items-center justify-between text-sm font-semibold">
+                <span>
+                  {format(day, "EEEE, MMM d")}
+                  <span className="ml-2 text-xs font-normal text-stone-500">
+                    {dayJobs.length} stop{dayJobs.length === 1 ? "" : "s"}
+                  </span>
                 </span>
+                <button
+                  type="button"
+                  className="rounded-lg bg-orange px-2 py-1 text-xs font-bold text-white"
+                  onClick={() => onNewJob?.(technicians[0]?.id ?? "", day, "09:00")}
+                >
+                  + Job
+                </button>
               </h2>
               {dayJobs.length === 0 ? (
                 <p className="py-3 text-center text-xs text-stone-500">No stops</p>
@@ -59,7 +78,9 @@ export function WeekBoard({
                           {tech ? ` · ${tech.firstName} ${tech.lastName}` : ""}
                           {job.sourceJobId ? " · Trip" : ""}
                         </p>
-                        <p className="font-medium leading-tight">{job.title}</p>
+                        <Link href={`/jobs/${job.id}`} className="font-medium leading-tight hover:underline">
+                          {job.title}
+                        </Link>
                         <p className="text-xs text-stone-500">
                           {job.client.lastName} · {job.property.address1}
                         </p>
@@ -101,7 +122,13 @@ export function WeekBoard({
               <tr key={tech.id} className="border-t border-line align-top">
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: tech.color }} />
+                    <span
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
+                      style={{ background: tech.color }}
+                    >
+                      {tech.firstName.charAt(0)}
+                      {tech.lastName.charAt(0)}
+                    </span>
                     {tech.firstName} {tech.lastName}
                   </div>
                 </td>
@@ -125,13 +152,18 @@ export function WeekBoard({
                             key={job.id}
                             draggable
                             onDragStart={(event) => onDragStart(event, job.id)}
-                            className="cursor-grab rounded-lg border border-line bg-white px-2 py-2 shadow-sm"
+                            className={cn(
+                              "cursor-grab rounded-lg border border-line border-l-4 bg-white px-2 py-2 shadow-sm",
+                              JOB_TYPE_BAR[job.type ?? ""] ?? "border-l-orange",
+                            )}
                           >
                             <p className="text-xs font-semibold text-orange">
                               {format(new Date(job.scheduledStart!), "h:mm a")}
                               {job.sourceJobId ? " · Trip" : ""}
                             </p>
-                            <p className="font-medium leading-tight">{job.title}</p>
+                            <Link href={`/jobs/${job.id}`} className="font-medium leading-tight hover:underline">
+                              {job.title}
+                            </Link>
                             <p className="text-xs text-stone-500">
                               {job.client.lastName} · {job.property.address1}
                             </p>
@@ -140,6 +172,13 @@ export function WeekBoard({
                             </div>
                           </article>
                         ))}
+                        <button
+                          type="button"
+                          className="w-full rounded-lg border border-dashed border-line py-1 text-[11px] font-semibold text-stone-500 hover:border-orange hover:text-orange"
+                          onClick={() => onNewJob?.(tech.id, day, "09:00")}
+                        >
+                          + Job
+                        </button>
                       </div>
                     </td>
                   );

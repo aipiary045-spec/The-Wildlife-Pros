@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { lineTotals, withAuth } from "@/lib/api";
+import { jsonError, lineTotals, withAuth } from "@/lib/api";
 import { nextNumber } from "@/lib/utils";
 
 export const GET = withAuth(async (_session, request) => {
@@ -30,6 +30,9 @@ export const GET = withAuth(async (_session, request) => {
 
 export const POST = withAuth(async (session, request) => {
   const body = await request.json();
+  if (!body.clientId || !body.propertyId || !body.title) {
+    return jsonError("clientId, propertyId, and title are required");
+  }
   const count = await prisma.job.count();
   const items = (body.lineItems ?? []) as Array<{
     name: string;

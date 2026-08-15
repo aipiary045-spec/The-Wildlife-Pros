@@ -6,17 +6,8 @@ import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib
 
 export const dynamic = "force-dynamic";
 
-export default async function SchedulePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ view?: string; date?: string }>;
-}) {
-  const params = await searchParams;
-  const view = parseScheduleView(params.view ?? "week");
-  const date = parseDateParam(params.date);
-  const { from, to } = scheduleRange(view, date);
-  const { jobs, technicians } = await getSchedule(from, to);
-  const cards = jobs.map((job) => ({
+function toCard(job: Awaited<ReturnType<typeof getSchedule>>["jobs"][number]) {
+  return {
     id: job.id,
     number: job.number,
     title: job.title,
@@ -29,7 +20,19 @@ export default async function SchedulePage({
     sourceJobId: job.sourceJobId,
     client: job.client,
     property: job.property,
-  }));
+  };
+}
+
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; date?: string }>;
+}) {
+  const params = await searchParams;
+  const view = parseScheduleView(params.view ?? "week");
+  const date = parseDateParam(params.date);
+  const { from, to } = scheduleRange(view, date);
+  const { jobs, unscheduled, technicians, clients } = await getSchedule(from, to);
 
   return (
     <div className="space-y-5">
@@ -37,12 +40,12 @@ export default async function SchedulePage({
         <div>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
           <p className="text-stone-600">
-            Drag to move a stop. Copy trip keeps the same client and job, then asks for this visit’s date, tech, and notes.
+            Tap + Job on a square. Drag to move. Copy trip keeps the same client when they need another visit.
           </p>
         </div>
         <Link
           href={`/routes?date=${dateKey(date)}`}
-          className="inline-flex min-h-11 items-center rounded-lg bg-orange px-4 text-sm font-semibold text-white"
+          className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-sm font-semibold"
         >
           Optimize routes
         </Link>
@@ -53,7 +56,9 @@ export default async function SchedulePage({
         date={dateKey(date)}
         weekOf={dateKey(from)}
         technicians={technicians}
-        jobs={cards}
+        jobs={jobs.map(toCard)}
+        unscheduled={unscheduled.map(toCard)}
+        clients={clients}
       />
     </div>
   );

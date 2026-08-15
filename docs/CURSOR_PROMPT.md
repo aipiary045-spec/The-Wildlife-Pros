@@ -14,7 +14,8 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 
 - Client & property CRM (one customer, many service addresses)
 - Incoming requests → quotes → jobs → invoices → payments
-- Drag-and-drop dispatch calendar (technician × day)
+- Home dashboard with pipeline cards (requests, quotes, jobs, invoices) and today’s technician timeline
+- Drag-and-drop dispatch calendar: week grid (technician × day) and day timeline (technician × time, 15-minute snap). **New job** / **+ Job** opens a create dialog; unscheduled jobs drag onto a tech.
 - Recurring service visits
 - Digital quotes clients approve in a Client Hub
 - Invoices generated from completed jobs, balances, partial payments
@@ -126,7 +127,7 @@ Client hub: /portal/demo-client-hub
 
 ## What to build next (in order)
 
-1. Create/edit forms for clients, jobs, quotes, invoices (office UI currently lists + details)
+1. Create/edit forms for quotes and invoices (clients and jobs can already be created from Home / the calendar)
 1b. Job-level timers that attach `TimeEntry` rows to the open daily timesheet
 2. Recurring visit generator from `RecurringSchedule`
 3. File uploads to object storage instead of public SVG placeholders

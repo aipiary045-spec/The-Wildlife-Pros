@@ -16,7 +16,7 @@ All office endpoints require the `critterops_session` cookie unless noted.
 `PATCH /api/clients/:id`
 
 `GET /api/jobs?status&technicianId&from&to`  
-`POST /api/jobs` `{ clientId, propertyId, title, type, scheduledStart, technicianId, lineItems[] }`  
+`POST /api/jobs` `{ clientId, propertyId, title, type, technicianId, scheduledStart, scheduledEnd, durationMin, lineItems[] }` — `clientId`, `propertyId`, and `title` are required; a start time marks the job `SCHEDULED`  
 `GET /api/jobs/:id`  
 `PATCH /api/jobs/:id` `{ status, technicianId, scheduledStart, scheduledEnd }`
 
@@ -34,8 +34,8 @@ Clients never pay through CritterOps. Square is the processor.
 
 ## Dispatch & routing
 
-`GET /api/schedule?view=day|week&date=YYYY-MM-DD` — day board or Monday–Sunday week payload  
-`PATCH /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd }` — move a job  
+`GET /api/schedule?view=day|week&date=YYYY-MM-DD` — day board or Monday–Sunday week payload, plus `unscheduled` jobs and `clients` for the new-job dialog  
+`PATCH /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd }` — move a job onto a tech/time  
 `POST /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd, instructions?, durationMin? }` — new trip card: same client and job details, new visit info  
 `POST /api/routes/optimize` `{ date?: "YYYY-MM-DD", technicianIds?, mode?: "reorder"|"rebalance", startHour?: 5-12, persist?: boolean }`  
 `GET /api/routes/optimize?date=YYYY-MM-DD`

@@ -53,3 +53,53 @@ export function tripStartOnDay(sourceStart: Date | string | null, day: Date) {
   }
   return nextStart;
 }
+
+export const DAY_TIMELINE_START_HOUR = 7;
+export const DAY_TIMELINE_END_HOUR = 18;
+export const DAY_TIMELINE_SNAP_MIN = 15;
+
+export function dayTimelineHours(
+  startHour = DAY_TIMELINE_START_HOUR,
+  endHour = DAY_TIMELINE_END_HOUR,
+) {
+  return Array.from({ length: endHour - startHour }, (_, index) => startHour + index);
+}
+
+export function hourLabel(hour: number) {
+  const period = hour >= 12 ? "PM" : "AM";
+  const display = hour % 12 === 0 ? 12 : hour % 12;
+  return `${display} ${period}`;
+}
+
+export function snapMinutes(totalMinutes: number, snap = DAY_TIMELINE_SNAP_MIN) {
+  return Math.round(totalMinutes / snap) * snap;
+}
+
+export function timeFromTimelineRatio(
+  day: Date,
+  ratio: number,
+  startHour = DAY_TIMELINE_START_HOUR,
+  endHour = DAY_TIMELINE_END_HOUR,
+) {
+  const span = (endHour - startHour) * 60;
+  const clamped = Math.max(0, Math.min(1, ratio));
+  const minutesFromStart = snapMinutes(clamped * span);
+  const next = new Date(day);
+  next.setHours(startHour, 0, 0, 0);
+  next.setMinutes(minutesFromStart);
+  return next;
+}
+
+export function jobTimelinePlacement(
+  start: Date,
+  durationMin: number,
+  startHour = DAY_TIMELINE_START_HOUR,
+  endHour = DAY_TIMELINE_END_HOUR,
+) {
+  const span = (endHour - startHour) * 60;
+  const startMin = start.getHours() * 60 + start.getMinutes() - startHour * 60;
+  const leftMin = Math.max(0, Math.min(span - 15, startMin));
+  const left = (leftMin / span) * 100;
+  const width = Math.min((Math.max(30, durationMin) / span) * 100, 100 - left);
+  return { left, width };
+}

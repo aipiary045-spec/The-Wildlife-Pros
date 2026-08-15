@@ -99,3 +99,16 @@ export const EQUIPMENT_SERIAL_PREFIX: Record<string, string> = {
 };
 
 export const EQUIPMENT_TYPES = Object.keys(EQUIPMENT_TYPE_LABEL);
+
+export const JOB_TYPE_BAR: Record<string, string> = {
+  INSPECTION: "border-l-sky-500 bg-sky-50",
+  TRAPPING: "border-l-orange bg-orange/10",
+  EXCLUSION: "border-l-amber bg-amber/10",
+  REMOVAL: "border-l-rose-500 bg-rose-50",
+  CLEANUP: "border-l-stone-400 bg-stone-100",
+  PREVENTION: "border-l-emerald-500 bg-emerald-50",
+  RECURRING: "border-l-violet-500 bg-violet-50",
+  EMERGENCY: "border-l-red-600 bg-red-50",
+  FOLLOW_UP: "border-l-gold bg-gold/20",
+  OTHER: "border-l-stone-400 bg-white",
+};

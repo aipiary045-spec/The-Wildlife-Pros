@@ -13,4 +13,4 @@ export type ScheduleJobCard = {
   property: { address1: string };
 };
 
-export type ScheduleTech = { id: string; firstName: string; lastName: string; color: string };
+export type ScheduleTech = { id: string; firstName: string; lastName: string; color: string; initials?: string };

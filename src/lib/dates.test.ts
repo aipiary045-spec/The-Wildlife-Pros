@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { adjacentDate, dateKey, parseDateParam, parseScheduleView, periodLabel, scheduleRange, tripStartOnDay } from "./dates";
+import { adjacentDate, dateKey, hourLabel, jobTimelinePlacement, parseDateParam, parseScheduleView, periodLabel, scheduleRange, timeFromTimelineRatio, tripStartOnDay } from "./dates";
 import { homePath, safeNextPath } from "./paths";
 
 test("parseDateParam reads a local calendar day", () => {
@@ -60,4 +60,31 @@ test("tripStartOnDay defaults to 9:00 when the source has no time", () => {
   const start = tripStartOnDay(null, new Date(2026, 7, 17));
   assert.equal(start.getDate(), 17);
   assert.equal(start.getHours(), 9);
+});
+
+test("day timeline snaps drop position to a 15-minute clock", () => {
+  const day = parseDateParam("2026-08-15");
+  const seven = timeFromTimelineRatio(day, 0);
+  assert.equal(seven.getHours(), 7);
+  assert.equal(seven.getMinutes(), 0);
+  const nine = timeFromTimelineRatio(day, 2 / 11);
+  assert.equal(nine.getHours(), 9);
+  assert.equal(nine.getMinutes(), 0);
+  const end = timeFromTimelineRatio(day, 1);
+  assert.equal(end.getHours(), 18);
+  assert.equal(end.getMinutes(), 0);
+});
+
+test("jobTimelinePlacement keeps a block on the 7am–6pm track", () => {
+  const place = jobTimelinePlacement(new Date(2026, 7, 15, 9, 0, 0), 60);
+  assert.ok(place.left > 17 && place.left < 19);
+  assert.ok(place.width > 8 && place.width < 10);
+  const early = jobTimelinePlacement(new Date(2026, 7, 15, 5, 0, 0), 60);
+  assert.equal(early.left, 0);
+});
+
+test("hourLabel uses 12-hour clock", () => {
+  assert.equal(hourLabel(7), "7 AM");
+  assert.equal(hourLabel(12), "12 PM");
+  assert.equal(hourLabel(17), "5 PM");
 });

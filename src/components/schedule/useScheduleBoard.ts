@@ -12,6 +12,7 @@ export type CopyRequest = {
   job: ScheduleJobCard;
   technicianId: string;
   day: Date;
+  startAt?: Date;
 };
 
 export function useScheduleBoard(
@@ -22,14 +23,20 @@ export function useScheduleBoard(
   const router = useRouter();
   const [saving, setSaving] = useState(false);
 
-  async function placeJob(jobId: string, technicianId: string, day: Date, copy = mode === "copy") {
+  async function placeJob(
+    jobId: string,
+    technicianId: string,
+    day: Date,
+    copy = mode === "copy",
+    startAt?: Date,
+  ) {
     const existing = jobs.find((job) => job.id === jobId);
     if (!existing) return;
+    const nextStart = startAt ?? tripStartOnDay(existing.scheduledStart, day);
     if (copy) {
-      onCopyRequest?.({ job: existing, technicianId, day });
+      onCopyRequest?.({ job: existing, technicianId, day, startAt: nextStart });
       return;
     }
-    const nextStart = tripStartOnDay(existing.scheduledStart, day);
     setSaving(true);
     await fetch("/api/schedule", {
       method: "PATCH",
@@ -56,10 +63,11 @@ export function useScheduleBoard(
     event.dataTransfer.dropEffect = event.altKey || mode === "copy" ? "copy" : "move";
   }
 
-  function onDrop(event: React.DragEvent, technicianId: string, day: Date) {
+  function onDrop(event: React.DragEvent, technicianId: string, day: Date, startAt?: Date) {
+    event.preventDefault();
     const jobId = event.dataTransfer.getData("text/job-id");
     if (!jobId) return;
-    void placeJob(jobId, technicianId, day, mode === "copy" || event.altKey);
+    void placeJob(jobId, technicianId, day, mode === "copy" || event.altKey, startAt);
   }
 
   return { saving, placeJob, onDragStart, onDragOver, onDrop };

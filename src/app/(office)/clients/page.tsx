@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { NewClientButton } from "@/components/crm/NewClientDialog";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { clientName, formatPhone } from "@/lib/utils";
 
@@ -13,9 +14,12 @@ export default async function ClientsPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Clients</h1>
-        <p className="text-stone-600">CRM with multiple service addresses per customer.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl tracking-wide md:text-3xl">Clients</h1>
+          <p className="text-stone-600">CRM with multiple service addresses per customer.</p>
+        </div>
+        <NewClientButton />
       </div>
       <div className="space-y-2 md:hidden">
         {clients.map((client) => (
