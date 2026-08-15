@@ -25,6 +25,8 @@ export const POST = withAuth(async (session, request) => {
     technicianId: body.technicianId,
     scheduledStart: new Date(body.scheduledStart),
     scheduledEnd: body.scheduledEnd ? new Date(body.scheduledEnd) : undefined,
+    instructions: body.instructions,
+    durationMin: body.durationMin ? Number(body.durationMin) : undefined,
   });
   if (!job) return jsonError("Job not found", 404);
   return NextResponse.json({ job }, { status: 201 });

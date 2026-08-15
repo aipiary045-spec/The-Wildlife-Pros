@@ -8,6 +8,8 @@ export async function duplicateJobTrip(input: {
   technicianId?: string | null;
   scheduledStart: Date;
   scheduledEnd?: Date;
+  instructions?: string | null;
+  durationMin?: number;
 }) {
   const source = await prisma.job.findUnique({
     where: { id: input.jobId },
@@ -15,8 +17,11 @@ export async function duplicateJobTrip(input: {
   });
   if (!source) return null;
 
+  const durationMin = input.durationMin ?? source.durationMin;
   const scheduledStart = input.scheduledStart;
-  const scheduledEnd = input.scheduledEnd ?? addMinutes(scheduledStart, source.durationMin);
+  const scheduledEnd = input.scheduledEnd ?? addMinutes(scheduledStart, durationMin);
+  const instructions =
+    input.instructions === undefined ? null : input.instructions?.trim() || null;
 
   return prisma.$transaction(async (tx) => {
     const count = await tx.job.count();
@@ -31,10 +36,10 @@ export async function duplicateJobTrip(input: {
         type: source.type,
         status: "SCHEDULED",
         title: source.title,
-        instructions: source.instructions,
+        instructions,
         scheduledStart,
         scheduledEnd,
-        durationMin: source.durationMin,
+        durationMin,
         subtotal: source.subtotal,
         taxAmount: source.taxAmount,
         total: source.total,

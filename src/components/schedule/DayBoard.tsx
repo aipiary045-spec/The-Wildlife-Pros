@@ -1,11 +1,10 @@
 "use client";
 
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { dateKey, sameDay } from "@/lib/dates";
-import { CopyTripForm } from "./CopyTripForm";
+import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
-import type { ScheduleMode } from "./useScheduleBoard";
 import { useScheduleBoard } from "./useScheduleBoard";
 
 export function DayBoard({
@@ -13,21 +12,23 @@ export function DayBoard({
   technicians,
   date,
   mode,
+  onCopyRequest,
 }: {
   jobs: ScheduleJobCard[];
   technicians: ScheduleTech[];
   date: string;
   mode: ScheduleMode;
+  onCopyRequest?: (request: CopyRequest) => void;
 }) {
-  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(jobs, mode);
+  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(jobs, mode, onCopyRequest);
   const day = new Date(date.includes("T") ? date : `${date}T12:00:00`);
 
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
         {mode === "copy"
-          ? "Drop a job on a tech to add another trip that day. The original stay put."
-          : "Stops in time order. Drag to reassign, or hold Alt/Option while dropping to copy a trip."}{" "}
+          ? "Drop a job on a tech to open a new-trip card. Client and job details stay; you fill in this visit."
+          : "Stops in time order. Drag to reassign, or hold Alt/Option while dropping to add another trip."}{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -91,7 +92,13 @@ export function DayBoard({
                         </select>
                       </div>
                       <div className="md:hidden">
-                        <CopyTripForm job={job} technicians={technicians} onCopy={(id, techId, nextDay) => placeJob(id, techId, nextDay, true)} />
+                        <button
+                          type="button"
+                          className="mt-2 rounded-lg bg-ink px-2 py-1 text-xs font-semibold text-white"
+                          onClick={() => void placeJob(job.id, tech.id, addDays(day, 1), true)}
+                        >
+                          New trip
+                        </button>
                       </div>
                     </article>
                   ))

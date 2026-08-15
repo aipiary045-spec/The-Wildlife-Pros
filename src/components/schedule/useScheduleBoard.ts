@@ -8,25 +8,39 @@ import type { ScheduleJobCard } from "./job-card";
 
 export type ScheduleMode = "move" | "copy";
 
-export function useScheduleBoard(jobs: ScheduleJobCard[], mode: ScheduleMode) {
+export type CopyRequest = {
+  job: ScheduleJobCard;
+  technicianId: string;
+  day: Date;
+};
+
+export function useScheduleBoard(
+  jobs: ScheduleJobCard[],
+  mode: ScheduleMode,
+  onCopyRequest?: (request: CopyRequest) => void,
+) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
 
   async function placeJob(jobId: string, technicianId: string, day: Date, copy = mode === "copy") {
     const existing = jobs.find((job) => job.id === jobId);
-    const nextStart = tripStartOnDay(existing?.scheduledStart ?? null, day);
-    const payload = {
-      jobId,
-      technicianId,
-      scheduledStart: nextStart.toISOString(),
-      scheduledEnd: addMinutes(nextStart, existing?.durationMin ?? 60).toISOString(),
-    };
+    if (!existing) return;
+    if (copy) {
+      onCopyRequest?.({ job: existing, technicianId, day });
+      return;
+    }
+    const nextStart = tripStartOnDay(existing.scheduledStart, day);
     setSaving(true);
     await fetch("/api/schedule", {
-      method: copy ? "POST" : "PATCH",
+      method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        jobId,
+        technicianId,
+        scheduledStart: nextStart.toISOString(),
+        scheduledEnd: addMinutes(nextStart, existing.durationMin ?? 60).toISOString(),
+      }),
     });
     setSaving(false);
     router.refresh();

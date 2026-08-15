@@ -4,9 +4,8 @@ import { addDays, format, startOfWeek } from "date-fns";
 import { useMemo } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { dateKey } from "@/lib/dates";
-import { CopyTripForm } from "./CopyTripForm";
+import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
-import type { ScheduleMode } from "./useScheduleBoard";
 import { useScheduleBoard } from "./useScheduleBoard";
 
 export function WeekBoard({
@@ -14,13 +13,15 @@ export function WeekBoard({
   technicians,
   weekOf,
   mode,
+  onCopyRequest,
 }: {
   jobs: ScheduleJobCard[];
   technicians: ScheduleTech[];
   weekOf: string;
   mode: ScheduleMode;
+  onCopyRequest?: (request: CopyRequest) => void;
 }) {
-  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(jobs, mode);
+  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(jobs, mode, onCopyRequest);
   const start = startOfWeek(new Date(weekOf.includes("T") ? weekOf : `${weekOf}T12:00:00`), { weekStartsOn: 1 });
   const days = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(start, index)), [start]);
 
@@ -28,8 +29,8 @@ export function WeekBoard({
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
         {mode === "copy"
-          ? "Drop a job on another day to add a return trip. The first visit stays on the calendar."
-          : "Drag to move. Hold Alt/Option while dropping — or switch to Copy trip — to duplicate a multi-day job."}{" "}
+          ? "Drop a job on another day to open a new-trip card. Same client and job; new date, tech, and visit notes."
+          : "Drag to move. Hold Alt/Option while dropping — or switch to Copy trip — to add another visit."}{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
       <div className="space-y-3 md:hidden">
@@ -65,11 +66,15 @@ export function WeekBoard({
                         <div className="mt-1">
                           <StatusBadge status={job.status} />
                         </div>
-                        <CopyTripForm
-                          job={job}
-                          technicians={technicians}
-                          onCopy={(id, techId, nextDay) => placeJob(id, techId, nextDay, true)}
-                        />
+                        <button
+                          type="button"
+                          className="mt-2 rounded-lg bg-ink px-2 py-1 text-xs font-semibold text-white"
+                          onClick={() =>
+                            void placeJob(job.id, job.technicianId ?? technicians[0]?.id ?? "", addDays(day, 1), true)
+                          }
+                        >
+                          New trip
+                        </button>
                       </article>
                     );
                   })}

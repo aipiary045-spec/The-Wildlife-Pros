@@ -19,9 +19,11 @@ export default async function SchedulePage({
     id: job.id,
     number: job.number,
     title: job.title,
+    type: job.type,
     status: job.status,
     scheduledStart: job.scheduledStart,
     durationMin: job.durationMin,
+    instructions: job.instructions,
     technicianId: job.technicianId,
     sourceJobId: job.sourceJobId,
     client: job.client,
@@ -33,7 +35,7 @@ export default async function SchedulePage({
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
         <p className="text-stone-600">
-          Drag to move a stop, or copy it as another trip when the work takes more than one visit.
+          Drag to move a stop. Copy trip keeps the same client and job, then asks for this visit’s date, tech, and notes.
         </p>
       </div>
       <ScheduleToolbar view={view} date={date} basePath="/schedule" />
