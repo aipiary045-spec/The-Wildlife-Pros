@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { adjacentDate, dateKey, formatClockDuration, hourLabel, jobTimelinePlacement, parseDateParam, parseScheduleView, periodLabel, scheduleRange, timeFromTimelineRatio, tripStartOnDay } from "./dates";
+import { adjacentDate, clockLabel, dateKey, dayTimelineSlots, formatClockDuration, hourLabel, jobTimelinePlacement, parseDateParam, parseScheduleView, periodLabel, scheduleRange, slotTimeValue, startAtFromTrackX, timeFromTimelineRatio, tripStartOnDay } from "./dates";
 import { homePath, safeNextPath } from "./paths";
 
 test("parseDateParam reads a local calendar day", () => {
@@ -62,17 +62,43 @@ test("tripStartOnDay defaults to 9:00 when the source has no time", () => {
   assert.equal(start.getHours(), 9);
 });
 
-test("day timeline snaps drop position to a 15-minute clock", () => {
+test("day timeline snaps drop position to a 30-minute clock", () => {
   const day = parseDateParam("2026-08-15");
   const seven = timeFromTimelineRatio(day, 0);
   assert.equal(seven.getHours(), 7);
   assert.equal(seven.getMinutes(), 0);
+  const halfPast = timeFromTimelineRatio(day, 30 / 660);
+  assert.equal(halfPast.getHours(), 7);
+  assert.equal(halfPast.getMinutes(), 30);
   const nine = timeFromTimelineRatio(day, 2 / 11);
   assert.equal(nine.getHours(), 9);
   assert.equal(nine.getMinutes(), 0);
   const end = timeFromTimelineRatio(day, 1);
   assert.equal(end.getHours(), 18);
   assert.equal(end.getMinutes(), 0);
+});
+
+test("startAtFromTrackX snaps the pointer to a 30-minute slot", () => {
+  const day = parseDateParam("2026-08-15");
+  const seven = startAtFromTrackX(day, 100, 100, 660);
+  assert.equal(seven.getHours(), 7);
+  assert.equal(seven.getMinutes(), 0);
+  const halfPast = startAtFromTrackX(day, 130, 100, 660);
+  assert.equal(halfPast.getHours(), 7);
+  assert.equal(halfPast.getMinutes(), 30);
+  const nine = startAtFromTrackX(day, 220, 100, 660);
+  assert.equal(nine.getHours(), 9);
+  assert.equal(nine.getMinutes(), 0);
+  assert.equal(slotTimeValue(7, 30), "07:30");
+  assert.equal(slotTimeValue(9, 0), "09:00");
+});
+
+test("day timeline slots are every 30 minutes", () => {
+  const slots = dayTimelineSlots();
+  assert.equal(slots[0]?.label, "7 AM");
+  assert.equal(slots[1]?.label, "7:30");
+  assert.equal(slots.length, 22);
+  assert.equal(clockLabel(12, 30), "12:30");
 });
 
 test("jobTimelinePlacement keeps a block on the 7am–6pm track", () => {

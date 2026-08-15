@@ -3,7 +3,7 @@
 import { addMinutes } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { parseDateParam, dateKey, tripStartOnDay } from "@/lib/dates";
+import { parseDateParam, dateKey, startAtFromTrackX, tripStartOnDay } from "@/lib/dates";
 import { jobNeedsMove } from "@/lib/schedule-move";
 import type { ScheduleJobCard } from "./job-card";
 
@@ -21,6 +21,7 @@ export type BoardDrag = {
   x: number;
   y: number;
   overTechId: string | null;
+  overStartAt: Date | null;
 };
 
 type PendingPointer = {
@@ -38,7 +39,15 @@ export function dropTargetFromPoint(x: number, y: number) {
   const technicianId = host.getAttribute("data-drop-tech");
   const day = host.getAttribute("data-drop-day");
   if (!technicianId || technicianId === "unassigned") return null;
-  return { technicianId, day: day || null };
+  const track = host.querySelector("[data-drop-track]");
+  let startAt: Date | undefined;
+  if (track instanceof HTMLElement && day) {
+    const rect = track.getBoundingClientRect();
+    if (rect.width > 0 && x >= rect.left && x <= rect.right) {
+      startAt = startAtFromTrackX(parseDateParam(day), x, rect.left, rect.width);
+    }
+  }
+  return { technicianId, day: day || null, startAt };
 }
 
 export function useScheduleBoard(
@@ -54,6 +63,7 @@ export function useScheduleBoard(
   const dragRef = useRef<BoardDrag | null>(null);
   const pendingRef = useRef<PendingPointer | null>(null);
   const jobsRef = useRef(jobs);
+  const dropStampRef = useRef(0);
   jobsRef.current = jobs;
   dragRef.current = drag;
 
@@ -66,7 +76,7 @@ export function useScheduleBoard(
         onCopyRequest?.({ job: existing, technicianId, day, startAt: nextStart });
         return;
       }
-      if (!jobNeedsMove(existing, technicianId, dateKey(day))) return;
+      if (!jobNeedsMove(existing, technicianId, dateKey(day), nextStart)) return;
       setSaving(true);
       setError("");
       const response = await fetch("/api/schedule", {
@@ -101,7 +111,15 @@ export function useScheduleBoard(
   const updateOver = useCallback((x: number, y: number) => {
     const over = dropTargetFromPoint(x, y);
     setDrag((current) =>
-      current ? { ...current, x, y, overTechId: over?.technicianId ?? null } : current,
+      current
+        ? {
+            ...current,
+            x,
+            y,
+            overTechId: over?.technicianId ?? null,
+            overStartAt: over?.startAt ?? null,
+          }
+        : current,
     );
   }, []);
 
@@ -111,10 +129,11 @@ export function useScheduleBoard(
       clearPending();
       setDrag(null);
       if (!current) return;
+      dropStampRef.current = Date.now();
       const over = dropTargetFromPoint(x, y);
       if (!over) return;
       const day = over.day ? parseDateParam(over.day) : new Date();
-      void placeJob(current.jobId, over.technicianId, day);
+      void placeJob(current.jobId, over.technicianId, day, undefined, over.startAt);
     },
     [clearPending, placeJob],
   );
@@ -124,11 +143,19 @@ export function useScheduleBoard(
     if (pending?.timer) window.clearTimeout(pending.timer);
     pendingRef.current = null;
     const over = dropTargetFromPoint(x, y);
-    const next = { jobId, x, y, overTechId: over?.technicianId ?? null };
+    const next = {
+      jobId,
+      x,
+      y,
+      overTechId: over?.technicianId ?? null,
+      overStartAt: over?.startAt ?? null,
+    };
     dragRef.current = next;
     setDrag(next);
     setTracking(true);
   }, []);
+
+  const wasRecentDrop = useCallback(() => Date.now() - dropStampRef.current < 500, []);
 
   useEffect(() => {
     if (!tracking && !drag) return;
@@ -203,5 +230,6 @@ export function useScheduleBoard(
     drag,
     placeJob,
     onChipPointerDown,
+    wasRecentDrop,
   };
 }

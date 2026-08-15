@@ -56,7 +56,7 @@ export function tripStartOnDay(sourceStart: Date | string | null, day: Date) {
 
 export const DAY_TIMELINE_START_HOUR = 7;
 export const DAY_TIMELINE_END_HOUR = 18;
-export const DAY_TIMELINE_SNAP_MIN = 15;
+export const DAY_TIMELINE_SNAP_MIN = 30;
 
 export function dayTimelineHours(
   startHour = DAY_TIMELINE_START_HOUR,
@@ -66,9 +66,28 @@ export function dayTimelineHours(
 }
 
 export function hourLabel(hour: number) {
+  return clockLabel(hour, 0);
+}
+
+export function clockLabel(hour: number, minute = 0) {
   const period = hour >= 12 ? "PM" : "AM";
   const display = hour % 12 === 0 ? 12 : hour % 12;
-  return `${display} ${period}`;
+  if (!minute) return `${display} ${period}`;
+  return `${display}:${String(minute).padStart(2, "0")}`;
+}
+
+export function dayTimelineSlots(
+  startHour = DAY_TIMELINE_START_HOUR,
+  endHour = DAY_TIMELINE_END_HOUR,
+  snap = DAY_TIMELINE_SNAP_MIN,
+) {
+  const slots: Array<{ hour: number; minute: number; label: string }> = [];
+  for (let total = startHour * 60; total < endHour * 60; total += snap) {
+    const hour = Math.floor(total / 60);
+    const minute = total % 60;
+    slots.push({ hour, minute, label: clockLabel(hour, minute) });
+  }
+  return slots;
 }
 
 export function formatClockDuration(totalMin: number) {
@@ -95,6 +114,20 @@ export function timeFromTimelineRatio(
   next.setHours(startHour, 0, 0, 0);
   next.setMinutes(minutesFromStart);
   return next;
+}
+
+export function startAtFromTrackX(
+  day: Date,
+  clientX: number,
+  trackLeft: number,
+  trackWidth: number,
+) {
+  if (trackWidth <= 0) return timeFromTimelineRatio(day, 0);
+  return timeFromTimelineRatio(day, (clientX - trackLeft) / trackWidth);
+}
+
+export function slotTimeValue(hour: number, minute: number) {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 export function jobTimelinePlacement(

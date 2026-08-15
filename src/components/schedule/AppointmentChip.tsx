@@ -16,6 +16,7 @@ export function AppointmentChip({
   technicians,
   showVisit,
   dragging,
+  layout = "card",
   onPointerDown,
   onReassign,
 }: {
@@ -23,16 +24,20 @@ export function AppointmentChip({
   technicians: ScheduleTech[];
   showVisit?: boolean;
   dragging?: boolean;
+  layout?: "card" | "timeline";
   onPointerDown: (event: React.PointerEvent, immediate?: boolean) => void;
   onReassign: (technicianId: string) => void;
 }) {
   const start = job.scheduledStart ? new Date(job.scheduledStart) : null;
   const typeLabel = JOB_TYPE_LABEL[job.type ?? ""] ?? job.title;
+  const timeline = layout === "timeline";
   return (
     <article
+      data-job-chip
       onPointerDown={(event) => onPointerDown(event)}
       className={cn(
-        "w-40 shrink-0 touch-manipulation rounded-lg border border-line border-l-4 px-2.5 py-2 shadow-sm select-none",
+        "touch-manipulation rounded-lg border border-line border-l-4 shadow-sm select-none",
+        timeline ? "flex h-full min-w-0 flex-col overflow-hidden px-1.5 py-1" : "w-40 shrink-0 px-2.5 py-2",
         JOB_TYPE_BAR[job.type ?? ""] ?? "border-l-orange bg-white",
         DONE.has(job.status) && "opacity-60",
         LIVE.has(job.status) && "ring-2 ring-orange/40",
@@ -50,7 +55,7 @@ export function AppointmentChip({
             onPointerDown(event, true);
           }}
         >
-          <GripVertical size={14} />
+          <GripVertical size={timeline ? 12 : 14} />
         </button>
         <p className="min-w-0 flex-1 text-[11px] font-bold uppercase tracking-wide text-stone-700">
           {start ? format(start, "h:mma") : "Anytime"}
@@ -105,19 +110,26 @@ export function DragGhost({
   job,
   x,
   y,
+  snapTime,
 }: {
   job: ScheduleJobCard;
   x: number;
   y: number;
+  snapTime?: Date | null;
 }) {
   const typeLabel = JOB_TYPE_LABEL[job.type ?? ""] ?? job.title;
   return (
     <div
-      className="pointer-events-none fixed z-50 w-40 rounded-lg border border-orange bg-white px-2.5 py-2 text-sm shadow-lg"
+      className="pointer-events-none fixed z-50 w-44 rounded-lg border border-orange bg-white px-2.5 py-2 text-sm shadow-lg"
       style={{ left: x + 8, top: y - 16 }}
     >
       <p className="font-semibold leading-tight">{typeLabel}</p>
       <p className="text-xs text-stone-500">{job.client.lastName}</p>
+      {snapTime ? (
+        <p className="mt-1 text-xs font-bold text-orange">
+          Drop at {format(snapTime, "h:mm a")}
+        </p>
+      ) : null}
     </div>
   );
 }
