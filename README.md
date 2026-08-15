@@ -9,7 +9,7 @@ Payments are collected by staff in **Square** (Terminal, POS, or a keyed card on
 - Next.js (App Router) + TypeScript + Tailwind CSS
 - PostgreSQL + Prisma 7
 - Cookie JWT auth
-- Built-in route optimization (nearest-neighbor + 2-opt)
+- Built-in route optimization (preview, then apply; keep-tech reorder or rebalance)
 
 ## Quick start
 

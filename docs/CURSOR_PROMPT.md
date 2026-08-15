@@ -40,7 +40,7 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 - Next.js App Router (current major) + TypeScript + Tailwind v4
 - PostgreSQL + Prisma 7 (`prisma.config.ts`, `@prisma/adapter-pg`). SQLite is a planned local/Pi option; Google Sheets is export-only (see `docs/DATA.md`).
 - Cookie JWT auth (`jose` + `bcryptjs`) — no NextAuth unless a later PR needs OAuth
-- Route math in `src/lib/routing.ts` (Haversine, nearest-neighbor, 2-opt)
+- Route math in `src/lib/routing.ts` (Haversine, nearest-neighbor, 2-opt). Persist/Prisma lives in `src/lib/route-plan.ts`.
 - Demo seed in `prisma/seed.ts`
 
 Do not introduce a second framework. Prefer server components for reads, route handlers for mutations, and small `"use client"` islands for drag-drop / portal actions.
@@ -69,7 +69,7 @@ Everything else requires a session (`src/proxy.ts`).
 - Equipment has a global serial number. A live **EquipmentDeployment** is the site-specific status.
 - Capture events may point at a deployment. Logging a capture should flip that deployment to `ACTIVE_CAPTURE`.
 - Photos must be able to reference job, property, and entry point.
-- Route optimize may persist: rewrite `RouteDay` / `RouteStop` and reschedule job start times.
+- Route optimize preview first, then persist. Default mode `reorder` keeps technician assignments and only fixes driving order; `rebalance` may move stops. Persist rewrites `RouteDay` / `RouteStop` and `scheduledStart` from one start-hour clock. Return-to-shop miles are totals only, not a fake stop. Field `/field` shows saved sequence, drive, and ETA when a `RouteDay` exists.
 - A technician has one **Timesheet** per calendar day and one or more **TimePunch** pairs. Clock-in opens a punch; clock-out closes it. Only one punch may be open. Office roles approve sheets.
 - Google Sheets sync reuses one spreadsheet (`Organization.googleSpreadsheetId`). Upsert rows by id. Never create a second workbook on a later upload.
 
@@ -91,7 +91,7 @@ Everything else requires a session (`src/proxy.ts`).
 | GET | `/api/payments/square/config` | Public Square app/location flags |
 | POST | `/api/payments/square` | Charge a Square payment token (staff only) |
 | GET/PATCH/POST | `/api/schedule` | Day or Mon–Sun week board; drag to move, POST copies a multi-trip job |
-| GET/POST | `/api/routes/optimize` | Preview or persist optimized routes |
+| GET/POST | `/api/routes/optimize` | Preview (`persist: false`) or apply a day’s routes; `mode=reorder|rebalance` |
 | GET/POST | `/api/traps` | Serialized inventory |
 | GET/POST/PATCH | `/api/deployments` | Place / retrieve gear |
 | GET/POST | `/api/species-logs` | Captures |
@@ -131,7 +131,7 @@ Client hub: /portal/demo-client-hub
 2. Recurring visit generator from `RecurringSchedule`
 3. File uploads to object storage instead of public SVG placeholders
 4. Square Terminal / Mobile Payments SDK for the field app (cards already go through Square on the invoice page)
-5. Map tiles + turn-by-turn using Mapbox/Google; keep `routing.ts` as the offline fallback
+5. Map tiles + turn-by-turn using Mapbox/Google; keep `routing.ts` as the offline fallback (Haversine planner is already the day-route tool)
 6. Push notifications / SMS visit reminders
 7. React Native or PWA packaging of `/field`
 8. Multi-state compliance template library

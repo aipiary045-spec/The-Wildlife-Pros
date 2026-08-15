@@ -26,9 +26,10 @@ export default async function DashboardPage() {
         <div className="rounded-2xl border border-line bg-panel p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-semibold">Scheduled today</h2>
-            <Link href="/schedule" className="text-sm font-medium text-orange">
-              Open calendar
-            </Link>
+            <div className="flex gap-3 text-sm font-medium text-orange">
+              <Link href="/schedule">Open calendar</Link>
+              <Link href="/routes">Optimize routes</Link>
+            </div>
           </div>
           <div className="space-y-3">
             {data.jobsToday.length === 0 ? (

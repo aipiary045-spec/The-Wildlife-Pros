@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
 import { getSchedule } from "@/lib/data";
@@ -32,11 +33,19 @@ export default async function SchedulePage({
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
-        <p className="text-stone-600">
-          Drag to move a stop. Copy trip keeps the same client and job, then asks for this visit’s date, tech, and notes.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
+          <p className="text-stone-600">
+            Drag to move a stop. Copy trip keeps the same client and job, then asks for this visit’s date, tech, and notes.
+          </p>
+        </div>
+        <Link
+          href={`/routes?date=${dateKey(date)}`}
+          className="inline-flex min-h-11 items-center rounded-lg bg-orange px-4 text-sm font-semibold text-white"
+        >
+          Optimize routes
+        </Link>
       </div>
       <ScheduleToolbar view={view} date={date} basePath="/schedule" />
       <ScheduleWorkspace

@@ -37,10 +37,12 @@ Clients never pay through CritterOps. Square is the processor.
 `GET /api/schedule?view=day|week&date=YYYY-MM-DD` — day board or Monday–Sunday week payload  
 `PATCH /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd }` — move a job  
 `POST /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd, instructions?, durationMin? }` — new trip card: same client and job details, new visit info  
-`POST /api/routes/optimize` `{ date?, technicianIds?, persist? }`  
-`GET /api/routes/optimize?date`
+`POST /api/routes/optimize` `{ date?: "YYYY-MM-DD", technicianIds?, mode?: "reorder"|"rebalance", startHour?: 5-12, persist?: boolean }`  
+`GET /api/routes/optimize?date=YYYY-MM-DD`
 
-Optimization uses Haversine miles, nearest-neighbor construction, and 2-opt improvement from each technician’s home coordinates. Average speed is 22 mph until a maps provider is wired in.
+Default `mode` is `reorder`: keep each job on its technician and only fix driving order. Unassigned jobs go to the nearest home. `rebalance` may move stops between selected techs. `persist: false` (the UI preview) returns the plan without writing. `persist: true` upserts `RouteDay` / `RouteStop`, rewrites `scheduledStart` from `startHour` (default 8:00) plus each stop’s ETA offset, and deletes a saved route when a selected tech ends up with zero stops.
+
+Jobs that are on site, in progress, completed, invoiced, cancelled, or on hold are left alone. Jobs without property coordinates, and jobs assigned to a selected tech with no home GPS, come back in `skipped`. Average speed is 22 mph (Haversine, nearest-neighbor, 2-opt) until a maps provider is wired in.
 
 ## Wildlife field data
 

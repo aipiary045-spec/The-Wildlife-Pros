@@ -802,17 +802,21 @@ model Photo {
 }
 
 model RouteDay {
-  id            String      @id @default(cuid())
-  technicianId  String
-  technician    User        @relation(fields: [technicianId], references: [id])
-  date          DateTime
-  status        RouteStatus @default(DRAFT)
-  startLat      Float?
-  startLng      Float?
-  totalMiles    Float       @default(0)
-  totalDriveMin Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  technicianId   String
+  technician     User        @relation(fields: [technicianId], references: [id])
+  date           DateTime
+  status         RouteStatus @default(DRAFT)
+  startLat       Float?
+  startLng       Float?
+  startHour      Int         @default(8)
+  mode           String      @default("reorder")
+  totalMiles     Float       @default(0)
+  totalDriveMin  Int         @default(0)
+  returnMiles    Float       @default(0)
+  returnDriveMin Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   stops         RouteStop[]
 
