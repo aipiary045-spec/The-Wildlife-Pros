@@ -1,0 +1,123 @@
+import { notFound } from "next/navigation";
+import { format } from "date-fns";
+import { prisma } from "@/lib/prisma";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { DISPOSITION_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
+import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
+
+export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">) {
+  const { id } = await params;
+  const job = await prisma.job.findUnique({
+    where: { id },
+    include: {
+      client: true,
+      property: true,
+      technician: true,
+      lineItems: true,
+      deployments: { include: { equipment: true, checks: true } },
+      captures: { include: { species: true } },
+      entryPoints: true,
+      exclusions: true,
+      applications: { include: { product: true } },
+      photos: { include: { entryPoint: true } },
+    },
+  });
+  if (!job) notFound();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-orange">{job.number}</p>
+          <h1 className="font-display text-3xl tracking-wide">{job.title}</h1>
+          <p className="text-stone-600">
+            {clientName(job.client)} · {propertyAddress(job.property)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={job.status} />
+          <StatusBadge status={job.type} label={JOB_TYPE_LABEL[job.type]} />
+        </div>
+      </div>
+      <section className="grid gap-4 md:grid-cols-3">
+        <Card title="Visit">
+          <p>{job.scheduledStart ? format(job.scheduledStart, "PPP p") : "Unscheduled"}</p>
+          <p className="text-sm text-stone-600">
+            {job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned"} ·{" "}
+            {job.durationMin} min
+          </p>
+        </Card>
+        <Card title="Value">
+          <p className="font-display text-2xl">{formatMoney(job.total)}</p>
+          <p className="text-sm text-stone-600">Tax {formatMoney(job.taxAmount)}</p>
+        </Card>
+        <Card title="Instructions">
+          <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
+        </Card>
+      </section>
+      <section className="grid gap-6 lg:grid-cols-2">
+        <Card title="Line items">
+          {job.lineItems.map((item) => (
+            <p key={item.id} className="flex justify-between py-1 text-sm">
+              <span>
+                {item.name} × {Number(item.quantity)}
+              </span>
+              <span>{formatMoney(Number(item.quantity) * Number(item.unitPrice))}</span>
+            </p>
+          ))}
+        </Card>
+        <Card title="Traps on this job">
+          {job.deployments.length === 0 ? <p className="text-sm text-stone-500">None deployed.</p> : null}
+          {job.deployments.map((item) => (
+            <p key={item.id} className="py-1 text-sm">
+              {item.equipment.serialNumber} · {item.locationNote} <StatusBadge status={item.status} />
+            </p>
+          ))}
+        </Card>
+        <Card title="Species activity">
+          {job.captures.map((capture) => (
+            <p key={capture.id} className="py-1 text-sm">
+              {capture.quantity} {capture.species.commonName} · {DISPOSITION_LABEL[capture.disposition]}
+            </p>
+          ))}
+        </Card>
+        <Card title="Exclusion & chemicals">
+          {job.exclusions.map((work) => (
+            <p key={work.id} className="py-1 text-sm">
+              {work.material} {work.quantity ? `· ${work.quantity}` : ""}
+            </p>
+          ))}
+          {job.applications.map((app) => (
+            <p key={app.id} className="py-1 text-sm">
+              {app.product.name} ({app.product.epaNumber}) · {app.targetPests} · {app.rate}
+            </p>
+          ))}
+        </Card>
+      </section>
+      <Card title="Photo documentation">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {job.photos.map((photo) => (
+            <figure key={photo.id} className="overflow-hidden rounded-xl border border-line">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photo.url} alt={photo.caption ?? photo.kind} className="h-36 w-full object-cover" />
+              <figcaption className="px-3 py-2 text-xs">
+                {photo.kind} {photo.entryPoint ? `· ${photo.entryPoint.label}` : ""} · {photo.caption}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-line bg-panel p-5">
+      <h2 className="mb-3 font-semibold">{title}</h2>
+      {children}
+    </section>
+  );
+}

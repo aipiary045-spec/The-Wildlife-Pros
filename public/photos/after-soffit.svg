@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#e85d04"/>
+  <rect x="0" y="220" width="640" height="180" fill="#2b2b2b"/>
+  <rect x="80" y="80" width="480" height="160" fill="#f4a261"/>
+  <rect x="300" y="40" width="70" height="200" fill="#111"/>
+  <rect x="308" y="130" width="54" height="40" fill="#9aa0a6"/>
+  <path d="M308 130 H362 M308 140 H362 M308 150 H362 M308 160 H362" stroke="#111" stroke-width="2"/>
+  <text x="24" y="36" fill="#fff" font-family="Arial" font-size="22" font-weight="700">AFTER · sealed</text>
+</svg>

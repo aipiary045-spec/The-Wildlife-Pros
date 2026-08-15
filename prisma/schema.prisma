@@ -1,0 +1,781 @@
+// CritterOps — The Wildlife Pros field-service schema
+// PostgreSQL + Prisma 7. Connection URL lives in prisma.config.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  DISPATCHER
+  TECHNICIAN
+  ACCOUNTING
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  DISABLED
+}
+
+enum ClientStatus {
+  ACTIVE
+  LEAD
+  INACTIVE
+  DO_NOT_SERVICE
+}
+
+enum PropertyType {
+  RESIDENTIAL
+  COMMERCIAL
+  AGRICULTURAL
+  MUNICIPAL
+  OTHER
+}
+
+enum RequestStatus {
+  NEW
+  ASSESSED
+  CONVERTED_QUOTE
+  CONVERTED_JOB
+  CLOSED
+  SPAM
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  VIEWED
+  APPROVED
+  DECLINED
+  EXPIRED
+  CONVERTED
+}
+
+enum JobType {
+  INSPECTION
+  TRAPPING
+  EXCLUSION
+  REMOVAL
+  CLEANUP
+  PREVENTION
+  RECURRING
+  EMERGENCY
+  FOLLOW_UP
+  OTHER
+}
+
+enum JobStatus {
+  UNSCHEDULED
+  SCHEDULED
+  EN_ROUTE
+  ON_SITE
+  IN_PROGRESS
+  COMPLETED
+  INVOICED
+  CANCELLED
+  ON_HOLD
+}
+
+enum VisitStatus {
+  SCHEDULED
+  EN_ROUTE
+  ON_SITE
+  COMPLETED
+  SKIPPED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PARTIAL
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+  CHECK
+  CARD
+  ACH
+  OTHER
+}
+
+enum RecurrenceFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  SEASONAL
+  CUSTOM
+}
+
+enum EquipmentType {
+  LIVE_CAGE
+  ONE_WAY_DOOR
+  SNAP_TRAP
+  GLUE_BOARD
+  EXCLUSION_FUNNEL
+  BAIT_STATION
+  CAMERA
+  REPELLENT
+  OTHER
+}
+
+enum EquipmentStatus {
+  IN_INVENTORY
+  DEPLOYED
+  ACTIVE_CAPTURE
+  NEEDS_CHECK
+  RETRIEVED
+  DAMAGED
+  LOST
+  RETIRED
+}
+
+enum AnimalDisposition {
+  RELOCATED
+  RELEASED_ON_SITE
+  EUTHANIZED
+  TRANSFERRED
+  ESCAPED
+  FOUND_DEAD
+  OTHER
+}
+
+enum ApplicationType {
+  PESTICIDE
+  RODENTICIDE
+  REPELLENT
+  SANITIZER
+  OTHER
+}
+
+enum PhotoKind {
+  BEFORE
+  AFTER
+  DURING
+  DAMAGE
+  ENTRY_POINT
+  CAPTURE
+  COMPLIANCE
+  OTHER
+}
+
+enum RouteStatus {
+  DRAFT
+  OPTIMIZED
+  DISPATCHED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  tradeName       String?
+  phone           String?
+  email           String?
+  website         String?
+  licenseNumber   String?
+  pesticideLicense String?
+  address1        String?
+  address2        String?
+  city            String?
+  state           String?
+  postalCode      String?
+  timezone        String   @default("America/New_York")
+  brandPrimary    String   @default("#E85D04")
+  brandDark       String   @default("#111111")
+  invoiceFooter   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users           User[]
+  clients         Client[]
+  services        Service[]
+  taxRates        TaxRate[]
+  species         Species[]
+  chemicalProducts ChemicalProduct[]
+  formTemplates   FormTemplate[]
+}
+
+model User {
+  id             String     @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  email          String     @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  phone          String?
+  role           UserRole   @default(TECHNICIAN)
+  status         UserStatus @default(ACTIVE)
+  color          String     @default("#E85D04")
+  homeLat        Float?
+  homeLng        Float?
+  homeAddress    String?
+  avatarUrl      String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  assignedJobs   Job[]      @relation("JobTechnician")
+  createdJobs    Job[]      @relation("JobCreatedBy")
+  visits         Visit[]
+  quotes         Quote[]    @relation("QuoteCreatedBy")
+  invoices       Invoice[]  @relation("InvoiceCreatedBy")
+  timeEntries    TimeEntry[]
+  applications   ChemicalApplication[]
+  captures       CaptureEvent[]
+  photos         Photo[]
+  notes          Note[]
+  routes         RouteDay[]
+  formSubmissions FormSubmission[]
+
+  @@index([organizationId, role])
+}
+
+model Client {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  firstName      String
+  lastName       String
+  companyName    String?
+  email          String?
+  phone          String?
+  altPhone       String?
+  status         ClientStatus @default(ACTIVE)
+  billingEmail   String?
+  billingAddress1 String?
+  billingCity    String?
+  billingState   String?
+  billingPostal  String?
+  tags           Json         @default("[]")
+  notes          String?
+  portalToken    String       @unique @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  properties     Property[]
+  requests       ServiceRequest[]
+  quotes         Quote[]
+  jobs           Job[]
+  invoices       Invoice[]
+  notesList      Note[]
+
+  @@index([organizationId, lastName])
+  @@index([email])
+}
+
+model Property {
+  id             String       @id @default(cuid())
+  clientId       String
+  client         Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  label          String       @default("Primary")
+  type           PropertyType @default(RESIDENTIAL)
+  address1       String
+  address2       String?
+  city           String
+  state          String
+  postalCode     String
+  lat            Float?
+  lng            Float?
+  accessNotes    String?
+  gateCode       String?
+  petsOnSite     Boolean      @default(false)
+  yearBuilt      Int?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  jobs           Job[]
+  quotes         Quote[]
+  requests       ServiceRequest[]
+  deployments    EquipmentDeployment[]
+  entryPoints    EntryPoint[]
+  photos         Photo[]
+  invoices       Invoice[]
+
+  @@index([clientId])
+  @@index([city, state])
+}
+
+model Service {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  description    String?
+  jobType        JobType  @default(INSPECTION)
+  unitPrice      Decimal  @default(0) @db.Decimal(10, 2)
+  taxable        Boolean  @default(true)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  quoteItems     QuoteLineItem[]
+  jobItems       JobLineItem[]
+  invoiceItems   InvoiceLineItem[]
+}
+
+model TaxRate {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  rate           Decimal  @db.Decimal(6, 4)
+  default        Boolean  @default(false)
+}
+
+model ServiceRequest {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id])
+  propertyId  String?
+  property    Property?     @relation(fields: [propertyId], references: [id])
+  title       String
+  details     String?
+  status      RequestStatus @default(NEW)
+  source      String        @default("phone")
+  preferredAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Quote {
+  id          String      @id @default(cuid())
+  number      String      @unique
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id])
+  propertyId  String?
+  property    Property?   @relation(fields: [propertyId], references: [id])
+  createdById String?
+  createdBy   User?       @relation("QuoteCreatedBy", fields: [createdById], references: [id])
+  status      QuoteStatus @default(DRAFT)
+  title       String
+  message     String?
+  subtotal    Decimal     @default(0) @db.Decimal(10, 2)
+  taxAmount   Decimal     @default(0) @db.Decimal(10, 2)
+  total       Decimal     @default(0) @db.Decimal(10, 2)
+  depositDue  Decimal     @default(0) @db.Decimal(10, 2)
+  validUntil  DateTime?
+  sentAt      DateTime?
+  viewedAt    DateTime?
+  approvedAt  DateTime?
+  declinedAt  DateTime?
+  clientNote  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  lineItems   QuoteLineItem[]
+  jobs        Job[]
+
+  @@index([clientId, status])
+}
+
+model QuoteLineItem {
+  id          String   @id @default(cuid())
+  quoteId     String
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id])
+  name        String
+  description String?
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  taxable     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+}
+
+model RecurringSchedule {
+  id          String              @id @default(cuid())
+  frequency   RecurrenceFrequency
+  interval    Int                 @default(1)
+  daysOfWeek  Json?
+  endsOn      DateTime?
+  active      Boolean             @default(true)
+  jobs        Job[]
+}
+
+model Job {
+  id             String    @id @default(cuid())
+  number         String    @unique
+  clientId       String
+  client         Client    @relation(fields: [clientId], references: [id])
+  propertyId     String
+  property       Property  @relation(fields: [propertyId], references: [id])
+  quoteId        String?
+  quote          Quote?    @relation(fields: [quoteId], references: [id])
+  technicianId   String?
+  technician     User?     @relation("JobTechnician", fields: [technicianId], references: [id])
+  createdById    String?
+  createdBy      User?     @relation("JobCreatedBy", fields: [createdById], references: [id])
+  scheduleId     String?
+  schedule       RecurringSchedule? @relation(fields: [scheduleId], references: [id])
+  type           JobType   @default(INSPECTION)
+  status         JobStatus @default(UNSCHEDULED)
+  title          String
+  instructions   String?
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  completedAt    DateTime?
+  durationMin    Int       @default(60)
+  subtotal       Decimal   @default(0) @db.Decimal(10, 2)
+  taxAmount      Decimal   @default(0) @db.Decimal(10, 2)
+  total          Decimal   @default(0) @db.Decimal(10, 2)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  lineItems      JobLineItem[]
+  visits         Visit[]
+  invoices       Invoice[]
+  deployments    EquipmentDeployment[]
+  captures       CaptureEvent[]
+  entryPoints    EntryPoint[]
+  exclusions     ExclusionWork[]
+  applications   ChemicalApplication[]
+  photos         Photo[]
+  notes          Note[]
+  timeEntries    TimeEntry[]
+  routeStops     RouteStop[]
+  formSubmissions FormSubmission[]
+
+  @@index([technicianId, scheduledStart])
+  @@index([status, scheduledStart])
+  @@index([clientId])
+}
+
+model JobLineItem {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id])
+  name        String
+  description String?
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  taxable     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+}
+
+model Visit {
+  id          String      @id @default(cuid())
+  jobId       String
+  job         Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  technicianId String?
+  technician  User?       @relation(fields: [technicianId], references: [id])
+  status      VisitStatus @default(SCHEDULED)
+  scheduledStart DateTime
+  scheduledEnd   DateTime?
+  arrivedAt   DateTime?
+  departedAt  DateTime?
+  summary     String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([technicianId, scheduledStart])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  number      String        @unique
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id])
+  propertyId  String?
+  property    Property?     @relation(fields: [propertyId], references: [id])
+  jobId       String?
+  job         Job?          @relation(fields: [jobId], references: [id])
+  createdById String?
+  createdBy   User?         @relation("InvoiceCreatedBy", fields: [createdById], references: [id])
+  status      InvoiceStatus @default(DRAFT)
+  issuedOn    DateTime      @default(now())
+  dueOn       DateTime?
+  subtotal    Decimal       @default(0) @db.Decimal(10, 2)
+  taxAmount   Decimal       @default(0) @db.Decimal(10, 2)
+  total       Decimal       @default(0) @db.Decimal(10, 2)
+  balance     Decimal       @default(0) @db.Decimal(10, 2)
+  sentAt      DateTime?
+  viewedAt    DateTime?
+  paidAt      DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  lineItems   InvoiceLineItem[]
+  payments    Payment[]
+
+  @@index([clientId, status])
+  @@index([status, dueOn])
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id])
+  name        String
+  description String?
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  taxable     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod @default(CARD)
+  reference String?
+  receivedOn DateTime     @default(now())
+  notes     String?
+  createdAt DateTime      @default(now())
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
+  jobId     String?
+  job       Job?     @relation(fields: [jobId], references: [id])
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
+  body      String
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model TimeEntry {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  jobId        String?
+  job          Job?      @relation(fields: [jobId], references: [id])
+  startedAt    DateTime
+  endedAt      DateTime?
+  notes        String?
+  billable     Boolean   @default(true)
+}
+
+model Equipment {
+  id           String          @id @default(cuid())
+  serialNumber String          @unique
+  name         String
+  type         EquipmentType
+  status       EquipmentStatus @default(IN_INVENTORY)
+  manufacturer String?
+  notes        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  deployments  EquipmentDeployment[]
+}
+
+model EquipmentDeployment {
+  id           String          @id @default(cuid())
+  equipmentId  String
+  equipment    Equipment       @relation(fields: [equipmentId], references: [id])
+  jobId        String
+  job          Job             @relation(fields: [jobId], references: [id])
+  propertyId   String
+  property     Property        @relation(fields: [propertyId], references: [id])
+  locationNote String
+  targetSpecies String?
+  deployedAt   DateTime        @default(now())
+  retrievedAt  DateTime?
+  status       EquipmentStatus @default(DEPLOYED)
+  baitUsed     String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  checks       TrapCheck[]
+  captures     CaptureEvent[]
+
+  @@index([propertyId, status])
+  @@index([equipmentId, status])
+}
+
+model TrapCheck {
+  id            String               @id @default(cuid())
+  deploymentId  String
+  deployment    EquipmentDeployment  @relation(fields: [deploymentId], references: [id], onDelete: Cascade)
+  checkedAt     DateTime             @default(now())
+  result        String
+  notes         String?
+}
+
+model Species {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  commonName     String
+  scientificName String?
+  regulated      Boolean  @default(false)
+  notes          String?
+
+  captures       CaptureEvent[]
+}
+
+model CaptureEvent {
+  id             String             @id @default(cuid())
+  jobId          String
+  job            Job                @relation(fields: [jobId], references: [id])
+  speciesId      String
+  species        Species            @relation(fields: [speciesId], references: [id])
+  technicianId   String?
+  technician     User?              @relation(fields: [technicianId], references: [id])
+  deploymentId   String?
+  deployment     EquipmentDeployment? @relation(fields: [deploymentId], references: [id])
+  quantity       Int                @default(1)
+  sex            String?
+  ageClass       String?
+  disposition    AnimalDisposition
+  dispositionNote String?
+  locationNote   String?
+  capturedAt     DateTime           @default(now())
+  createdAt      DateTime           @default(now())
+}
+
+model EntryPoint {
+  id          String    @id @default(cuid())
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  jobId       String?
+  job         Job?      @relation(fields: [jobId], references: [id])
+  label       String
+  area        String?
+  description String?
+  sealed      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  exclusions  ExclusionWork[]
+  photos      Photo[]
+}
+
+model ExclusionWork {
+  id           String     @id @default(cuid())
+  jobId        String
+  job          Job        @relation(fields: [jobId], references: [id])
+  entryPointId String?
+  entryPoint   EntryPoint? @relation(fields: [entryPointId], references: [id])
+  material     String
+  quantity     String?
+  notes        String?
+  completedAt  DateTime   @default(now())
+}
+
+model ChemicalProduct {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  epaNumber      String
+  type           ApplicationType
+  activeIngredient String?
+  signalWord     String?
+  active         Boolean  @default(true)
+
+  applications   ChemicalApplication[]
+}
+
+model ChemicalApplication {
+  id            String           @id @default(cuid())
+  jobId         String
+  job           Job              @relation(fields: [jobId], references: [id])
+  productId     String
+  product       ChemicalProduct  @relation(fields: [productId], references: [id])
+  technicianId  String?
+  technician    User?            @relation(fields: [technicianId], references: [id])
+  targetPests   String
+  method        String
+  rate          String
+  quantity      String?
+  areaTreated   String?
+  weather       String?
+  appliedAt     DateTime         @default(now())
+  notes         String?
+  createdAt     DateTime         @default(now())
+}
+
+model FormTemplate {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  jurisdiction   String?
+  schema         Json
+  active         Boolean  @default(true)
+  submissions    FormSubmission[]
+}
+
+model FormSubmission {
+  id          String       @id @default(cuid())
+  templateId  String
+  template    FormTemplate @relation(fields: [templateId], references: [id])
+  jobId       String?
+  job         Job?         @relation(fields: [jobId], references: [id])
+  technicianId String?
+  technician  User?        @relation(fields: [technicianId], references: [id])
+  data        Json
+  submittedAt DateTime     @default(now())
+}
+
+model Photo {
+  id           String    @id @default(cuid())
+  jobId        String?
+  job          Job?      @relation(fields: [jobId], references: [id])
+  propertyId   String?
+  property     Property? @relation(fields: [propertyId], references: [id])
+  entryPointId String?
+  entryPoint   EntryPoint? @relation(fields: [entryPointId], references: [id])
+  uploadedById String?
+  uploadedBy   User?     @relation(fields: [uploadedById], references: [id])
+  kind         PhotoKind @default(OTHER)
+  url          String
+  caption      String?
+  takenAt      DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+}
+
+model RouteDay {
+  id            String      @id @default(cuid())
+  technicianId  String
+  technician    User        @relation(fields: [technicianId], references: [id])
+  date          DateTime
+  status        RouteStatus @default(DRAFT)
+  startLat      Float?
+  startLng      Float?
+  totalMiles    Float       @default(0)
+  totalDriveMin Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  stops         RouteStop[]
+
+  @@unique([technicianId, date])
+}
+
+model RouteStop {
+  id              String   @id @default(cuid())
+  routeDayId      String
+  routeDay        RouteDay @relation(fields: [routeDayId], references: [id], onDelete: Cascade)
+  jobId           String
+  job             Job      @relation(fields: [jobId], references: [id])
+  sequence        Int
+  eta             DateTime?
+  milesFromPrev   Float    @default(0)
+  driveMinFromPrev Int     @default(0)
+}

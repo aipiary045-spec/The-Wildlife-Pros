@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6efe4;
+  --foreground: #16120c;
+  --orange: #e85d04;
+  --amber: #f48c06;
+  --gold: #f9c74f;
+  --ink: #111111;
+  --panel: #fffaf3;
+  --line: #e6d8c4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-orange: var(--orange);
+  --color-amber: var(--amber);
+  --color-gold: var(--gold);
+  --color-ink: var(--ink);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-oswald);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-outfit), "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+.sunset-panel {
+  background: linear-gradient(180deg, #e85d04 0%, #f48c06 48%, #f9c74f 100%);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}

@@ -1,0 +1,47 @@
+type LogoProps = {
+  className?: string;
+  size?: number;
+};
+
+export function Logo({ className, size = 56 }: LogoProps) {
+  return (
+    <svg
+      className={className}
+      width={size}
+      height={Math.round(size * 1.125)}
+      viewBox="0 0 320 360"
+      role="img"
+      aria-label="The Wildlife Pros"
+    >
+      <defs>
+        <linearGradient id="twp-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#E85D04" />
+          <stop offset="55%" stopColor="#F48C06" />
+          <stop offset="100%" stopColor="#F9C74F" />
+        </linearGradient>
+      </defs>
+      <path d="M160 8 L292 84 L292 236 L160 352 L28 236 L28 84 Z" fill="#111111" />
+      <path d="M160 22 L278 92 L278 228 L160 336 L42 228 L42 92 Z" fill="url(#twp-sky)" />
+      <path d="M42 176 L78 150 L104 166 L138 128 L168 154 L198 118 L232 148 L278 132 L278 228 L160 336 L42 228 Z" fill="#111111" />
+      <path d="M48 200 L56 168 L64 200 L58 200 L56 188 L54 200 Z" fill="#111" />
+      <path d="M256 198 L266 160 L276 198 L270 198 L266 176 L262 198 Z" fill="#111" />
+      <path d="M92 150 C92 136 104 128 112 140 C116 132 126 134 124 146 C132 148 128 160 118 158 C114 168 96 164 92 150 Z" fill="#111" />
+      <path d="M148 136 C150 122 166 118 170 132 C178 126 188 134 182 144 C188 150 180 160 170 154 C164 164 146 156 148 136 Z" fill="#111" />
+      <path d="M188 128 C190 118 202 116 206 126 C212 122 220 128 216 136 C220 142 212 150 204 144 C200 152 186 144 188 128 Z" fill="#111" />
+      <path d="M214 120 C216 108 232 106 234 120 C242 116 250 126 242 134 C246 144 228 146 224 136 C216 140 210 128 214 120 Z" fill="#111" />
+      <text x="160" y="58" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="16" fontWeight="700" fill="#E85D04" letterSpacing="6">
+        THE
+      </text>
+      <text x="160" y="108" textAnchor="middle" fontFamily="Arial Black, Arial, sans-serif" fontSize="34" fontWeight="900" fill="#E85D04" stroke="#111" strokeWidth="3" paintOrder="stroke" letterSpacing="1">
+        WILD  IFE
+      </text>
+      <path d="M168 72 C176 78 186 92 180 108 C174 118 166 112 164 102 C160 112 150 108 156 92 C160 82 164 76 168 72 Z" fill="#111" />
+      <text x="160" y="250" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="28" fontWeight="800" fill="#E85D04" letterSpacing="8">
+        PROS
+      </text>
+      <circle cx="140" cy="300" r="4" fill="#fff" />
+      <circle cx="160" cy="300" r="4" fill="#fff" />
+      <circle cx="180" cy="300" r="4" fill="#fff" />
+    </svg>
+  );
+}

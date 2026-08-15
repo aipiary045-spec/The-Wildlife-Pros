@@ -1,0 +1,14 @@
+---
+description: CritterOps / The Wildlife Pros product rules
+alwaysApply: true
+---
+
+You are building CritterOps, a Jobber-style field-service app for The Wildlife Pros (wildlife + pest). Read `docs/CURSOR_PROMPT.md` before large changes.
+
+Stack: Next.js App Router, TypeScript, Tailwind v4, Prisma 7, PostgreSQL, cookie JWT auth.
+
+Brand: orange #E85D04, amber #F48C06, gold #F9C74F, ink #111111. Use the hex logo component.
+
+Keep wildlife domain objects (Equipment, EquipmentDeployment, CaptureEvent, EntryPoint, ChemicalApplication, Photo) tied to jobs/properties. Do not genericize them away.
+
+Prefer server components for reads and existing `/api` route handlers for writes. Match current naming and status enums.

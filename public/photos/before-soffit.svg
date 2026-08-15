@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#c9833a"/>
+  <rect x="0" y="220" width="640" height="180" fill="#5c4030"/>
+  <rect x="80" y="80" width="480" height="160" fill="#d9a066"/>
+  <rect x="300" y="40" width="70" height="200" fill="#3f3f3f"/>
+  <ellipse cx="335" cy="150" rx="28" ry="18" fill="#1a1a1a"/>
+  <text x="24" y="36" fill="#fff" font-family="Arial" font-size="22" font-weight="700">BEFORE · soffit gap</text>
+</svg>

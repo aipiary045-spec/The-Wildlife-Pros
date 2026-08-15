@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#f9c74f"/>
+  <rect x="140" y="140" width="360" height="160" fill="none" stroke="#111" stroke-width="10"/>
+  <path d="M140 140 V300 M200 140 V300 M260 140 V300 M320 140 V300 M380 140 V300 M440 140 V300 M500 140 V300" stroke="#111" stroke-width="4"/>
+  <ellipse cx="300" cy="230" rx="50" ry="30" fill="#111"/>
+  <circle cx="270" cy="220" r="6" fill="#f9c74f"/>
+  <text x="24" y="36" fill="#111" font-family="Arial" font-size="22" font-weight="700">T-014 · ACTIVE CAPTURE</text>
+</svg>
