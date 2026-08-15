@@ -61,5 +61,8 @@ Worked minutes = sum of punch spans minus `breakMin`.
 
 ## Client hub (public token)
 
+`GET /api/exports/google-sheets` — whether Sheets is configured and the linked workbook  
+`POST /api/exports/google-sheets` — create the workbook once, then update/append in place
+
 `GET /api/portal/:token` — visits and quotes only  
 `POST /api/portal/:token/actions` `{ type: "approve_quote"|"decline_quote", id, note? }`

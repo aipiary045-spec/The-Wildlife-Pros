@@ -15,4 +15,6 @@ Daily time uses Timesheet + TimePunch (clock in/out). Do not replace that with a
 
 Payments go through Square and are staff-collected only. Do not add a customer checkout or invoice pay button on the client hub.
 
+Google Sheets is an export. Sync must reuse `Organization.googleSpreadsheetId` and upsert by row id. Do not create a new spreadsheet on every upload. PostgreSQL is the system of record; SQLite is a possible local/Pi mode, not a second live database.
+
 Prefer server components for reads and existing `/api` route handlers for writes. Match current naming and status enums.

@@ -38,7 +38,7 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 ## Tech stack
 
 - Next.js App Router (current major) + TypeScript + Tailwind v4
-- PostgreSQL + Prisma 7 (`prisma.config.ts`, `@prisma/adapter-pg`)
+- PostgreSQL + Prisma 7 (`prisma.config.ts`, `@prisma/adapter-pg`). SQLite is a planned local/Pi option; Google Sheets is export-only (see `docs/DATA.md`).
 - Cookie JWT auth (`jose` + `bcryptjs`) — no NextAuth unless a later PR needs OAuth
 - Route math in `src/lib/routing.ts` (Haversine, nearest-neighbor, 2-opt)
 - Demo seed in `prisma/seed.ts`
@@ -71,6 +71,7 @@ Everything else requires a session (`src/proxy.ts`).
 - Photos must be able to reference job, property, and entry point.
 - Route optimize may persist: rewrite `RouteDay` / `RouteStop` and reschedule job start times.
 - A technician has one **Timesheet** per calendar day and one or more **TimePunch** pairs. Clock-in opens a punch; clock-out closes it. Only one punch may be open. Office roles approve sheets.
+- Google Sheets sync reuses one spreadsheet (`Organization.googleSpreadsheetId`). Upsert rows by id. Never create a second workbook on a later upload.
 
 ## API map
 
@@ -103,6 +104,7 @@ Everything else requires a session (`src/proxy.ts`).
 | GET | `/api/timesheets/me` | Current user today + recent |
 | POST | `/api/timesheets/clock` | `{ action: "in" \| "out" }` |
 | PATCH | `/api/timesheets/[id]` | submit / approve / reject |
+| GET/POST | `/api/exports/google-sheets` | Status + upsert sync to the existing workbook |
 
 ## UI conventions
 

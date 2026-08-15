@@ -77,6 +77,9 @@ CREATE TABLE "Organization" (
     "brandPrimary" TEXT NOT NULL DEFAULT '#E85D04',
     "brandDark" TEXT NOT NULL DEFAULT '#111111',
     "invoiceFooter" TEXT,
+    "googleSpreadsheetId" TEXT,
+    "googleSpreadsheetUrl" TEXT,
+    "lastSheetsSyncAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

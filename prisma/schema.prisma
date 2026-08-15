@@ -206,6 +206,9 @@ model Organization {
   brandPrimary    String   @default("#E85D04")
   brandDark       String   @default("#111111")
   invoiceFooter   String?
+  googleSpreadsheetId  String?
+  googleSpreadsheetUrl String?
+  lastSheetsSyncAt     DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

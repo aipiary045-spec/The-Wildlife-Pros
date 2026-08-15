@@ -45,6 +45,7 @@ src/app/api              REST API
 src/lib/routing.ts       route optimizer
 docs/CURSOR_PROMPT.md    standing Cursor brief
 docs/API.md              endpoint list
+docs/DATA.md             PostgreSQL vs SQLite/Pi, Google Sheets sync
 ```
 
 ## Scripts
