@@ -6,6 +6,7 @@ import {
   Clock,
   FileSpreadsheet,
   FileText,
+  HardHat,
   LayoutDashboard,
   MapPinned,
   Menu,
@@ -16,6 +17,7 @@ import {
   Users,
   Warehouse,
 } from "lucide-react";
+import { canManageTeam } from "@/lib/team";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon };
 
@@ -29,6 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/routes", label: "Routes", icon: MapPinned },
   { href: "/timesheets", label: "Timesheets", icon: Clock },
+  { href: "/team", label: "Team", icon: HardHat },
   { href: "/inventory", label: "Traps & gear", icon: Warehouse },
   { href: "/activity", label: "Species log", icon: Squirrel },
   { href: "/compliance", label: "Compliance", icon: ShieldCheck },
@@ -57,5 +60,9 @@ export function primaryTabs(role: string): NavItem[] {
 
 export function moreItems(role: string) {
   const tabs = new Set(primaryTabs(role).map((item) => item.href));
-  return NAV_ITEMS.filter((item) => !tabs.has(item.href));
+  return NAV_ITEMS.filter((item) => {
+    if (tabs.has(item.href)) return false;
+    if (item.href === "/team" && !canManageTeam(role)) return false;
+    return true;
+  });
 }

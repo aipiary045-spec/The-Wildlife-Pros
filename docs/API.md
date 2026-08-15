@@ -5,8 +5,12 @@ All office endpoints require the `critterops_session` cookie unless noted.
 ## Auth
 
 `POST /api/auth/login` `{ email, password }`  
-`POST /api/auth/logout`  
-`GET /api/auth/me`
+`POST /api/auth/logout`
+
+## Team
+
+`GET|POST /api/users` — owner, admin, and dispatch. POST `{ firstName, lastName, email, password, role, phone?, color?, homeAddress? }`  
+`PATCH /api/users/:id` `{ status: "ACTIVE"|"DISABLED", role?, password?, ... }` — disable instead of delete so jobs stay. Dispatch can only change technicians.
 
 ## CRM & jobs
 

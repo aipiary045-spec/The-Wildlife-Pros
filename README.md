@@ -32,6 +32,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Client hub: [/portal/demo-client-hub](http://localhost:3000/portal/demo-client-hub)
 
+Office can add and disable people on `/team`. Disable keeps their jobs and timesheets; they cannot sign in and they drop off the calendar.
+
 ## Project map
 
 ```

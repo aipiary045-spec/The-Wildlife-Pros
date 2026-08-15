@@ -27,6 +27,8 @@ const TONES: Record<string, string> = {
   IN_INVENTORY: "bg-stone-200 text-stone-700",
   RETRIEVED: "bg-emerald-100 text-emerald-800",
   ACTIVE: "bg-emerald-100 text-emerald-800",
+  DISABLED: "bg-zinc-200 text-zinc-600",
+  INVITED: "bg-sky-100 text-sky-800",
   LEAD: "bg-sky-100 text-sky-800",
   CLOCKED_IN: "bg-emerald-100 text-emerald-800",
   CLOCKED_OUT: "bg-stone-200 text-stone-700",

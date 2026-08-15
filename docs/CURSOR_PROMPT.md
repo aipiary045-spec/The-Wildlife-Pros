@@ -26,6 +26,7 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 - Technician field view (phone-first)
 - Route optimization for a day’s stops
 - Daily timesheets: technicians clock in/out (multiple punches per day), office reviews and approves hours
+- Team: owners/admins (and dispatch for techs) add logins and disable people instead of deleting them
 
 ### Wildlife / pest additions (the differentiator)
 
@@ -84,6 +85,8 @@ Everything else requires a session (`src/proxy.ts`).
 | POST | `/api/auth/login` | Credentials → cookie |
 | POST | `/api/auth/logout` | Clear cookie |
 | GET | `/api/auth/me` | Session |
+| GET/POST | `/api/users` | Team list / add (office) |
+| PATCH | `/api/users/[id]` | Disable, re-enable, role, password |
 | GET/POST | `/api/clients` | CRM list / create |
 | GET/PATCH | `/api/clients/[id]` | Client 360 |
 | GET/POST | `/api/jobs` | Work orders |
