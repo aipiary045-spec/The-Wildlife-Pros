@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
+import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { DISPOSITION_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
@@ -32,13 +33,18 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   });
   if (!job) notFound();
 
-  const [stock, allGear, species] = await Promise.all([
+  const [stock, allGear, species, technicians] = await Promise.all([
     prisma.equipment.findMany({
       where: { status: { in: ["IN_INVENTORY", "RETRIEVED"] } },
       orderBy: { serialNumber: "asc" },
     }),
     prisma.equipment.findMany({ select: { serialNumber: true } }),
     prisma.species.findMany({ orderBy: { commonName: "asc" }, select: { commonName: true } }),
+    prisma.user.findMany({
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
+      orderBy: { firstName: "asc" },
+      select: { id: true, firstName: true, lastName: true, color: true },
+    }),
   ]);
 
   return (
@@ -59,9 +65,15 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             }}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={job.status} />
           <StatusBadge status={job.type} label={JOB_TYPE_LABEL[job.type]} />
+          <JobVisitControls
+            jobId={job.id}
+            status={job.status}
+            technicianId={job.technicianId}
+            technicians={technicians}
+          />
         </div>
       </div>
       <section className="grid gap-4 md:grid-cols-3">

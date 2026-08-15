@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { JOB_TYPE_BAR } from "@/lib/constants";
 import {
   dateKey,
@@ -55,8 +56,8 @@ export function DayBoard({
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
         {mode === "copy"
-          ? "Drop a job on a time to open a new-trip card. Client and job details stay; you fill in this visit."
-          : "Tap + Job, click an hour, or drag a stop onto a tech and time. Hold Alt/Option while dropping to add another trip."}{" "}
+          ? "Drop a job on a time to open a copy. Check in when you arrive; check out asks if they need a follow-up."
+          : "Tap + Job, click an hour, or drag a stop onto a tech and time. Check in on site. Check out asks follow-up vs complete."}{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
 
@@ -94,7 +95,6 @@ export function DayBoard({
                       technicians={technicians}
                       onDragStart={onDragStart}
                       onReassign={(technicianId) => void placeJob(job.id, technicianId, day, false)}
-                      onCopy={() => void placeJob(job.id, tech.id, addDays(day, 1), true)}
                       mobile
                     />
                   ))
@@ -187,6 +187,13 @@ export function DayBoard({
                         <p className="truncate text-xs text-stone-500">
                           {job.client.lastName} · {job.property.address1}
                         </p>
+                        <JobVisitControls
+                          jobId={job.id}
+                          status={job.status}
+                          technicianId={job.technicianId}
+                          technicians={technicians}
+                          compact
+                        />
                       </article>
                     );
                   })}
@@ -224,7 +231,6 @@ function JobBlock({
   technicians,
   onDragStart,
   onReassign,
-  onCopy,
   mobile,
 }: {
   job: ScheduleJobCard;
@@ -232,7 +238,6 @@ function JobBlock({
   technicians: ScheduleTech[];
   onDragStart: (event: React.DragEvent, jobId: string) => void;
   onReassign: (technicianId: string) => void;
-  onCopy: () => void;
   mobile?: boolean;
 }) {
   return (
@@ -273,9 +278,13 @@ function JobBlock({
                 </option>
               ))}
             </select>
-            <button type="button" className="rounded-lg bg-ink px-2 py-1 text-xs font-semibold text-white" onClick={onCopy}>
-              New trip
-            </button>
+            <JobVisitControls
+              jobId={job.id}
+              status={job.status}
+              technicianId={job.technicianId}
+              technicians={technicians}
+              compact
+            />
           </>
         ) : null}
       </div>

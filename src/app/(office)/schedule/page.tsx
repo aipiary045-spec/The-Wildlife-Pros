@@ -40,7 +40,7 @@ export default async function SchedulePage({
         <div>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
           <p className="text-stone-600">
-            Tap + Job on a square. Drag to move. Copy trip keeps the same client when they need another visit.
+            Tap + Job on a square. Drag to move. Check in on site; check out asks if they need a follow-up.
           </p>
         </div>
         <Link

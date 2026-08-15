@@ -18,7 +18,9 @@ All office endpoints require the `critterops_session` cookie unless noted.
 `GET /api/jobs?status&technicianId&from&to`  
 `POST /api/jobs` `{ clientId, propertyId, title, type, technicianId, scheduledStart, scheduledEnd, durationMin, lineItems[] }` — `clientId`, `propertyId`, and `title` are required; a start time marks the job `SCHEDULED`  
 `GET /api/jobs/:id`  
-`PATCH /api/jobs/:id` `{ status, technicianId, scheduledStart, scheduledEnd }`
+`PATCH /api/jobs/:id` `{ status, technicianId, scheduledStart, scheduledEnd }`  
+`POST /api/jobs/:id/check-in` — on site: job `ON_SITE`, open `TimeEntry` + `Visit`, auto day clock-in if needed  
+`POST /api/jobs/:id/check-out` `{ outcome: "complete"|"follow_up", notes?, followUp?: { scheduledStart, scheduledEnd, technicianId, durationMin, instructions } }` — closes the visit. `complete` marks the job `COMPLETED`. `follow_up` does the same and creates a new scheduled job for the same client/address
 
 ## Quotes, invoices, payments
 
@@ -36,7 +38,7 @@ Clients never pay through CritterOps. Square is the processor.
 
 `GET /api/schedule?view=day|week&date=YYYY-MM-DD` — day board or Monday–Sunday week payload, plus `unscheduled` jobs and `clients` for the new-job dialog  
 `PATCH /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd }` — move a job onto a tech/time  
-`POST /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd, instructions?, durationMin? }` — new trip card: same client and job details, new visit info  
+`POST /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd, instructions?, durationMin? }` — dispatch copy: same client and job details, new visit info. Field follow-ups are created at check-out instead.  
 `POST /api/routes/optimize` `{ date?: "YYYY-MM-DD", technicianIds?, mode?: "reorder"|"rebalance", startHour?: 5-12, persist?: boolean }`  
 `GET /api/routes/optimize?date=YYYY-MM-DD`
 

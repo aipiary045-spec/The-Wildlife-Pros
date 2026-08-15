@@ -23,7 +23,7 @@ export default async function FieldPage({
   const { from, to, days } = scheduleRange(view, date);
   const myTime = await getMyTimesheet(session.id);
   const technicianFilter = session.role === "TECHNICIAN" ? session.id : undefined;
-  const [jobs, routeDays] = await Promise.all([
+  const [jobs, routeDays, technicians] = await Promise.all([
     prisma.job.findMany({
       where: {
         technicianId: technicianFilter,
@@ -39,6 +39,11 @@ export default async function FieldPage({
         technicianId: technicianFilter,
       },
       include: { stops: true },
+    }),
+    prisma.user.findMany({
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
+      orderBy: { firstName: "asc" },
+      select: { id: true, firstName: true, lastName: true, color: true },
     }),
   ]);
 
@@ -65,7 +70,7 @@ export default async function FieldPage({
           {jobs.length} stop{jobs.length === 1 ? "" : "s"} {view === "week" ? "this week" : "today"}
         </h1>
         <p>
-          {session.firstName}, run them in order and clock the day.
+          {session.firstName}, check in when you arrive. Check out asks if they need a follow-up or if the job is done.
           {optimizedStops > 0 ? " Dispatch saved a driving order for these stops." : ""}
         </p>
       </div>
@@ -76,6 +81,7 @@ export default async function FieldPage({
         days={days}
         showTech={session.role !== "TECHNICIAN"}
         routeByJobId={routeByJobId}
+        technicians={technicians}
       />
     </div>
   );

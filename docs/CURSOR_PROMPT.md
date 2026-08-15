@@ -16,6 +16,7 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 - Incoming requests → quotes → jobs → invoices → payments
 - Home dashboard with pipeline cards (requests, quotes, jobs, invoices) and today’s technician timeline
 - Drag-and-drop dispatch calendar: week grid (technician × day) and day timeline (technician × time, 15-minute snap). **New job** / **+ Job** opens a create dialog; unscheduled jobs drag onto a tech.
+- Check in / check out on the job, field route, and calendar. Check-out asks if the customer needs a follow-up visit or if the job is complete. Follow-up creates a new job for the same client.
 - Recurring service visits
 - Digital quotes clients approve in a Client Hub
 - Invoices generated from completed jobs, balances, partial payments
@@ -72,6 +73,7 @@ Everything else requires a session (`src/proxy.ts`).
 - Photos must be able to reference job, property, and entry point.
 - Route optimize preview first, then persist. Default mode `reorder` keeps technician assignments and only fixes driving order; `rebalance` may move stops. Persist rewrites `RouteDay` / `RouteStop` and `scheduledStart` from one start-hour clock. Return-to-shop miles are totals only, not a fake stop. Field `/field` shows saved sequence, drive, and ETA when a `RouteDay` exists. Techs navigate by **street address** (Google/Apple Maps); lat/lng is for the optimizer and a fallback pin. Geocode on property save and before optimize when coords are missing. If `MAPBOX_TOKEN` is set, snap the chosen order to road time; otherwise keep Haversine.
 - A technician has one **Timesheet** per calendar day and one or more **TimePunch** pairs. Clock-in opens a punch; clock-out closes it. Only one punch may be open. Office roles approve sheets.
+- Job check-in opens a billable **TimeEntry** on that timesheet and a **Visit** (`arrivedAt`). Check-out closes them and either completes the job or completes it and copies a follow-up job.
 - Google Sheets sync reuses one spreadsheet (`Organization.googleSpreadsheetId`). Upsert rows by id. Never create a second workbook on a later upload.
 
 ## API map
@@ -85,6 +87,8 @@ Everything else requires a session (`src/proxy.ts`).
 | GET/PATCH | `/api/clients/[id]` | Client 360 |
 | GET/POST | `/api/jobs` | Work orders |
 | GET/PATCH | `/api/jobs/[id]` | Job + wildlife docs |
+| POST | `/api/jobs/[id]/check-in` | Arrive on site |
+| POST | `/api/jobs/[id]/check-out` | Leave: complete or schedule follow-up |
 | GET/POST | `/api/quotes` | Estimates |
 | PATCH | `/api/quotes/[id]` | send / approve / decline |
 | GET/POST | `/api/invoices` | Billing; pass `jobId` to copy line items |
@@ -128,7 +132,6 @@ Client hub: /portal/demo-client-hub
 ## What to build next (in order)
 
 1. Create/edit forms for quotes and invoices (clients and jobs can already be created from Home / the calendar)
-1b. Job-level timers that attach `TimeEntry` rows to the open daily timesheet
 2. Recurring visit generator from `RecurringSchedule`
 3. File uploads to object storage instead of public SVG placeholders
 4. Square Terminal / Mobile Payments SDK for the field app (cards already go through Square on the invoice page)

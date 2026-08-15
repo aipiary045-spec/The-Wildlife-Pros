@@ -2,8 +2,10 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { dateKey } from "@/lib/dates";
 import { propertyAddress } from "@/lib/utils";
+import type { ScheduleTech } from "@/components/schedule/job-card";
 
 type FieldJob = {
   id: string;
@@ -11,6 +13,7 @@ type FieldJob = {
   title: string;
   status: string;
   scheduledStart: Date | null;
+  technicianId?: string | null;
   technician?: { firstName: string; lastName: string } | null;
   property: {
     address1: string;
@@ -35,11 +38,13 @@ export function FieldJobList({
   days,
   showTech,
   routeByJobId = {},
+  technicians = [],
 }: {
   jobs: FieldJob[];
   days: Date[];
   showTech: boolean;
   routeByJobId?: Record<string, RouteHint>;
+  technicians?: ScheduleTech[];
 }) {
   return (
     <div className="space-y-4">
@@ -121,6 +126,14 @@ export function FieldJobList({
                       </p>
                     </Link>
                     <NavigateLink destination={place} className="mt-3" />
+                    <div className="mt-3">
+                      <JobVisitControls
+                        jobId={job.id}
+                        status={job.status}
+                        technicianId={job.technicianId}
+                        technicians={technicians}
+                      />
+                    </div>
                   </article>
                 );
               })

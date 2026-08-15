@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { addDays, format, startOfWeek } from "date-fns";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { JOB_TYPE_BAR } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { dateKey } from "@/lib/dates";
@@ -27,7 +28,7 @@ export function WeekBoard({
   onCopyRequest?: (request: CopyRequest) => void;
   onNewJob?: (technicianId: string, day: Date, time?: string) => void;
 }) {
-  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(
+  const { saving, onDragStart, onDragOver, onDrop } = useScheduleBoard(
     [...jobs, ...unscheduled],
     mode,
     onCopyRequest,
@@ -39,8 +40,8 @@ export function WeekBoard({
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
         {mode === "copy"
-          ? "Drop a job on another day to open a new-trip card. Same client and job; new date, tech, and visit notes."
-          : "Tap + Job on a square, or drag a stop onto a tech and day. Hold Alt/Option to copy a trip."}{" "}
+          ? "Drop a job on another day to copy it. Check in when you arrive; check out asks if they need a follow-up."
+          : "Tap + Job on a square, or drag a stop onto a tech and day. Check in on site. Check out asks follow-up vs complete."}{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
       <div className="space-y-3 md:hidden">
@@ -87,15 +88,15 @@ export function WeekBoard({
                         <div className="mt-1">
                           <StatusBadge status={job.status} />
                         </div>
-                        <button
-                          type="button"
-                          className="mt-2 rounded-lg bg-ink px-2 py-1 text-xs font-semibold text-white"
-                          onClick={() =>
-                            void placeJob(job.id, job.technicianId ?? technicians[0]?.id ?? "", addDays(day, 1), true)
-                          }
-                        >
-                          New trip
-                        </button>
+                        <div className="mt-2">
+                          <JobVisitControls
+                            jobId={job.id}
+                            status={job.status}
+                            technicianId={job.technicianId}
+                            technicians={technicians}
+                            compact
+                          />
+                        </div>
                       </article>
                     );
                   })}
@@ -170,6 +171,13 @@ export function WeekBoard({
                             <div className="mt-1">
                               <StatusBadge status={job.status} />
                             </div>
+                            <JobVisitControls
+                              jobId={job.id}
+                              status={job.status}
+                              technicianId={job.technicianId}
+                              technicians={technicians}
+                              compact
+                            />
                           </article>
                         ))}
                         <button
