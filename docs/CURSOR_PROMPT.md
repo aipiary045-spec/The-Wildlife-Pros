@@ -118,7 +118,7 @@ Everything else requires a session (`src/proxy.ts`).
 ## Demo
 
 ```
-owner@thewildlifepros.com / demo
+admin@thewildlifepros.com / demo
 dispatch@thewildlifepros.com / demo
 tech@thewildlifepros.com / demo
 Client hub: /portal/demo-client-hub

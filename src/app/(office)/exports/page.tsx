@@ -41,7 +41,7 @@ export default async function ExportsPage() {
             Add a Google service account in <code>.env</code>:
             <pre className="mt-2 overflow-x-auto text-xs">
               {`GOOGLE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
-GOOGLE_SHEETS_OWNER_EMAIL='owner@thewildlifepros.com'`}
+GOOGLE_SHEETS_OWNER_EMAIL='admin@thewildlifepros.com'`}
             </pre>
             Share is automatic to that owner email. Optional: set{" "}
             <code>GOOGLE_SHEETS_SPREADSHEET_ID</code> to force a specific existing file.

@@ -26,7 +26,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Owner | owner@thewildlifepros.com | demo |
+| Admin | admin@thewildlifepros.com | demo |
 | Dispatch | dispatch@thewildlifepros.com | demo |
 | Technician | tech@thewildlifepros.com | demo |
 

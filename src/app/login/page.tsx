@@ -47,7 +47,7 @@ export default async function LoginPage({
                 name="email"
                 type="email"
                 autoComplete="username"
-                defaultValue="owner@thewildlifepros.com"
+                defaultValue="admin@thewildlifepros.com"
                 className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2"
               />
             </label>
@@ -66,7 +66,7 @@ export default async function LoginPage({
               Open dispatch board
             </button>
             <p className="text-xs text-stone-500">
-              Demo logins: owner@, dispatch@, or tech@thewildlifepros.com · password <strong>demo</strong>
+              Demo logins: admin@, dispatch@, or tech@thewildlifepros.com · password <strong>demo</strong>
             </p>
           </form>
         </div>

@@ -68,7 +68,7 @@ async function main() {
     prisma.user.create({
       data: {
         organizationId: org.id,
-        email: "owner@thewildlifepros.com",
+        email: "admin@thewildlifepros.com",
         passwordHash,
         firstName: "Riley",
         lastName: "Hart",
@@ -691,7 +691,7 @@ async function main() {
   });
 
   console.log("Seeded The Wildlife Pros demo data.");
-  console.log("Logins: owner@ / dispatch@ / tech@thewildlifepros.com  password: demo");
+  console.log("Logins: admin@ / dispatch@ / tech@thewildlifepros.com  password: demo");
   console.log("Client hub: /portal/demo-client-hub");
 }
 
