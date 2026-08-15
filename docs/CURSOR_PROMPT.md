@@ -40,7 +40,7 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 - Next.js App Router (current major) + TypeScript + Tailwind v4
 - PostgreSQL + Prisma 7 (`prisma.config.ts`, `@prisma/adapter-pg`). SQLite is a planned local/Pi option; Google Sheets is export-only (see `docs/DATA.md`).
 - Cookie JWT auth (`jose` + `bcryptjs`) — no NextAuth unless a later PR needs OAuth
-- Route math in `src/lib/routing.ts` (Haversine, nearest-neighbor, 2-opt). Persist/Prisma lives in `src/lib/route-plan.ts`.
+- Route math in `src/lib/routing.ts` (Haversine, nearest-neighbor, 2-opt). Persist/Prisma lives in `src/lib/route-plan.ts`. Map URLs in `src/lib/maps.ts`; geocoding / Mapbox Directions in `src/lib/geocode.ts`.
 - Demo seed in `prisma/seed.ts`
 
 Do not introduce a second framework. Prefer server components for reads, route handlers for mutations, and small `"use client"` islands for drag-drop / portal actions.
@@ -69,7 +69,7 @@ Everything else requires a session (`src/proxy.ts`).
 - Equipment has a global serial number. A live **EquipmentDeployment** is the site-specific status.
 - Capture events may point at a deployment. Logging a capture should flip that deployment to `ACTIVE_CAPTURE`.
 - Photos must be able to reference job, property, and entry point.
-- Route optimize preview first, then persist. Default mode `reorder` keeps technician assignments and only fixes driving order; `rebalance` may move stops. Persist rewrites `RouteDay` / `RouteStop` and `scheduledStart` from one start-hour clock. Return-to-shop miles are totals only, not a fake stop. Field `/field` shows saved sequence, drive, and ETA when a `RouteDay` exists.
+- Route optimize preview first, then persist. Default mode `reorder` keeps technician assignments and only fixes driving order; `rebalance` may move stops. Persist rewrites `RouteDay` / `RouteStop` and `scheduledStart` from one start-hour clock. Return-to-shop miles are totals only, not a fake stop. Field `/field` shows saved sequence, drive, and ETA when a `RouteDay` exists. Techs navigate by **street address** (Google/Apple Maps); lat/lng is for the optimizer and a fallback pin. Geocode on property save and before optimize when coords are missing. If `MAPBOX_TOKEN` is set, snap the chosen order to road time; otherwise keep Haversine.
 - A technician has one **Timesheet** per calendar day and one or more **TimePunch** pairs. Clock-in opens a punch; clock-out closes it. Only one punch may be open. Office roles approve sheets.
 - Google Sheets sync reuses one spreadsheet (`Organization.googleSpreadsheetId`). Upsert rows by id. Never create a second workbook on a later upload.
 
@@ -131,7 +131,7 @@ Client hub: /portal/demo-client-hub
 2. Recurring visit generator from `RecurringSchedule`
 3. File uploads to object storage instead of public SVG placeholders
 4. Square Terminal / Mobile Payments SDK for the field app (cards already go through Square on the invoice page)
-5. Map tiles + turn-by-turn using Mapbox/Google; keep `routing.ts` as the offline fallback (Haversine planner is already the day-route tool)
+5. Map tiles + in-app turn-by-turn (Navigate already opens Google/Apple Maps by address; Mapbox Directions is optional for road ETAs)
 6. Push notifications / SMS visit reminders
 7. React Native or PWA packaging of `/field`
 8. Multi-state compliance template library

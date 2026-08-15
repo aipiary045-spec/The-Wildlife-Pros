@@ -11,7 +11,7 @@ All office endpoints require the `critterops_session` cookie unless noted.
 ## CRM & jobs
 
 `GET /api/clients`  
-`POST /api/clients` `{ firstName, lastName, email, phone, companyName, notes, property? }`  
+`POST /api/clients` `{ firstName, lastName, email, phone, companyName, notes, property? }` — if the property has an address but no lat/lng, CritterOps geocodes it  
 `GET /api/clients/:id`  
 `PATCH /api/clients/:id`
 
@@ -42,7 +42,7 @@ Clients never pay through CritterOps. Square is the processor.
 
 Default `mode` is `reorder`: keep each job on its technician and only fix driving order. Unassigned jobs go to the nearest home. `rebalance` may move stops between selected techs. `persist: false` (the UI preview) returns the plan without writing. `persist: true` upserts `RouteDay` / `RouteStop`, rewrites `scheduledStart` from `startHour` (default 8:00) plus each stop’s ETA offset, and deletes a saved route when a selected tech ends up with zero stops.
 
-Jobs that are on site, in progress, completed, invoiced, cancelled, or on hold are left alone. Jobs without property coordinates, and jobs assigned to a selected tech with no home GPS, come back in `skipped`. Average speed is 22 mph (Haversine, nearest-neighbor, 2-opt) until a maps provider is wired in.
+Jobs that are on site, in progress, completed, invoiced, cancelled, or on hold are left alone. Jobs without coordinates are geocoded from the property **address** when possible (Mapbox if `MAPBOX_TOKEN` is set, otherwise OpenStreetMap Nominatim). If geocoding fails they come back in `skipped`. Techs navigate by address in Google/Apple Maps; GPS is only the backup pin. Average speed is 22 mph (Haversine) unless Mapbox Directions snaps the previewed order to road time. `driveTimes` in the POST response is `haversine` or `mapbox`.
 
 ## Wildlife field data
 

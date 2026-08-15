@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { NavigateLink } from "@/components/maps/NavigateLink";
 
 type TechOption = {
   id: string;
@@ -20,6 +21,8 @@ type PlanStop = {
   title: string;
   number?: string;
   address?: string;
+  lat?: number | null;
+  lng?: number | null;
   clientName?: string;
   milesFromPrev: number;
   driveMinFromPrev: number;
@@ -44,6 +47,7 @@ type PlanResponse = {
   mode: "reorder" | "rebalance";
   startHour: number;
   persisted: boolean;
+  driveTimes?: "haversine" | "mapbox";
   assignments: PlanAssignment[];
   skipped: Array<{ id: string; number: string; title: string; reason: string }>;
   warnings: Array<{ technicianId: string; message: string }>;
@@ -234,6 +238,7 @@ export function RoutePlanner({
             <p className="text-sm text-stone-500">
               {plan.mode === "reorder" ? "Kept assignments" : "Rebalanced"} · start{" "}
               {format(new Date(2026, 0, 1, plan.startHour), "h:mm a")}
+              {plan.driveTimes === "mapbox" ? " · road times" : " · straight-line miles"}
             </p>
           </div>
           {plan.warnings.map((warning) => (
@@ -251,7 +256,9 @@ export function RoutePlanner({
                       {job.number}
                     </Link>{" "}
                     {job.title} ·{" "}
-                    {job.reason === "missing_coordinates" ? "no property GPS" : "tech has no home GPS"}
+                    {job.reason === "missing_coordinates"
+                      ? "could not geocode this address"
+                      : "tech has no home GPS"}
                   </li>
                 ))}
               </ul>
@@ -261,9 +268,22 @@ export function RoutePlanner({
             {plan.assignments.map((assignment) => (
               <article key={assignment.technicianId} className="rounded-2xl border border-line bg-panel p-4">
                 <div className="mb-3 flex items-start justify-between gap-3">
-                  <h3 className="font-semibold">
-                    {assignment.technician.firstName} {assignment.technician.lastName}
-                  </h3>
+                  <div>
+                    <h3 className="font-semibold">
+                      {assignment.technician.firstName} {assignment.technician.lastName}
+                    </h3>
+                    {assignment.stops.length > 0 ? (
+                      <NavigateLink
+                        className="mt-2"
+                        label="Navigate this route"
+                        stops={assignment.stops.map((stop) => ({
+                          address: stop.address,
+                          lat: stop.lat,
+                          lng: stop.lng,
+                        }))}
+                      />
+                    ) : null}
+                  </div>
                   <p className="text-right text-xs text-stone-500">
                     {assignment.totalMiles} mi · {assignment.totalDriveMin} min drive
                     <br />
@@ -292,6 +312,10 @@ export function RoutePlanner({
                               {stop.milesFromPrev} mi · ETA {format(new Date(stop.eta), "h:mm a")} ·{" "}
                               {stop.durationMin} min on site
                             </p>
+                            <NavigateLink
+                              className="mt-2"
+                              destination={{ address: stop.address, lat: stop.lat, lng: stop.lng }}
+                            />
                           </div>
                         </div>
                       </li>

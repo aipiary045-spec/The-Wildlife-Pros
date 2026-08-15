@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  applyMeasuredLegs,
   applyStartClock,
   assignJobsToTechnicians,
   haversineMiles,
@@ -89,6 +90,31 @@ test("parse helpers default safely", () => {
   assert.equal(parseStartHour("7"), 7);
   assert.equal(parseStartHour(3), 5);
   assert.equal(parseStartHour(20), 12);
+});
+
+test("applyMeasuredLegs rebuilds ETAs from road minutes", () => {
+  const start = { id: "shop", lat: 35.2, lng: -80.84 };
+  const route = optimizeRoute(
+    [
+      { id: "a", lat: 35.21, lng: -80.84, durationMin: 30 },
+      { id: "b", lat: 35.22, lng: -80.84, durationMin: 30 },
+    ],
+    start,
+  );
+  const measured = applyMeasuredLegs(
+    route,
+    [
+      { miles: 1, minutes: 10 },
+      { miles: 2, minutes: 20 },
+    ],
+    { miles: 3, minutes: 15 },
+  );
+  assert.equal(measured.stops[0].etaMinutesFromStart, 10);
+  assert.equal(measured.stops[1].etaMinutesFromStart, 60);
+  assert.equal(measured.totalMiles, 3);
+  assert.equal(measured.totalDriveMin, 30);
+  assert.equal(measured.returnMiles, 3);
+  assert.equal(measured.returnDriveMin, 15);
 });
 
 test("applyStartClock uses one origin for ETA and scheduled start", () => {

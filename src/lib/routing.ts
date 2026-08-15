@@ -273,3 +273,37 @@ export function planDayRoutes(
   }
   return reorderJobsByTechnician(technicians, jobs);
 }
+
+/** Replace Haversine legs with measured road miles/minutes after the stop order is chosen. */
+export function applyMeasuredLegs(
+  route: OptimizedRoute,
+  stopLegs: Array<{ miles: number; minutes: number }>,
+  returnLeg?: { miles: number; minutes: number },
+): OptimizedRoute {
+  let elapsed = 0;
+  let miles = 0;
+  let drive = 0;
+  const stops = route.stops.map((stop, index) => {
+    const leg = stopLegs[index] ?? { miles: stop.milesFromPrev, minutes: stop.driveMinFromPrev };
+    elapsed += leg.minutes;
+    miles += leg.miles;
+    drive += leg.minutes;
+    const eta = elapsed;
+    elapsed += stop.durationMin ?? 60;
+    return {
+      ...stop,
+      milesFromPrev: Number(leg.miles.toFixed(2)),
+      driveMinFromPrev: Math.round(leg.minutes),
+      etaMinutesFromStart: eta,
+    };
+  });
+  const back = returnLeg ?? { miles: route.returnMiles, minutes: route.returnDriveMin };
+  return {
+    ...route,
+    stops,
+    totalMiles: Number(miles.toFixed(2)),
+    totalDriveMin: Math.round(drive),
+    returnMiles: Number(back.miles.toFixed(2)),
+    returnDriveMin: Math.round(back.minutes),
+  };
+}

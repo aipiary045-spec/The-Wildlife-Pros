@@ -43,6 +43,8 @@ src/app/field            technician phone UI
 src/app/portal           customer hub
 src/app/api              REST API
 src/lib/routing.ts       route optimizer
+src/lib/maps.ts          Google/Apple Maps links (address first)
+src/lib/geocode.ts       geocode addresses; optional Mapbox road times
 docs/CURSOR_PROMPT.md    standing Cursor brief
 docs/API.md              endpoint list
 docs/DATA.md             cheap self-host (Pi/Postgres), Google Sheets sync

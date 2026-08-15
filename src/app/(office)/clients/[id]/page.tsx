@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { NavigateLink } from "@/components/maps/NavigateLink";
 import { clientName, formatMoney, formatPhone, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,14 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
           <article key={property.id} className="rounded-2xl border border-line bg-panel p-5">
             <h2 className="font-semibold">{property.label}</h2>
             <p className="text-sm text-stone-600">{propertyAddress(property)}</p>
+            <NavigateLink
+              className="mt-3"
+              destination={{
+                address: propertyAddress(property),
+                lat: property.lat,
+                lng: property.lng,
+              }}
+            />
             <p className="mt-2 text-xs text-stone-500">
               {property.accessNotes ?? "No access notes"} · {property.petsOnSite ? "Pets on site" : "No pets noted"}
             </p>

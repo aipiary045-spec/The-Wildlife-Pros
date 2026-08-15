@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { addDays, format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { NavigateLink } from "@/components/maps/NavigateLink";
 import { RoutePlanner } from "@/components/routes/RoutePlanner";
 import { dateKey, parseDateParam } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { dayWindow } from "@/lib/route-plan";
+import { propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +46,9 @@ export default async function RoutesPage({
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Route optimization</h1>
         <p className="text-stone-600">
-          Preview a driving order from each tech&apos;s home, then apply it to the schedule. Keep techs on
-          their own stops, or rebalance the whole day. Drive times use straight-line miles at 22 mph until a
-          maps provider is wired in.
+          Preview a driving order, then apply it to the schedule. Techs navigate by street address in Google
+          or Apple Maps (GPS is only the backup pin). Drive times are straight-line miles at 22 mph unless a
+          Mapbox token is set, which snaps the previewed order to road time.
         </p>
       </div>
 
@@ -92,9 +94,20 @@ export default async function RoutesPage({
             {routes.map((route) => (
               <article key={route.id} className="rounded-2xl border border-line bg-panel p-5">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="font-semibold">
-                    {route.technician.firstName} {route.technician.lastName}
-                  </h3>
+                  <div>
+                    <h3 className="font-semibold">
+                      {route.technician.firstName} {route.technician.lastName}
+                    </h3>
+                    <NavigateLink
+                      className="mt-2"
+                      label="Navigate this route"
+                      stops={route.stops.map((stop) => ({
+                        address: propertyAddress(stop.job.property),
+                        lat: stop.job.property.lat,
+                        lng: stop.job.property.lng,
+                      }))}
+                    />
+                  </div>
                   <p className="text-right text-sm text-stone-500">
                     {route.totalMiles} mi · {route.totalDriveMin} min drive
                     {route.returnMiles ? (
@@ -118,6 +131,14 @@ export default async function RoutesPage({
                         {stop.job.property.address1} · +{stop.milesFromPrev} mi · {stop.driveMinFromPrev} min
                         {stop.eta ? ` · ETA ${format(stop.eta, "h:mm a")}` : ""}
                       </p>
+                      <NavigateLink
+                        className="mt-2"
+                        destination={{
+                          address: propertyAddress(stop.job.property),
+                          lat: stop.job.property.lat,
+                          lng: stop.job.property.lng,
+                        }}
+                      />
                     </li>
                   ))}
                 </ol>

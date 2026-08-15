@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { geocodeAddress, snapAssignmentsToRoads } from "@/lib/geocode";
 import { dateKey, parseDateParam } from "@/lib/dates";
 import { clientName, propertyAddress } from "@/lib/utils";
 import {
@@ -9,6 +10,7 @@ import {
   type OptimizeMode,
   type RouteJob,
   type TechnicianHome,
+  type TechnicianRoute,
 } from "@/lib/routing";
 
 export const ROUTABLE_STATUSES = ["UNSCHEDULED", "SCHEDULED", "EN_ROUTE"] as const;
@@ -54,6 +56,7 @@ export async function loadRoutableTechnicians(technicianIds?: string[]) {
       role: true,
       homeLat: true,
       homeLng: true,
+      homeAddress: true,
     },
   });
 }
@@ -151,18 +154,54 @@ export function toGeoTechnicians(
     }));
 }
 
+export async function hydrateMissingCoordinates(
+  technicians: Awaited<ReturnType<typeof loadRoutableTechnicians>>,
+  jobs: LoadedJob[],
+  selectedIds: Set<string>,
+) {
+  for (const tech of technicians) {
+    if (tech.homeLat != null && tech.homeLng != null) continue;
+    const query = tech.homeAddress?.replace(/^Shop\s*·\s*/i, "").trim();
+    if (!query) continue;
+    const hit = await geocodeAddress(query);
+    if (!hit) continue;
+    await prisma.user.update({
+      where: { id: tech.id },
+      data: { homeLat: hit.lat, homeLng: hit.lng },
+    });
+    tech.homeLat = hit.lat;
+    tech.homeLng = hit.lng;
+  }
+
+  for (const job of jobs) {
+    const assignedToSelected = Boolean(job.technicianId && selectedIds.has(job.technicianId));
+    const unassigned = !job.technicianId;
+    if (!assignedToSelected && !unassigned) continue;
+    if (job.property.lat != null && job.property.lng != null) continue;
+    const hit = await geocodeAddress(propertyAddress(job.property));
+    if (!hit) continue;
+    await prisma.property.update({
+      where: { id: job.property.id },
+      data: { lat: hit.lat, lng: hit.lng },
+    });
+    job.property.lat = hit.lat;
+    job.property.lng = hit.lng;
+  }
+}
+
 export function buildPlanPayload(input: {
   day: Date;
   mode: OptimizeMode;
   startHour: number;
   persisted: boolean;
+  driveTimes: "haversine" | "mapbox";
   technicians: Awaited<ReturnType<typeof loadRoutableTechnicians>>;
   geoTechs: TechnicianHome[];
   geoJobs: Array<RouteJob & { job: LoadedJob }>;
+  assignments: TechnicianRoute[];
   skipped: SkippedJob[];
   warnings: RouteWarning[];
 }) {
-  const assignments = planDayRoutes(input.geoTechs, input.geoJobs, input.mode);
   const jobsById = new Map(input.geoJobs.map((item) => [item.id, item.job]));
 
   return {
@@ -170,7 +209,8 @@ export function buildPlanPayload(input: {
     mode: input.mode,
     startHour: input.startHour,
     persisted: input.persisted,
-    assignments: assignments.map((assignment) => {
+    driveTimes: input.driveTimes,
+    assignments: input.assignments.map((assignment) => {
       const tech = input.technicians.find((item) => item.id === assignment.technicianId);
       return {
         technicianId: assignment.technicianId,
@@ -188,6 +228,8 @@ export function buildPlanPayload(input: {
             title: job?.title ?? stop.title ?? stop.id,
             number: job?.number,
             address: job ? propertyAddress(job.property) : undefined,
+            lat: job?.property.lat ?? stop.lat,
+            lng: job?.property.lng ?? stop.lng,
             clientName: job ? clientName(job.client) : undefined,
             milesFromPrev: stop.milesFromPrev,
             driveMinFromPrev: stop.driveMinFromPrev,
@@ -211,6 +253,39 @@ export function buildPlanPayload(input: {
 }
 
 export type PlanPayload = ReturnType<typeof buildPlanPayload>;
+
+export async function buildDayPlan(input: {
+  day: Date;
+  mode: OptimizeMode;
+  startHour: number;
+  persist: boolean;
+  technicianIds?: string[];
+}) {
+  const technicians = await loadRoutableTechnicians(input.technicianIds);
+  const jobs = await loadDayJobs(input.day);
+  const selectedIds = new Set(technicians.map((tech) => tech.id));
+  await hydrateMissingCoordinates(technicians, jobs, selectedIds);
+  const geoTechs = toGeoTechnicians(technicians);
+  const warnings = technicianWarnings(technicians);
+  const geoTechIds = new Set(geoTechs.map((tech) => tech.id));
+  const { geoJobs, skipped } = splitRoutableJobs(jobs, selectedIds, geoTechIds);
+  const planned = planDayRoutes(geoTechs, geoJobs, input.mode);
+  const snapped = await snapAssignmentsToRoads(planned, geoTechs);
+  const plan = buildPlanPayload({
+    day: input.day,
+    mode: input.mode,
+    startHour: input.startHour,
+    persisted: input.persist,
+    driveTimes: snapped.driveTimes,
+    technicians,
+    geoTechs,
+    geoJobs,
+    assignments: snapped.assignments,
+    skipped,
+    warnings,
+  });
+  return { plan, jobs, geoTechs };
+}
 
 export async function persistPlan(day: Date, plan: PlanPayload, jobs: LoadedJob[], geoTechs: TechnicianHome[]) {
   const { date } = dayWindow(day);

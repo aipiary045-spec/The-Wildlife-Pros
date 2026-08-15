@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { DISPOSITION_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
+import { NavigateLink } from "@/components/maps/NavigateLink";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,14 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           <p className="text-stone-600">
             {clientName(job.client)} · {propertyAddress(job.property)}
           </p>
+          <NavigateLink
+            className="mt-3"
+            destination={{
+              address: propertyAddress(job.property),
+              lat: job.property.lat,
+              lng: job.property.lng,
+            }}
+          />
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge status={job.status} />

@@ -3,17 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api";
 import { dateKey } from "@/lib/dates";
 import {
-  buildPlanPayload,
+  buildDayPlan,
   dayWindow,
-  loadDayJobs,
-  loadRoutableTechnicians,
   parseOptimizeMode,
   parsePlanDate,
   parseStartHour,
   persistPlan,
-  splitRoutableJobs,
-  technicianWarnings,
-  toGeoTechnicians,
 } from "@/lib/route-plan";
 
 export const POST = withAuth(async (_session, request) => {
@@ -26,31 +21,17 @@ export const POST = withAuth(async (_session, request) => {
   };
 
   const day = parsePlanDate(body.date);
-  const mode = parseOptimizeMode(body.mode);
-  const startHour = parseStartHour(body.startHour);
   const persist = body.persist === true;
   const technicianIds = Array.isArray(body.technicianIds)
     ? body.technicianIds.filter((id) => typeof id === "string" && id.length > 0)
     : undefined;
 
-  const technicians = await loadRoutableTechnicians(technicianIds);
-  const geoTechs = toGeoTechnicians(technicians);
-  const warnings = technicianWarnings(technicians);
-  const jobs = await loadDayJobs(day);
-  const selectedIds = new Set(technicians.map((tech) => tech.id));
-  const geoTechIds = new Set(geoTechs.map((tech) => tech.id));
-  const { geoJobs, skipped } = splitRoutableJobs(jobs, selectedIds, geoTechIds);
-
-  const plan = buildPlanPayload({
+  const { plan, jobs, geoTechs } = await buildDayPlan({
     day,
-    mode,
-    startHour,
-    persisted: persist,
-    technicians,
-    geoTechs,
-    geoJobs,
-    skipped,
-    warnings,
+    mode: parseOptimizeMode(body.mode),
+    startHour: parseStartHour(body.startHour),
+    persist,
+    technicianIds,
   });
 
   if (persist) {
