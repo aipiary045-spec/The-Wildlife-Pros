@@ -17,20 +17,11 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
         include: { lineItems: true, property: true },
         orderBy: { createdAt: "desc" },
       },
-      invoices: {
-        where: { status: { in: ["SENT", "VIEWED", "PARTIAL", "OVERDUE", "PAID"] } },
-        include: { lineItems: true, payments: true },
-        orderBy: { createdAt: "desc" },
-      },
     },
   });
   if (!client) return NextResponse.json({ error: "Portal not found" }, { status: 404 });
 
   await prisma.quote.updateMany({
-    where: { clientId: client.id, status: "SENT" },
-    data: { status: "VIEWED", viewedAt: new Date() },
-  });
-  await prisma.invoice.updateMany({
     where: { clientId: client.id, status: "SENT" },
     data: { status: "VIEWED", viewedAt: new Date() },
   });
@@ -43,7 +34,6 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
       properties: client.properties,
       jobs: client.jobs,
       quotes: client.quotes,
-      invoices: client.invoices,
     },
   });
 }

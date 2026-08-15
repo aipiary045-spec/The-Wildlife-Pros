@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -15,7 +16,9 @@ export default async function InvoicesPage() {
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-3xl tracking-wide">Invoices</h1>
-        <p className="text-stone-600">Generate from completed jobs and track balances.</p>
+        <p className="text-stone-600">
+          Staff collect through Square (Terminal, POS, or keyed card). Clients do not pay inside CritterOps.
+        </p>
       </div>
       <div className="overflow-hidden rounded-2xl border border-line bg-panel">
         <table className="w-full text-left text-sm">
@@ -32,7 +35,9 @@ export default async function InvoicesPage() {
             {invoices.map((invoice) => (
               <tr key={invoice.id} className="border-t border-line">
                 <td className="px-4 py-3">
-                  <p className="font-medium">{invoice.number}</p>
+                  <Link href={`/invoices/${invoice.id}`} className="font-medium hover:text-orange">
+                    {invoice.number}
+                  </Link>
                   <p className="text-xs text-stone-500">{invoice.job?.number ?? "Manual"}</p>
                 </td>
                 <td className="px-4 py-3">{clientName(invoice.client)}</td>

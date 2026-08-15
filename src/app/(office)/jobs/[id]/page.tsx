@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
@@ -22,6 +23,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       exclusions: true,
       applications: { include: { product: true } },
       photos: { include: { entryPoint: true } },
+      invoices: true,
     },
   });
   if (!job) notFound();
@@ -52,6 +54,11 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         <Card title="Value">
           <p className="font-display text-2xl">{formatMoney(job.total)}</p>
           <p className="text-sm text-stone-600">Tax {formatMoney(job.taxAmount)}</p>
+          {job.invoices.map((invoice) => (
+            <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
+              Collect {invoice.number} via Square · {formatMoney(invoice.balance)} due
+            </Link>
+          ))}
         </Card>
         <Card title="Instructions">
           <p className="text-sm">{job.instructions ?? "No special instructions."}</p>

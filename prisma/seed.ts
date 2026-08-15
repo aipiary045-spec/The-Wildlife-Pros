@@ -619,7 +619,17 @@ async function main() {
       total: 159.8,
       balance: 59.8,
       lineItems: { create: [{ name: "Wildlife inspection", quantity: 1, unitPrice: 149 }] },
-      payments: { create: [{ amount: 100, method: "CARD", reference: "visa-4242" }] },
+      payments: {
+        create: [
+          {
+            amount: 100,
+            method: "SQUARE",
+            reference: "sq-demo-1042",
+            squarePaymentId: "sq-demo-1042",
+            notes: "Square Terminal on site",
+          },
+        ],
+      },
     },
   });
 

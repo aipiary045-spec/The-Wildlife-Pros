@@ -13,4 +13,6 @@ Keep wildlife domain objects (Equipment, EquipmentDeployment, CaptureEvent, Entr
 
 Daily time uses Timesheet + TimePunch (clock in/out). Do not replace that with ad-hoc timestamps on User.
 
+Payments go through Square and are staff-collected only. Do not add a customer checkout or invoice pay button on the client hub.
+
 Prefer server components for reads and existing `/api` route handlers for writes. Match current naming and status enums.

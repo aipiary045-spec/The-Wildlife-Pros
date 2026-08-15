@@ -25,11 +25,9 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
         <p className="text-xs uppercase tracking-widest text-orange">Client</p>
         <h1 className="font-display text-3xl tracking-wide">{clientName(client)}</h1>
         <p className="text-stone-600">
-          {formatPhone(client.phone)} · {client.email} · portal token {client.portalToken}
+          {formatPhone(client.phone)} · {client.email}
         </p>
-        <Link href={`/portal/${client.portalToken}`} className="text-sm font-medium text-orange">
-          Open client hub
-        </Link>
+        <p className="text-sm text-stone-500">Billing is collected by staff in Square — clients do not log in to pay.</p>
       </div>
       <section className="grid gap-4 md:grid-cols-2">
         {client.properties.map((property) => (
@@ -62,9 +60,9 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
         </Panel>
         <Panel title="Invoices">
           {client.invoices.map((invoice) => (
-            <p key={invoice.id} className="py-2 text-sm">
+            <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="block py-2 text-sm hover:text-orange">
               {invoice.number} · {formatMoney(invoice.balance)} due <StatusBadge status={invoice.status} />
-            </p>
+            </Link>
           ))}
         </Panel>
       </section>

@@ -25,7 +25,12 @@ All office endpoints require the `critterops_session` cookie unless noted.
 `GET|POST /api/quotes`  
 `GET|PATCH /api/quotes/:id`  
 `GET|POST /api/invoices` — `POST` with `jobId` copies job line items and marks the job `INVOICED`  
-`POST /api/payments` `{ invoiceId, amount, method, reference }`
+`GET /api/invoices/:id`  
+`POST /api/payments` `{ invoiceId, amount, method: "SQUARE"|"CASH"|"CHECK", reference }` — staff record of a Terminal/POS/cash/check payment  
+`GET /api/payments/square/config` — application id, location, sandbox, configured  
+`POST /api/payments/square` `{ invoiceId, sourceId, amount, idempotencyKey }` — staff-keyed Square charge
+
+Clients never pay through CritterOps. Square is the processor.
 
 ## Dispatch & routing
 
@@ -56,5 +61,5 @@ Worked minutes = sum of punch spans minus `breakMin`.
 
 ## Client hub (public token)
 
-`GET /api/portal/:token`  
-`POST /api/portal/:token/actions` `{ type: "approve_quote"|"decline_quote"|"pay_invoice", id, note?, method? }`
+`GET /api/portal/:token` — visits and quotes only  
+`POST /api/portal/:token/actions` `{ type: "approve_quote"|"decline_quote", id, note? }`

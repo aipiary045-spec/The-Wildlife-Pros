@@ -18,7 +18,8 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 - Recurring service visits
 - Digital quotes clients approve in a Client Hub
 - Invoices generated from completed jobs, balances, partial payments
-- Client Hub: upcoming appointments, approve/decline quotes, pay invoices
+- **Payments are Square-only and staff-collected.** Clients do not log into CritterOps to pay. Techs/office take Terminal, POS, cash/check, or a staff-keyed Square card charge on the invoice.
+- Optional Client Hub for visit info / quote approval only — never billing
 - Technician field view (phone-first)
 - Route optimization for a day’s stops
 - Daily timesheets: technicians clock in/out (multiple punches per day), office reviews and approves hours
@@ -64,6 +65,7 @@ Everything else requires a session (`src/proxy.ts`).
 - A **Client** owns many **Properties**. Jobs always belong to one property.
 - Quotes and invoices are document records with line items; totals are stored denormalized.
 - Completing a job should make “create invoice” a one-click API (`POST /api/invoices` with `jobId`).
+- Do not add customer self-serve invoice payment. Square is the processor. `POST /api/payments/square` charges a staff-tokenized card; `POST /api/payments` records Terminal/POS/cash/check.
 - Equipment has a global serial number. A live **EquipmentDeployment** is the site-specific status.
 - Capture events may point at a deployment. Logging a capture should flip that deployment to `ACTIVE_CAPTURE`.
 - Photos must be able to reference job, property, and entry point.
@@ -84,7 +86,9 @@ Everything else requires a session (`src/proxy.ts`).
 | GET/POST | `/api/quotes` | Estimates |
 | PATCH | `/api/quotes/[id]` | send / approve / decline |
 | GET/POST | `/api/invoices` | Billing; pass `jobId` to copy line items |
-| POST | `/api/payments` | Record payment, update balance |
+| POST | `/api/payments` | Record Terminal / cash / check (staff only) |
+| GET | `/api/payments/square/config` | Public Square app/location flags |
+| POST | `/api/payments/square` | Charge a Square payment token (staff only) |
 | GET/PATCH | `/api/schedule` | Week board + drag-drop reschedule |
 | GET/POST | `/api/routes/optimize` | Preview or persist optimized routes |
 | GET/POST | `/api/traps` | Serialized inventory |
@@ -94,7 +98,7 @@ Everything else requires a session (`src/proxy.ts`).
 | GET/POST | `/api/photos` | Tagged documentation |
 | GET/POST | `/api/compliance` | Forms + application rollup |
 | GET | `/api/portal/[token]` | Client hub payload |
-| POST | `/api/portal/[token]/actions` | approve quote / pay invoice |
+| POST | `/api/portal/[token]/actions` | approve / decline quote only |
 | GET | `/api/timesheets` | Office/tech timesheet list |
 | GET | `/api/timesheets/me` | Current user today + recent |
 | POST | `/api/timesheets/clock` | `{ action: "in" \| "out" }` |
@@ -107,7 +111,7 @@ Everything else requires a session (`src/proxy.ts`).
 - Money via `formatMoney`
 - Office pages are `force-dynamic` and read Prisma directly
 - Field app is a single-column phone layout
-- Client hub is unauthenticated except for the unguessable `portalToken`
+- Optional client hub is unauthenticated except for the unguessable `portalToken` and must never collect cards
 
 ## Demo
 
@@ -124,7 +128,7 @@ Client hub: /portal/demo-client-hub
 1b. Job-level timers that attach `TimeEntry` rows to the open daily timesheet
 2. Recurring visit generator from `RecurringSchedule`
 3. File uploads to object storage instead of public SVG placeholders
-4. Stripe (or similar) for real Client Hub card payments
+4. Square Terminal / Mobile Payments SDK for the field app (cards already go through Square on the invoice page)
 5. Map tiles + turn-by-turn using Mapbox/Google; keep `routing.ts` as the offline fallback
 6. Push notifications / SMS visit reminders
 7. React Native or PWA packaging of `/field`

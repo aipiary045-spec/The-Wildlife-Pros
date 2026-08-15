@@ -1,6 +1,8 @@
 # CritterOps
 
-Field-service operations for **The Wildlife Pros** — Jobber-style CRM, dispatch, quotes, invoicing, timesheets, and a client hub, plus trap inventory, species logs, exclusion photos, and pesticide compliance.
+Field-service operations for **The Wildlife Pros** — Jobber-style CRM, dispatch, quotes, invoicing, Square payments, timesheets, plus trap inventory, species logs, exclusion photos, and pesticide compliance.
+
+Payments are collected by staff in **Square** (Terminal, POS, or a keyed card on the invoice). Customers do not log in to pay.
 
 ## Stack
 

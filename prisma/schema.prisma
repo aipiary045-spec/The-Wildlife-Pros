@@ -106,6 +106,7 @@ enum PaymentMethod {
   CASH
   CHECK
   CARD
+  SQUARE
   ACH
   OTHER
 }
@@ -543,15 +544,17 @@ model InvoiceLineItem {
 }
 
 model Payment {
-  id        String        @id @default(cuid())
-  invoiceId String
-  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  amount    Decimal       @db.Decimal(10, 2)
-  method    PaymentMethod @default(CARD)
-  reference String?
-  receivedOn DateTime     @default(now())
-  notes     String?
-  createdAt DateTime      @default(now())
+  id               String        @id @default(cuid())
+  invoiceId        String
+  invoice          Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount           Decimal       @db.Decimal(10, 2)
+  method           PaymentMethod @default(SQUARE)
+  reference        String?
+  squarePaymentId  String?       @unique
+  squareReceiptUrl String?
+  receivedOn       DateTime      @default(now())
+  notes            String?
+  createdAt        DateTime      @default(now())
 }
 
 model Note {

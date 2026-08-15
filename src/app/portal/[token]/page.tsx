@@ -24,14 +24,6 @@ type PortalData = {
       status: string;
       total: string;
       message: string | null;
-      lineItems: Array<{ id: string; name: string; quantity: string; unitPrice: string }>;
-    }>;
-    invoices: Array<{
-      id: string;
-      number: string;
-      status: string;
-      total: string;
-      balance: string;
     }>;
   };
 };
@@ -42,12 +34,18 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     void fetch(`/api/portal/${token}`)
       .then((response) => response.json())
-      .then((payload) => setData(payload.client ?? null));
+      .then((payload) => {
+        if (!cancelled) setData(payload.client ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
-  async function act(type: "approve_quote" | "decline_quote" | "pay_invoice", id: string) {
+  async function act(type: "approve_quote" | "decline_quote", id: string) {
     const response = await fetch(`/api/portal/${token}/actions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -61,7 +59,7 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
   }
 
   if (!data) {
-    return <p className="p-8 text-stone-500">Loading your Wildlife Pros hub…</p>;
+    return <p className="p-8 text-stone-500">Loading…</p>;
   }
 
   return (
@@ -72,7 +70,7 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
           <div>
             <p className="font-display tracking-[0.2em]">THE WILDLIFE PROS</p>
             <h1 className="text-3xl font-semibold">Hello, {data.firstName}</h1>
-            <p>Appointments, approvals, and invoices in one client hub.</p>
+            <p>Upcoming visits and quote approvals. Payments are taken by our crew through Square.</p>
           </div>
         </div>
       </header>
@@ -124,30 +122,6 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
                   </button>
                 </div>
               ) : null}
-            </article>
-          ))}
-        </section>
-        <section className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Invoices</h2>
-          {data.invoices.map((invoice) => (
-            <article key={invoice.id} className="flex items-center justify-between border-t border-line py-3 first:border-0">
-              <div>
-                <p className="font-medium">{invoice.number}</p>
-                <p className="text-sm text-stone-600">
-                  {formatMoney(invoice.balance)} of {formatMoney(invoice.total)}
-                </p>
-              </div>
-              {Number(invoice.balance) > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => act("pay_invoice", invoice.id)}
-                  className="rounded-lg bg-ink px-3 py-1.5 text-sm font-semibold text-white"
-                >
-                  Pay now
-                </button>
-              ) : (
-                <StatusBadge status="PAID" />
-              )}
             </article>
           ))}
         </section>

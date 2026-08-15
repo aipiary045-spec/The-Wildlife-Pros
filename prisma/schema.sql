@@ -32,7 +32,7 @@ CREATE TYPE "VisitStatus" AS ENUM ('SCHEDULED', 'EN_ROUTE', 'ON_SITE', 'COMPLETE
 CREATE TYPE "InvoiceStatus" AS ENUM ('DRAFT', 'SENT', 'VIEWED', 'PARTIAL', 'PAID', 'OVERDUE', 'VOID');
 
 -- CreateEnum
-CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'CHECK', 'CARD', 'ACH', 'OTHER');
+CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'CHECK', 'CARD', 'SQUARE', 'ACH', 'OTHER');
 
 -- CreateEnum
 CREATE TYPE "RecurrenceFrequency" AS ENUM ('WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'SEASONAL', 'CUSTOM');
@@ -353,8 +353,10 @@ CREATE TABLE "Payment" (
     "id" TEXT NOT NULL,
     "invoiceId" TEXT NOT NULL,
     "amount" DECIMAL(10,2) NOT NULL,
-    "method" "PaymentMethod" NOT NULL DEFAULT 'CARD',
+    "method" "PaymentMethod" NOT NULL DEFAULT 'SQUARE',
     "reference" TEXT,
+    "squarePaymentId" TEXT,
+    "squareReceiptUrl" TEXT,
     "receivedOn" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "notes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -671,6 +673,9 @@ CREATE INDEX "Invoice_clientId_status_idx" ON "Invoice"("clientId", "status");
 
 -- CreateIndex
 CREATE INDEX "Invoice_status_dueOn_idx" ON "Invoice"("status", "dueOn");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Payment_squarePaymentId_key" ON "Payment"("squarePaymentId");
 
 -- CreateIndex
 CREATE INDEX "Timesheet_date_status_idx" ON "Timesheet"("date", "status");
