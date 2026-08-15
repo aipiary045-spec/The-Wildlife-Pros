@@ -35,7 +35,8 @@ Clients never pay through CritterOps. Square is the processor.
 ## Dispatch & routing
 
 `GET /api/schedule?view=day|week&date=YYYY-MM-DD` — day board or Monday–Sunday week payload  
-`PATCH /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd }`  
+`PATCH /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd }` — move a job  
+`POST /api/schedule` `{ jobId, technicianId, scheduledStart, scheduledEnd }` — copy as another trip (new job number, same client/property/line items)  
 `POST /api/routes/optimize` `{ date?, technicianIds?, persist? }`  
 `GET /api/routes/optimize?date`
 

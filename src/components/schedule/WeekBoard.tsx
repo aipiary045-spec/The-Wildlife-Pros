@@ -1,52 +1,36 @@
 "use client";
 
-import { addDays, addMinutes, format, startOfWeek } from "date-fns";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { addDays, format, startOfWeek } from "date-fns";
+import { useMemo } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { dateKey } from "@/lib/dates";
+import { CopyTripForm } from "./CopyTripForm";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
+import type { ScheduleMode } from "./useScheduleBoard";
+import { useScheduleBoard } from "./useScheduleBoard";
 
 export function WeekBoard({
   jobs,
   technicians,
   weekOf,
+  mode,
 }: {
   jobs: ScheduleJobCard[];
   technicians: ScheduleTech[];
   weekOf: string;
+  mode: ScheduleMode;
 }) {
-  const router = useRouter();
-  const [saving, setSaving] = useState(false);
+  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(jobs, mode);
   const start = startOfWeek(new Date(weekOf.includes("T") ? weekOf : `${weekOf}T12:00:00`), { weekStartsOn: 1 });
   const days = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(start, index)), [start]);
-
-  async function moveJob(jobId: string, technicianId: string, day: Date) {
-    const existing = jobs.find((job) => job.id === jobId);
-    const current = existing?.scheduledStart ? new Date(existing.scheduledStart) : addMinutes(day, 9 * 60);
-    const nextStart = new Date(day);
-    nextStart.setHours(current.getHours(), current.getMinutes(), 0, 0);
-    setSaving(true);
-    await fetch("/api/schedule", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jobId,
-        technicianId,
-        scheduledStart: nextStart.toISOString(),
-        scheduledEnd: addMinutes(nextStart, existing?.durationMin ?? 60).toISOString(),
-      }),
-    });
-    setSaving(false);
-    router.refresh();
-  }
 
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
-        Full week including Saturday and Sunday. On a phone this is a day-by-day list. On desktop, drag a job to
-        reschedule. {saving ? "Saving…" : "Changes save immediately."}
+        {mode === "copy"
+          ? "Drop a job on another day to add a return trip. The first visit stays on the calendar."
+          : "Drag to move. Hold Alt/Option while dropping — or switch to Copy trip — to duplicate a multi-day job."}{" "}
+        {saving ? "Saving…" : "Changes save immediately."}
       </p>
       <div className="space-y-3 md:hidden">
         {days.map((day) => {
@@ -72,6 +56,7 @@ export function WeekBoard({
                         <p className="text-xs font-semibold text-orange">
                           {format(new Date(job.scheduledStart!), "h:mm a")}
                           {tech ? ` · ${tech.firstName} ${tech.lastName}` : ""}
+                          {job.sourceJobId ? " · Trip" : ""}
                         </p>
                         <p className="font-medium leading-tight">{job.title}</p>
                         <p className="text-xs text-stone-500">
@@ -80,6 +65,11 @@ export function WeekBoard({
                         <div className="mt-1">
                           <StatusBadge status={job.status} />
                         </div>
+                        <CopyTripForm
+                          job={job}
+                          technicians={technicians}
+                          onCopy={(id, techId, nextDay) => placeJob(id, techId, nextDay, true)}
+                        />
                       </article>
                     );
                   })}
@@ -121,22 +111,20 @@ export function WeekBoard({
                     <td
                       key={`${tech.id}-${day.toISOString()}`}
                       className="h-36 px-2 py-2"
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={(event) => {
-                        const jobId = event.dataTransfer.getData("text/job-id");
-                        if (jobId) void moveJob(jobId, tech.id, day);
-                      }}
+                      onDragOver={onDragOver}
+                      onDrop={(event) => onDrop(event, tech.id, day)}
                     >
                       <div className="min-h-28 space-y-2 rounded-xl bg-background/70 p-1">
                         {cellJobs.map((job) => (
                           <article
                             key={job.id}
                             draggable
-                            onDragStart={(event) => event.dataTransfer.setData("text/job-id", job.id)}
+                            onDragStart={(event) => onDragStart(event, job.id)}
                             className="cursor-grab rounded-lg border border-line bg-white px-2 py-2 shadow-sm"
                           >
                             <p className="text-xs font-semibold text-orange">
                               {format(new Date(job.scheduledStart!), "h:mm a")}
+                              {job.sourceJobId ? " · Trip" : ""}
                             </p>
                             <p className="font-medium leading-tight">{job.title}</p>
                             <p className="text-xs text-stone-500">

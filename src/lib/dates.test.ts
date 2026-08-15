@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { adjacentDate, dateKey, parseDateParam, parseScheduleView, periodLabel, scheduleRange } from "./dates";
+import { adjacentDate, dateKey, parseDateParam, parseScheduleView, periodLabel, scheduleRange, tripStartOnDay } from "./dates";
 import { homePath, safeNextPath } from "./paths";
 
 test("parseDateParam reads a local calendar day", () => {
@@ -47,4 +47,17 @@ test("safeNextPath rejects Chrome DevTools and protocol-relative URLs", () => {
   assert.equal(safeNextPath("/field?view=week"), "/field?view=week");
   assert.equal(homePath("TECHNICIAN"), "/field");
   assert.equal(homePath("OWNER"), "/dashboard");
+});
+
+test("tripStartOnDay keeps the original clock time on a new calendar day", () => {
+  const start = tripStartOnDay(new Date(2026, 7, 15, 9, 0, 0), new Date(2026, 7, 16));
+  assert.equal(dateKey(start), "2026-08-16");
+  assert.equal(start.getHours(), 9);
+  assert.equal(start.getMinutes(), 0);
+});
+
+test("tripStartOnDay defaults to 9:00 when the source has no time", () => {
+  const start = tripStartOnDay(null, new Date(2026, 7, 17));
+  assert.equal(start.getDate(), 17);
+  assert.equal(start.getHours(), 9);
 });

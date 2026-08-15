@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { withAuth } from "@/lib/api";
+import { jsonError, withAuth } from "@/lib/api";
 import { getSchedule } from "@/lib/data";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
+import { duplicateJobTrip } from "@/lib/jobs";
 
 export const GET = withAuth(async (_session, request) => {
   const url = new URL(request.url);
@@ -11,6 +12,22 @@ export const GET = withAuth(async (_session, request) => {
   const { from, to } = scheduleRange(view, date);
   const data = await getSchedule(from, to);
   return NextResponse.json({ view, from, to, ...data });
+});
+
+export const POST = withAuth(async (session, request) => {
+  const body = await request.json();
+  if (!body.jobId || !body.scheduledStart) {
+    return jsonError("jobId and scheduledStart are required");
+  }
+  const job = await duplicateJobTrip({
+    jobId: body.jobId,
+    createdById: session.id,
+    technicianId: body.technicianId,
+    scheduledStart: new Date(body.scheduledStart),
+    scheduledEnd: body.scheduledEnd ? new Date(body.scheduledEnd) : undefined,
+  });
+  if (!job) return jsonError("Job not found", 404);
+  return NextResponse.json({ job }, { status: 201 });
 });
 
 export const PATCH = withAuth(async (_session, request) => {

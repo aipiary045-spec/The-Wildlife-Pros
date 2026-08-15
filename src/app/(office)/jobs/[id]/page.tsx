@@ -24,6 +24,8 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       applications: { include: { product: true } },
       photos: { include: { entryPoint: true } },
       invoices: true,
+      sourceJob: true,
+      trips: { orderBy: { scheduledStart: "asc" } },
     },
   });
   if (!job) notFound();
@@ -50,6 +52,21 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             {job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned"} ·{" "}
             {job.durationMin} min
           </p>
+          {job.sourceJob ? (
+            <Link href={`/jobs/${job.sourceJob.id}`} className="mt-2 block text-sm font-medium text-orange">
+              First trip {job.sourceJob.number}
+            </Link>
+          ) : null}
+          {job.trips.length ? (
+            <div className="mt-2 space-y-1 text-sm">
+              {job.trips.map((trip) => (
+                <Link key={trip.id} href={`/jobs/${trip.id}`} className="block font-medium text-orange">
+                  Later trip {trip.number}
+                  {trip.scheduledStart ? ` · ${format(trip.scheduledStart, "MMM d")}` : ""}
+                </Link>
+              ))}
+            </div>
+          ) : null}
         </Card>
         <Card title="Value">
           <p className="font-display text-2xl">{formatMoney(job.total)}</p>

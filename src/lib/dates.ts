@@ -42,3 +42,14 @@ export function periodLabel(view: ScheduleView, date: Date) {
 export function sameDay(left: Date, right: Date) {
   return dateKey(left) === dateKey(right);
 }
+
+export function tripStartOnDay(sourceStart: Date | string | null, day: Date) {
+  const nextStart = new Date(day);
+  if (sourceStart) {
+    const current = new Date(sourceStart);
+    nextStart.setHours(current.getHours(), current.getMinutes(), 0, 0);
+  } else {
+    nextStart.setHours(9, 0, 0, 0);
+  }
+  return nextStart;
+}

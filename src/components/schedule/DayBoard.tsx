@@ -1,50 +1,33 @@
 "use client";
 
-import { addMinutes, format } from "date-fns";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { format } from "date-fns";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { dateKey, sameDay } from "@/lib/dates";
+import { CopyTripForm } from "./CopyTripForm";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
+import type { ScheduleMode } from "./useScheduleBoard";
+import { useScheduleBoard } from "./useScheduleBoard";
 
 export function DayBoard({
   jobs,
   technicians,
   date,
+  mode,
 }: {
   jobs: ScheduleJobCard[];
   technicians: ScheduleTech[];
   date: string;
+  mode: ScheduleMode;
 }) {
-  const router = useRouter();
-  const [saving, setSaving] = useState(false);
+  const { saving, placeJob, onDragStart, onDragOver, onDrop } = useScheduleBoard(jobs, mode);
   const day = new Date(date.includes("T") ? date : `${date}T12:00:00`);
-
-  async function moveJob(jobId: string, technicianId: string) {
-    const existing = jobs.find((job) => job.id === jobId);
-    const current = existing?.scheduledStart ? new Date(existing.scheduledStart) : addMinutes(day, 9 * 60);
-    const nextStart = new Date(day);
-    nextStart.setHours(current.getHours(), current.getMinutes(), 0, 0);
-    setSaving(true);
-    await fetch("/api/schedule", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jobId,
-        technicianId,
-        scheduledStart: nextStart.toISOString(),
-        scheduledEnd: addMinutes(nextStart, existing?.durationMin ?? 60).toISOString(),
-      }),
-    });
-    setSaving(false);
-    router.refresh();
-  }
 
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone-500">
-        Stops in time order. On a phone, reassign with the tech menu. On desktop, drag a card onto another column.{" "}
+        {mode === "copy"
+          ? "Drop a job on a tech to add another trip that day. The original stay put."
+          : "Stops in time order. Drag to reassign, or hold Alt/Option while dropping to copy a trip."}{" "}
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -56,11 +39,8 @@ export function DayBoard({
             <section
               key={tech.id}
               className="rounded-2xl border border-line bg-panel p-3"
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                const jobId = event.dataTransfer.getData("text/job-id");
-                if (jobId) void moveJob(jobId, tech.id);
-              }}
+              onDragOver={onDragOver}
+              onDrop={(event) => onDrop(event, tech.id, day)}
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -81,11 +61,12 @@ export function DayBoard({
                     <article
                       key={job.id}
                       draggable
-                      onDragStart={(event) => event.dataTransfer.setData("text/job-id", job.id)}
+                      onDragStart={(event) => onDragStart(event, job.id)}
                       className="rounded-lg border border-line bg-white px-3 py-2 shadow-sm md:cursor-grab"
                     >
                       <p className="text-xs font-semibold text-orange">
                         Stop {index + 1} · {format(new Date(job.scheduledStart!), "h:mm a")}
+                        {job.sourceJobId ? " · Trip" : ""}
                       </p>
                       <p className="font-medium leading-tight">{job.title}</p>
                       <p className="text-xs text-stone-500">
@@ -100,7 +81,7 @@ export function DayBoard({
                           id={`assign-${job.id}`}
                           className="rounded-lg border border-line bg-white px-2 py-1 text-xs md:hidden"
                           value={job.technicianId ?? ""}
-                          onChange={(event) => void moveJob(job.id, event.target.value)}
+                          onChange={(event) => void placeJob(job.id, event.target.value, day, false)}
                         >
                           {technicians.map((option) => (
                             <option key={option.id} value={option.id}>
@@ -108,6 +89,9 @@ export function DayBoard({
                             </option>
                           ))}
                         </select>
+                      </div>
+                      <div className="md:hidden">
+                        <CopyTripForm job={job} technicians={technicians} onCopy={(id, techId, nextDay) => placeJob(id, techId, nextDay, true)} />
                       </div>
                     </article>
                   ))

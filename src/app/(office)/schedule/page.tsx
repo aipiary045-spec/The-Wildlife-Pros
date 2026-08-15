@@ -1,6 +1,5 @@
-import { DayBoard } from "@/components/schedule/DayBoard";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
-import { WeekBoard } from "@/components/schedule/WeekBoard";
+import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
 import { getSchedule } from "@/lib/data";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 
@@ -24,6 +23,7 @@ export default async function SchedulePage({
     scheduledStart: job.scheduledStart,
     durationMin: job.durationMin,
     technicianId: job.technicianId,
+    sourceJobId: job.sourceJobId,
     client: job.client,
     property: job.property,
   }));
@@ -33,16 +33,17 @@ export default async function SchedulePage({
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
         <p className="text-stone-600">
-          Daily and weekly boards for techs with multiple stops. Drag jobs between technicians and days, then
-          optimize driving order on Routes.
+          Drag to move a stop, or copy it as another trip when the work takes more than one visit.
         </p>
       </div>
       <ScheduleToolbar view={view} date={date} basePath="/schedule" />
-      {view === "day" ? (
-        <DayBoard date={dateKey(date)} technicians={technicians} jobs={cards} />
-      ) : (
-        <WeekBoard weekOf={dateKey(from)} technicians={technicians} jobs={cards} />
-      )}
+      <ScheduleWorkspace
+        view={view}
+        date={dateKey(date)}
+        weekOf={dateKey(from)}
+        technicians={technicians}
+        jobs={cards}
+      />
     </div>
   );
 }
