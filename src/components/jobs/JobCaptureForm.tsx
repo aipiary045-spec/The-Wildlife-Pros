@@ -16,7 +16,8 @@ export function JobCaptureForm({
   deployments: Array<{ id: string; equipment: { serialNumber: string } }>;
 }) {
   const router = useRouter();
-  const [speciesId, setSpeciesId] = useState(species[0]?.id ?? "");
+  const [speciesId, setSpeciesId] = useState(species[0]?.id ?? "__new");
+  const [newSpecies, setNewSpecies] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [disposition, setDisposition] = useState("RELOCATED");
   const [deploymentId, setDeploymentId] = useState("");
@@ -26,8 +27,8 @@ export function JobCaptureForm({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!speciesId) {
-      setError("Pick a species.");
+    if (!speciesId || (speciesId === "__new" && !newSpecies.trim())) {
+      setError("Pick a species or type a new one.");
       return;
     }
     setSaving(true);
@@ -38,7 +39,8 @@ export function JobCaptureForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         jobId,
-        speciesId,
+        speciesId: speciesId === "__new" ? undefined : speciesId,
+        speciesName: speciesId === "__new" || !speciesId ? newSpecies.trim() : undefined,
         quantity,
         disposition,
         deploymentId: deploymentId || undefined,
@@ -53,6 +55,7 @@ export function JobCaptureForm({
     }
     setLocationNote("");
     setQuantity(1);
+    setNewSpecies("");
     router.refresh();
   }
 
@@ -62,6 +65,7 @@ export function JobCaptureForm({
         <label className="block text-sm">
           Species
           <select required value={speciesId} onChange={(event) => setSpeciesId(event.target.value)} className={inputClass}>
+            <option value="__new">Type a new species…</option>
             {species.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.commonName}
@@ -69,6 +73,17 @@ export function JobCaptureForm({
             ))}
           </select>
         </label>
+        {speciesId === "__new" || species.length === 0 ? (
+          <label className="block text-sm">
+            New species name
+            <input
+              value={newSpecies}
+              onChange={(event) => setNewSpecies(event.target.value)}
+              className={inputClass}
+              placeholder="Gray squirrel"
+            />
+          </label>
+        ) : null}
         <label className="block text-sm">
           Quantity
           <input type="number" min={1} value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} className={inputClass} />
@@ -100,7 +115,7 @@ export function JobCaptureForm({
         </label>
       </div>
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
-      <button type="submit" disabled={saving || !speciesId} className="min-h-11 rounded-lg bg-ink px-4 text-sm font-semibold text-white disabled:opacity-60">
+      <button type="submit" disabled={saving} className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60">
         {saving ? "Saving…" : "Log capture"}
       </button>
     </form>

@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { NeedsPool } from "@/components/schedule/NeedsPool";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
 import { getSchedule } from "@/lib/data";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +34,21 @@ export default async function SchedulePage({
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
   const { from, to } = scheduleRange(view, date);
-  const { jobs, unscheduled, technicians, clients } = await getSchedule(from, to);
+  const [{ jobs, unscheduled, technicians, clients }, needs, blocks] = await Promise.all([
+    getSchedule(from, to),
+    prisma.scheduleNeed.findMany({
+      where: { status: "OPEN" },
+      include: {
+        client: true,
+        property: true,
+        preferredTech: { select: { id: true, firstName: true, lastName: true, color: true } },
+      },
+      orderBy: { dueOn: "asc" },
+    }),
+    prisma.availabilityBlock.findMany({
+      where: { date: { gte: from, lte: to } },
+    }),
+  ]);
 
   return (
     <div className="space-y-5">
@@ -40,7 +56,7 @@ export default async function SchedulePage({
         <div>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
           <p className="text-stone-600">
-            Tap a tech row or + Job. Each person has their own line; jobs sit left to right in order. Drag to move.
+            Pull from the needs-scheduled pool, then drop the stop on a time. Off days show as a blocker on that tech&apos;s row.
           </p>
         </div>
         <Link
@@ -50,6 +66,13 @@ export default async function SchedulePage({
           Optimize routes
         </Link>
       </div>
+      <NeedsPool
+        needs={needs.map((need) => ({
+          ...need,
+          dueOn: need.dueOn.toISOString(),
+        }))}
+        technicians={technicians}
+      />
       <ScheduleToolbar view={view} date={date} basePath="/schedule" />
       <ScheduleWorkspace
         view={view}
@@ -59,6 +82,11 @@ export default async function SchedulePage({
         jobs={jobs.map(toCard)}
         unscheduled={unscheduled.map(toCard)}
         clients={clients}
+        availability={blocks.map((block) => ({
+          technicianId: block.userId,
+          date: dateKey(block.date),
+          reason: block.reason,
+        }))}
       />
     </div>
   );

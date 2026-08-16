@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDuration, workedMinutes } from "@/lib/time";
 
@@ -30,8 +30,20 @@ export function ClockControls({
   const [recent, setRecent] = useState<Sheet[]>(initialRecent);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [now, setNow] = useState(() => Date.now());
 
-  const liveMin = sheet ? workedMinutes(sheet.punches, sheet.breakMin) : 0;
+  useEffect(() => {
+    if (!sheet?.open) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [sheet?.open]);
+
+  const liveMin = sheet
+    ? workedMinutes(
+        sheet.punches.map((punch) => (punch.clockOutAt ? punch : { ...punch, clockOutAt: new Date(now).toISOString() })),
+        sheet.breakMin,
+      )
+    : 0;
 
   async function clock(action: "in" | "out") {
     setBusy(true);
@@ -60,14 +72,14 @@ export function ClockControls({
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <span className="hidden text-xs text-stone-600 min-[400px]:inline">
+        <span className="hidden text-xs text-stone-600 min-[400px]:inline tabular-nums">
           {sheet?.open ? `On clock · ${formatDuration(liveMin)}` : "Off clock"}
         </span>
         <button
           type="button"
           disabled={busy}
           onClick={() => clock(sheet?.open ? "out" : "in")}
-          className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+          className="rounded-full bg-orange px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
         >
           {sheet?.open ? "Clock out" : "Clock in"}
         </button>
@@ -80,7 +92,7 @@ export function ClockControls({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-widest text-orange">Timesheet</p>
-          <h2 className="font-display text-2xl">{formatDuration(liveMin)} today</h2>
+          <h2 className="font-display text-2xl tabular-nums">{formatDuration(liveMin)} today</h2>
           <p className="text-sm text-stone-600">
             {sheet?.open ? "You are clocked in." : "Clock in to start the day."}
           </p>

@@ -1,9 +1,8 @@
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { hasOpenPunch } from "@/lib/time";
-import { duplicateJobTrip } from "@/lib/jobs";
 import type { SessionUser } from "@/lib/auth";
-import { JobVisitError, visitActionForStatus, type CheckoutInput } from "@/lib/job-visit";
+import { JobVisitError, checkoutSummary, visitActionForStatus, type CheckoutInput } from "@/lib/job-visit";
 
 export { JobVisitError };
 
@@ -98,8 +97,8 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     throw new JobVisitError("Check in before you check out.");
   }
 
-  if (input.outcome === "follow_up" && !input.followUp?.scheduledStart) {
-    throw new JobVisitError("Pick a date and time for the follow-up visit.");
+  if (input.outcome === "follow_up" && !input.followUp) {
+    throw new JobVisitError("Enter about how many days until they need a return trip.");
   }
 
   const now = new Date();
@@ -110,11 +109,7 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     where: { jobId, departedAt: null },
     orderBy: { createdAt: "desc" },
   });
-
-  const summary =
-    input.outcome === "complete"
-      ? input.notes || "Job complete"
-      : input.notes || "Needs follow-up visit";
+  const summary = checkoutSummary(input);
 
   await prisma.$transaction(async (tx) => {
     if (openEntry) {
@@ -126,8 +121,36 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     if (openVisit) {
       await tx.visit.update({
         where: { id: openVisit.id },
-        data: { departedAt: now, status: "COMPLETED", summary },
+        data: {
+          departedAt: now,
+          status: "COMPLETED",
+          summary,
+          checkoutWork: {
+            workDone: input.workDone,
+            siteLeft: input.siteLeft ?? null,
+          },
+          trapPlaced: input.trapPlaced,
+          trapLat: input.trapLat ?? null,
+          trapLng: input.trapLng ?? null,
+          trapNote: input.trapNote ?? null,
+        },
       });
+    }
+    if (input.trapPlaced && (input.trapLat != null || input.trapNote)) {
+      const live = await tx.equipmentDeployment.findFirst({
+        where: { jobId, retrievedAt: null },
+        orderBy: { deployedAt: "desc" },
+      });
+      if (live) {
+        await tx.equipmentDeployment.update({
+          where: { id: live.id },
+          data: {
+            lat: input.trapLat ?? live.lat,
+            lng: input.trapLng ?? live.lng,
+            locationNote: input.trapNote || live.locationNote,
+          },
+        });
+      }
     }
     await tx.job.update({
       where: { id: jobId },
@@ -143,18 +166,20 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
 
   let followUp = null;
   if (input.outcome === "follow_up" && input.followUp) {
-    followUp = await duplicateJobTrip({
-      jobId,
-      createdById: user.id,
-      technicianId: input.followUp.technicianId ?? job.technicianId ?? user.id,
-      scheduledStart: input.followUp.scheduledStart,
-      scheduledEnd: input.followUp.scheduledEnd,
-      durationMin: input.followUp.durationMin,
-      instructions: input.followUp.instructions ?? input.notes,
+    followUp = await prisma.scheduleNeed.create({
+      data: {
+        clientId: job.clientId,
+        propertyId: job.propertyId,
+        sourceJobId: job.id,
+        preferredTechId: job.technicianId,
+        title: job.title,
+        notes: input.followUp.notes ?? input.notes,
+        returnInDays: input.followUp.returnInDays,
+        dueOn: input.followUp.dueOn,
+        status: "OPEN",
+      },
+      include: { client: true, property: true },
     });
-    if (!followUp) {
-      throw new JobVisitError("Visit closed, but the follow-up job could not be created. Schedule it from the calendar.");
-    }
   }
 
   const updated = await prisma.job.findUnique({

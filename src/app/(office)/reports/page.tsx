@@ -1,13 +1,14 @@
-import { startOfMonth, startOfWeek } from "date-fns";
+import { format, startOfMonth, startOfWeek } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { hoursByDay } from "@/lib/hours";
+import { formatDuration } from "@/lib/time";
 import { formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
-  const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const monthStart = startOfMonth(now);
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const monthStart = startOfMonth(new Date());
 
   const [weekPayments, monthPayments, openInvoices, completedWeek, captures, traps, timesheets] = await Promise.all([
     prisma.payment.aggregate({ where: { createdAt: { gte: weekStart } }, _sum: { amount: true } }),
@@ -37,16 +38,6 @@ export default async function ReportsPage() {
     where: { id: { in: captures.map((row) => row.speciesId) } },
   });
   const speciesName = Object.fromEntries(species.map((item) => [item.id, item.commonName]));
-
-  const techMinutes = timesheets.reduce<Record<string, { name: string; minutes: number }>>((acc, sheet) => {
-    const minutes = sheet.punches.reduce((sum, punch) => {
-      const end = punch.clockOutAt ?? now;
-      return sum + Math.max(0, (end.getTime() - punch.clockInAt.getTime()) / 60000);
-    }, 0);
-    const name = `${sheet.user.firstName} ${sheet.user.lastName}`;
-    acc[sheet.userId] = { name, minutes: (acc[sheet.userId]?.minutes ?? 0) + minutes - sheet.breakMin };
-    return acc;
-  }, {});
 
   return (
     <div className="space-y-6">
@@ -78,15 +69,36 @@ export default async function ReportsPage() {
         </article>
         <article className="rounded-2xl border border-line bg-panel p-5">
           <h2 className="mb-3 font-semibold">Tech hours this week</h2>
-          {Object.keys(techMinutes).length === 0 ? (
+          {timesheets.length === 0 ? (
             <p className="text-sm text-stone-500">No punches this week.</p>
-          ) : null}
-          {Object.values(techMinutes).map((row) => (
-            <p key={row.name} className="flex justify-between py-1 text-sm">
-              <span>{row.name}</span>
-              <span className="font-medium">{(Math.max(0, row.minutes) / 60).toFixed(1)} hr</span>
-            </p>
-          ))}
+          ) : (
+            Object.entries(
+              timesheets.reduce<Record<string, typeof timesheets>>((acc, sheet) => {
+                (acc[sheet.userId] ??= []).push(sheet);
+                return acc;
+              }, {}),
+            ).map(([userId, sheets]) => {
+              const name = `${sheets[0]?.user.firstName} ${sheets[0]?.user.lastName}`;
+              const days = hoursByDay(sheets);
+              const total = days.reduce((sum, day) => sum + day.minutes, 0);
+              return (
+                <div key={userId} className="mb-4 border-b border-line pb-3 last:mb-0 last:border-b-0 last:pb-0">
+                  <p className="flex justify-between text-sm font-semibold">
+                    <span>{name}</span>
+                    <span>{formatDuration(total)}</span>
+                  </p>
+                  <ul className="mt-1 space-y-0.5 text-sm text-stone-600">
+                    {days.map((day) => (
+                      <li key={day.date.toISOString()} className="flex justify-between">
+                        <span>{format(day.date, "EEE MMM d")}</span>
+                        <span>{formatDuration(day.minutes)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })
+          )}
         </article>
       </section>
     </div>

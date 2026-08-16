@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ClientEditor } from "@/components/crm/ClientEditor";
 import { NavigateLink } from "@/components/maps/NavigateLink";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { clientName, formatMoney, formatPhone, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,10 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
         </p>
         <p className="text-sm text-stone-500">Billing is collected by staff in Square — clients do not log in to pay.</p>
       </div>
+      <section className="rounded-2xl border border-line bg-panel p-5">
+        <h2 className="mb-3 font-semibold">Edit client</h2>
+        <ClientEditor client={client} />
+      </section>
       <section className="grid gap-4 md:grid-cols-2">
         {client.properties.map((property) => (
           <article key={property.id} className="rounded-2xl border border-line bg-panel p-5">

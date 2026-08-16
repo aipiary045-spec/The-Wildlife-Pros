@@ -11,7 +11,6 @@ import {
   MapPinned,
   Menu,
   Receipt,
-  ShieldCheck,
   Smartphone,
   Squirrel,
   Users,
@@ -34,7 +33,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/team", label: "Team", icon: HardHat },
   { href: "/inventory", label: "Traps & gear", icon: Warehouse },
   { href: "/activity", label: "Species log", icon: Squirrel },
-  { href: "/compliance", label: "Compliance", icon: ShieldCheck },
   { href: "/exports", label: "Google Sheets", icon: FileSpreadsheet },
   { href: "/field", label: "Field route", icon: Smartphone },
 ];

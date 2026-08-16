@@ -27,6 +27,7 @@ export function DayBoard({
   compact = false,
   onCopyRequest,
   onNewJob,
+  availability = [],
 }: {
   jobs: ScheduleJobCard[];
   unscheduled?: ScheduleJobCard[];
@@ -36,6 +37,7 @@ export function DayBoard({
   compact?: boolean;
   onCopyRequest?: (request: CopyRequest) => void;
   onNewJob?: (technicianId: string, day: Date, time?: string) => void;
+  availability?: Array<{ technicianId: string; date: string; reason: string | null }>;
 }) {
   const { saving, error, drag, placeJob, onChipPointerDown, wasRecentDrop } = useScheduleBoard(
     [...jobs, ...unscheduled],
@@ -54,7 +56,7 @@ export function DayBoard({
       job,
       technicians,
       layout,
-      showVisit: !compact && layout !== "timeline",
+      showVisit: false,
       dragging: drag?.jobId === job.id,
       onPointerDown: (event: React.PointerEvent, immediate?: boolean) =>
         onChipPointerDown(event, job.id, immediate),
@@ -106,6 +108,7 @@ export function DayBoard({
                 .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
               const minutes = techJobs.reduce((sum, job) => sum + (job.durationMin ?? 0), 0);
               const stacked = stackTimelineJobs(techJobs);
+              const off = availability.find((block) => block.technicianId === tech.id && block.date === dayKey);
               const trackHeight = Math.max(7, stacked.lanes * 6.75);
               return (
                 <Lane
@@ -143,6 +146,13 @@ export function DayBoard({
                         />
                       ))}
                     </div>
+                    {off ? (
+                      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-stone-900/45">
+                        <p className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink">
+                          Off{off.reason ? ` · ${off.reason}` : ""}
+                        </p>
+                      </div>
+                    ) : null}
                     {drag?.overTechId === tech.id && drag.overStartAt ? (
                       <div
                         className="pointer-events-none absolute inset-y-0 z-10 bg-orange/20"

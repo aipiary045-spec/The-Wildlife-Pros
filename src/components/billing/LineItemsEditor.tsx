@@ -54,30 +54,40 @@ export function LineItemsEditor({
     <div className="space-y-2">
       {items.map((item, index) => (
         <div key={`${item.serviceId ?? item.name}-${index}`} className="grid grid-cols-12 gap-2">
-          <input
-            className={`col-span-5 ${inputClass}`}
-            value={item.name}
-            onChange={(event) => update(index, { name: event.target.value })}
-          />
-          <input
-            type="number"
-            min={0}
-            step={1}
-            className={`col-span-2 ${inputClass}`}
-            value={item.quantity}
-            onChange={(event) => update(index, { quantity: Number(event.target.value) })}
-          />
-          <input
-            type="number"
-            min={0}
-            step={0.01}
-            className={`col-span-3 ${inputClass}`}
-            value={item.unitPrice}
-            onChange={(event) => update(index, { unitPrice: Number(event.target.value) })}
-          />
+          <label className="col-span-5 text-[11px] font-medium text-stone-500">
+            What you are charging for
+            <input
+              className={`mt-1 ${inputClass}`}
+              value={item.name}
+              placeholder="Live trap check"
+              onChange={(event) => update(index, { name: event.target.value })}
+            />
+          </label>
+          <label className="col-span-2 text-[11px] font-medium text-stone-500">
+            Qty
+            <input
+              type="number"
+              min={0}
+              step={1}
+              className={`mt-1 ${inputClass}`}
+              value={item.quantity}
+              onChange={(event) => update(index, { quantity: Number(event.target.value) })}
+            />
+          </label>
+          <label className="col-span-3 text-[11px] font-medium text-stone-500">
+            Price each
+            <input
+              type="number"
+              min={0}
+              step={0.01}
+              className={`mt-1 ${inputClass}`}
+              value={item.unitPrice}
+              onChange={(event) => update(index, { unitPrice: Number(event.target.value) })}
+            />
+          </label>
           <button
             type="button"
-            className="col-span-2 rounded-lg border border-line text-xs font-semibold"
+            className="col-span-2 self-end rounded-lg border border-line py-1.5 text-xs font-semibold"
             onClick={() => onChange(items.filter((_, i) => i !== index))}
           >
             Remove
@@ -108,6 +118,9 @@ export function LineItemsEditor({
           Blank line
         </button>
       </div>
+      <p className="text-xs text-stone-500">
+        Blank line is a custom charge: name what you did, how many, and the price for one. Tax is added automatically.
+      </p>
       <p className="text-sm text-stone-600">
         {formatMoney(totals.subtotal)} + tax {formatMoney(totals.taxAmount)} ={" "}
         <span className="font-semibold text-ink">{formatMoney(totals.total)}</span>

@@ -13,6 +13,7 @@ export const GET = withAuth(async () => {
         orderBy: { deployedAt: "desc" },
         take: 1,
       },
+      location: true,
     },
     orderBy: { serialNumber: "asc" },
   });
@@ -26,6 +27,7 @@ export const POST = withAuth(async (_session, request) => {
     type?: string;
     manufacturer?: string;
     notes?: string;
+    locationId?: string;
   };
   const type = body.type && body.type in EQUIPMENT_TYPE_LABEL ? body.type : "LIVE_CAGE";
   let serialNumber = body.serialNumber?.trim();
@@ -47,6 +49,7 @@ export const POST = withAuth(async (_session, request) => {
       type: type as never,
       manufacturer: body.manufacturer?.trim() || null,
       notes: body.notes?.trim() || null,
+      locationId: body.locationId || null,
       status: "IN_INVENTORY",
     },
   });

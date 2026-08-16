@@ -15,7 +15,7 @@ export function ScheduleModeToggle({
         onClick={() => onChange("move")}
         className={cn(
           "flex-1 rounded-full px-4 py-2 text-sm font-semibold",
-          mode === "move" ? "bg-ink text-white" : "text-stone-600",
+          mode === "move" ? "bg-orange text-white" : "text-stone-600",
         )}
       >
         Move

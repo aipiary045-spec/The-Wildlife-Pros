@@ -2,14 +2,11 @@ import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { InstallHint } from "@/components/layout/InstallHint";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
-import { getMyTimesheet } from "@/lib/timesheets";
 
 export default async function OfficeLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
-  const myTime = await getMyTimesheet(session.id);
 
   return (
     <div className="flex min-h-dvh">
@@ -27,7 +24,6 @@ export default async function OfficeLayout({ children }: { children: React.React
               {session.firstName} {session.lastName} · {session.role.toLowerCase()}
             </p>
           </div>
-          <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>

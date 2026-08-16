@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
 import { FieldJobList } from "@/components/field/FieldJobList";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
-import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
-import { getMyTimesheet } from "@/lib/timesheets";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +19,6 @@ export default async function FieldPage({
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
   const { from, to, days } = scheduleRange(view, date);
-  const myTime = await getMyTimesheet(session.id);
   const technicianFilter = session.role === "TECHNICIAN" ? session.id : undefined;
   const [jobs, routeDays, technicians] = await Promise.all([
     prisma.job.findMany({
@@ -74,7 +71,6 @@ export default async function FieldPage({
           {optimizedStops > 0 ? " Dispatch saved a driving order for these stops." : ""}
         </p>
       </div>
-      <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
       <ScheduleToolbar view={view} date={date} basePath="/field" />
       <FieldJobList
         jobs={jobs}

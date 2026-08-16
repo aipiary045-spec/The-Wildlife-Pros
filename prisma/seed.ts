@@ -11,6 +11,8 @@ if (!url) {
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 
 async function main() {
+  await prisma.scheduleNeed.deleteMany();
+  await prisma.availabilityBlock.deleteMany();
   await prisma.routeStop.deleteMany();
   await prisma.routeDay.deleteMany();
   await prisma.photo.deleteMany();
@@ -38,6 +40,7 @@ async function main() {
   await prisma.property.deleteMany();
   await prisma.client.deleteMany();
   await prisma.equipment.deleteMany();
+  await prisma.inventoryLocation.deleteMany();
   await prisma.service.deleteMany();
   await prisma.taxRate.deleteMany();
   await prisma.chemicalProduct.deleteMany();
@@ -145,6 +148,12 @@ async function main() {
   await prisma.taxRate.create({
     data: { organizationId: org.id, name: "Mecklenburg County", rate: 0.0725, default: true },
   });
+
+  const [shop, truck, shed] = await Promise.all([
+    prisma.inventoryLocation.create({ data: { organizationId: org.id, name: "Shop", sortOrder: 0 } }),
+    prisma.inventoryLocation.create({ data: { organizationId: org.id, name: "Truck 1", sortOrder: 1 } }),
+    prisma.inventoryLocation.create({ data: { organizationId: org.id, name: "Shed", sortOrder: 2 } }),
+  ]);
 
   const raccoon = await prisma.species.create({
     data: { organizationId: org.id, commonName: "Raccoon", scientificName: "Procyon lotor", regulated: true },
@@ -446,17 +455,50 @@ async function main() {
     },
   });
 
+  await prisma.scheduleNeed.create({
+    data: {
+      clientId: maya.id,
+      propertyId: maya.properties[0].id,
+      sourceJobId: job1.id,
+      preferredTechId: jordan.id,
+      title: "Raccoon trap check",
+      notes: "Cage still set in the attic. Come back in a few days.",
+      returnInDays: 3,
+      dueOn: startOfDay(addDays(today, -1)),
+      status: "OPEN",
+    },
+  });
+  await prisma.scheduleNeed.create({
+    data: {
+      clientId: langford.id,
+      propertyId: langford.properties[0].id,
+      preferredTechId: alex.id,
+      title: "Rodent station service",
+      notes: "Monthly bait stations — do not pre-load the calendar.",
+      returnInDays: 30,
+      dueOn: startOfDay(today),
+      status: "OPEN",
+    },
+  });
+  await prisma.availabilityBlock.create({
+    data: {
+      userId: jordan.id,
+      date: startOfDay(addDays(today, 2)),
+      reason: "PTO",
+    },
+  });
+
   const trap14 = await prisma.equipment.create({
-    data: { serialNumber: "T-014", name: "Tomahawk live cage #14", type: "LIVE_CAGE", status: "DEPLOYED" },
+    data: { serialNumber: "T-014", name: "Tomahawk live cage #14", type: "LIVE_CAGE", status: "DEPLOYED", locationId: truck.id },
   });
   const trap21 = await prisma.equipment.create({
-    data: { serialNumber: "T-021", name: "Tomahawk live cage #21", type: "LIVE_CAGE", status: "IN_INVENTORY" },
+    data: { serialNumber: "T-021", name: "Tomahawk live cage #21", type: "LIVE_CAGE", status: "IN_INVENTORY", locationId: shop.id },
   });
   const owd = await prisma.equipment.create({
-    data: { serialNumber: "OWD-07", name: "One-way door 7", type: "ONE_WAY_DOOR", status: "DEPLOYED" },
+    data: { serialNumber: "OWD-07", name: "One-way door 7", type: "ONE_WAY_DOOR", status: "DEPLOYED", locationId: truck.id },
   });
   await prisma.equipment.create({
-    data: { serialNumber: "CAM-03", name: "Trail camera 3", type: "CAMERA", status: "IN_INVENTORY" },
+    data: { serialNumber: "CAM-03", name: "Trail camera 3", type: "CAMERA", status: "IN_INVENTORY", locationId: shed.id },
   });
 
   const deploy14 = await prisma.equipmentDeployment.create({

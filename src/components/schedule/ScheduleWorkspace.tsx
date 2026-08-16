@@ -19,6 +19,7 @@ export function ScheduleWorkspace({
   unscheduled,
   clients,
   compact = false,
+  availability = [],
 }: {
   view: "day" | "week";
   date: string;
@@ -28,6 +29,7 @@ export function ScheduleWorkspace({
   unscheduled: ScheduleJobCard[];
   clients: ScheduleClient[];
   compact?: boolean;
+  availability?: Array<{ technicianId: string; date: string; reason: string | null }>;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<ScheduleMode>("move");
@@ -62,6 +64,7 @@ export function ScheduleWorkspace({
           unscheduled={unscheduled}
           mode={mode}
           compact={compact}
+          availability={availability}
           onCopyRequest={setCopyRequest}
           onNewJob={(technicianId, day, time) => setNewJob({ technicianId, day, time })}
         />
@@ -72,6 +75,7 @@ export function ScheduleWorkspace({
           jobs={jobs}
           unscheduled={unscheduled}
           mode={mode}
+          availability={availability}
           onCopyRequest={setCopyRequest}
           onNewJob={(technicianId, day, time) => setNewJob({ technicianId, day, time })}
         />

@@ -22,20 +22,33 @@ test("visitActionForStatus hides buttons on closed jobs", () => {
 
 test("parseCheckoutBody requires complete or follow_up", () => {
   assert.throws(() => parseCheckoutBody({}), /complete or needs a follow-up/);
-  const complete = parseCheckoutBody({ outcome: "complete", notes: "All clear" });
+  const complete = parseCheckoutBody({
+    outcome: "complete",
+    notes: "All clear",
+    workDone: ["inspection", "no_activity"],
+    siteLeft: "secure",
+  });
   assert.equal(complete.outcome, "complete");
   assert.equal(complete.notes, "All clear");
+  assert.deepEqual(complete.workDone, ["inspection", "no_activity"]);
+  assert.equal(complete.trapPlaced, false);
 });
 
-test("parseCheckoutBody requires a follow-up start time", () => {
-  assert.throws(() => parseCheckoutBody({ outcome: "follow_up" }), /date and time/);
+test("parseCheckoutBody asks for days until return instead of a calendar slot", () => {
+  assert.throws(() => parseCheckoutBody({ outcome: "follow_up" }), /how many days/);
   const next = parseCheckoutBody({
     outcome: "follow_up",
     notes: "Trap still active",
-    followUp: { scheduledStart: "2026-08-16T13:00:00.000Z", durationMin: 45, technicianId: "tech-1" },
+    returnInDays: 3,
+    workDone: ["trap_check"],
+    trapPlaced: true,
+    trapLat: 35.2,
+    trapLng: -80.8,
+    trapNote: "South eave",
   });
   assert.equal(next.outcome, "follow_up");
-  assert.equal(next.followUp?.durationMin, 45);
-  assert.equal(next.followUp?.technicianId, "tech-1");
-  assert.equal(next.followUp?.scheduledStart.toISOString(), "2026-08-16T13:00:00.000Z");
+  assert.equal(next.followUp?.returnInDays, 3);
+  assert.equal(next.trapPlaced, true);
+  assert.equal(next.trapLat, 35.2);
+  assert.ok(next.followUp?.dueOn.getTime() > Date.now());
 });

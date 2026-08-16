@@ -7,7 +7,13 @@ import { suggestSerial } from "@/lib/equipment";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 
-export function AddEquipmentForm({ serials }: { serials: string[] }) {
+export function AddEquipmentForm({
+  serials,
+  locations = [],
+}: {
+  serials: string[];
+  locations?: Array<{ id: string; name: string }>;
+}) {
   const router = useRouter();
   const [type, setType] = useState("LIVE_CAGE");
   const suggested = useMemo(() => suggestSerial(type, serials), [type, serials]);
@@ -16,6 +22,8 @@ export function AddEquipmentForm({ serials }: { serials: string[] }) {
   const [name, setName] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [notes, setNotes] = useState("");
+  const [locationId, setLocationId] = useState(locations[0]?.id ?? "");
+  const [newLocation, setNewLocation] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -28,6 +36,22 @@ export function AddEquipmentForm({ serials }: { serials: string[] }) {
     event.preventDefault();
     setSaving(true);
     setError("");
+    let nextLocationId = locationId;
+    if (newLocation.trim()) {
+      const created = await fetch("/api/inventory-locations", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newLocation.trim() }),
+      });
+      const payload = (await created.json()) as { location?: { id: string }; error?: string };
+      if (!created.ok) {
+        setSaving(false);
+        setError(payload.error ?? "Could not save that location.");
+        return;
+      }
+      nextLocationId = payload.location?.id ?? "";
+    }
     const response = await fetch("/api/traps", {
       method: "POST",
       credentials: "include",
@@ -38,6 +62,7 @@ export function AddEquipmentForm({ serials }: { serials: string[] }) {
         type,
         manufacturer: manufacturer.trim() || undefined,
         notes: notes.trim() || undefined,
+        locationId: nextLocationId || undefined,
       }),
     });
     const data = (await response.json()) as { error?: string };
@@ -99,8 +124,19 @@ export function AddEquipmentForm({ serials }: { serials: string[] }) {
           <input value={manufacturer} onChange={(event) => setManufacturer(event.target.value)} className={inputClass} />
         </label>
         <label className="block text-sm">
-          Notes
-          <input value={notes} onChange={(event) => setNotes(event.target.value)} className={inputClass} />
+          Inventory location
+          <select value={locationId} onChange={(event) => setLocationId(event.target.value)} className={inputClass}>
+            <option value="">Unassigned</option>
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {location.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm">
+          Or new location
+          <input value={newLocation} onChange={(event) => setNewLocation(event.target.value)} className={inputClass} placeholder="Truck 2, shed, shop shelf…" />
         </label>
       </div>
       {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}

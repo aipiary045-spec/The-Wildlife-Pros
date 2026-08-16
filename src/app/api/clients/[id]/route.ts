@@ -39,3 +39,23 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   });
   return NextResponse.json({ client });
 }
+
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  const { id } = await context.params;
+  const client = await prisma.client.findUnique({
+    where: { id },
+    include: { _count: { select: { jobs: true, invoices: true, quotes: true } } },
+  });
+  if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+  if (client._count.jobs > 0 || client._count.invoices > 0 || client._count.quotes > 0) {
+    const updated = await prisma.client.update({
+      where: { id },
+      data: { status: "INACTIVE" },
+    });
+    return NextResponse.json({ client: updated, deactivated: true });
+  }
+  await prisma.client.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

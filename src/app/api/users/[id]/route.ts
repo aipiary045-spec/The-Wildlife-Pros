@@ -7,7 +7,6 @@ import { canAssignRole, canChangeUser, canManageTeam } from "@/lib/team";
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return jsonError("Sign in required", 401);
-  if (!canManageTeam(session.role)) return jsonError("Only office staff can update the team.", 403);
 
   const { id } = await context.params;
   const body = (await request.json()) as {
@@ -26,24 +25,39 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return jsonError("Team member not found", 404);
   }
 
-  const action = body.status === "DISABLED" ? "disable" : body.status === "ACTIVE" ? "enable" : "edit";
-  const activeOwners = await prisma.user.count({
-    where: { organizationId: session.organizationId, role: "OWNER", status: "ACTIVE" },
-  });
-  if (
-    !canChangeUser(
-      { id: session.id, role: session.role },
-      { id: target.id, role: target.role, status: target.status },
-      action,
-      activeOwners,
-    )
-  ) {
-    return jsonError("You cannot change that team member.");
+  const isSelf = session.id === target.id;
+  const selfEditOnly =
+    isSelf &&
+    !body.status &&
+    !body.role &&
+    (body.firstName !== undefined ||
+      body.lastName !== undefined ||
+      body.phone !== undefined ||
+      body.color !== undefined ||
+      body.homeAddress !== undefined ||
+      body.password !== undefined);
+
+  if (!selfEditOnly) {
+    if (!canManageTeam(session.role)) return jsonError("Only office staff can update the team.", 403);
+    const action = body.status === "DISABLED" ? "disable" : body.status === "ACTIVE" ? "enable" : "edit";
+    const activeOwners = await prisma.user.count({
+      where: { organizationId: session.organizationId, role: "OWNER", status: "ACTIVE" },
+    });
+    if (
+      !canChangeUser(
+        { id: session.id, role: session.role },
+        { id: target.id, role: target.role, status: target.status },
+        action,
+        activeOwners,
+      )
+    ) {
+      return jsonError("You cannot change that team member.");
+    }
+    if (body.role && !canAssignRole(session.role, body.role)) {
+      return jsonError("You cannot assign that role.");
+    }
   }
 
-  if (body.role && !canAssignRole(session.role, body.role)) {
-    return jsonError("You cannot assign that role.");
-  }
   if (body.password && body.password.length < 6) {
     return jsonError("Password must be at least 6 characters.");
   }
@@ -51,8 +65,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const user = await prisma.user.update({
     where: { id },
     data: {
-      status: body.status,
-      role: body.role as never,
+      status: selfEditOnly ? undefined : body.status,
+      role: selfEditOnly ? undefined : (body.role as never),
       firstName: body.firstName?.trim() || undefined,
       lastName: body.lastName?.trim() || undefined,
       phone: body.phone === undefined ? undefined : body.phone.trim() || null,

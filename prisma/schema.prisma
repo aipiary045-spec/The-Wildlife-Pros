@@ -188,6 +188,12 @@ enum TimesheetStatus {
   REJECTED
 }
 
+enum ScheduleNeedStatus {
+  OPEN
+  SCHEDULED
+  CANCELLED
+}
+
 model Organization {
   id              String   @id @default(cuid())
   name            String
@@ -219,6 +225,7 @@ model Organization {
   species         Species[]
   chemicalProducts ChemicalProduct[]
   formTemplates   FormTemplate[]
+  inventoryLocations InventoryLocation[]
 }
 
 model User {
@@ -254,6 +261,8 @@ model User {
   notes          Note[]
   routes         RouteDay[]
   formSubmissions FormSubmission[]
+  scheduleNeeds  ScheduleNeed[] @relation("ScheduleNeedTech")
+  availabilityBlocks AvailabilityBlock[]
 
   @@index([organizationId, role])
 }
@@ -286,6 +295,7 @@ model Client {
   jobs           Job[]
   invoices       Invoice[]
   notesList      Note[]
+  scheduleNeeds  ScheduleNeed[]
 
   @@index([organizationId, lastName])
   @@index([email])
@@ -318,6 +328,7 @@ model Property {
   entryPoints    EntryPoint[]
   photos         Photo[]
   invoices       Invoice[]
+  scheduleNeeds  ScheduleNeed[]
 
   @@index([clientId])
   @@index([city, state])
@@ -465,6 +476,8 @@ model Job {
   timeEntries    TimeEntry[]
   routeStops     RouteStop[]
   formSubmissions FormSubmission[]
+  followUpNeeds  ScheduleNeed[] @relation("JobScheduleNeeds")
+  scheduledNeeds ScheduleNeed[] @relation("ScheduledFromNeed")
 
   @@index([technicianId, scheduledStart])
   @@index([status, scheduledStart])
@@ -497,6 +510,11 @@ model Visit {
   arrivedAt   DateTime?
   departedAt  DateTime?
   summary     String?
+  checkoutWork Json?
+  trapPlaced  Boolean     @default(false)
+  trapLat     Float?
+  trapLng     Float?
+  trapNote    String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -620,6 +638,20 @@ model TimeEntry {
   billable     Boolean    @default(true)
 }
 
+model InventoryLocation {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  equipment      Equipment[]
+
+  @@unique([organizationId, name])
+}
+
 model Equipment {
   id           String          @id @default(cuid())
   serialNumber String          @unique
@@ -628,6 +660,8 @@ model Equipment {
   status       EquipmentStatus @default(IN_INVENTORY)
   manufacturer String?
   notes        String?
+  locationId   String?
+  location     InventoryLocation? @relation(fields: [locationId], references: [id])
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -648,6 +682,8 @@ model EquipmentDeployment {
   retrievedAt  DateTime?
   status       EquipmentStatus @default(DEPLOYED)
   baitUsed     String?
+  lat          Float?
+  lng          Float?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -677,6 +713,8 @@ model Species {
   notes          String?
 
   captures       CaptureEvent[]
+
+  @@unique([organizationId, commonName])
 }
 
 model CaptureEvent {
@@ -821,6 +859,42 @@ model RouteDay {
   stops         RouteStop[]
 
   @@unique([technicianId, date])
+}
+
+model ScheduleNeed {
+  id              String             @id @default(cuid())
+  clientId        String
+  client          Client             @relation(fields: [clientId], references: [id])
+  propertyId      String
+  property        Property           @relation(fields: [propertyId], references: [id])
+  sourceJobId     String?
+  sourceJob       Job?               @relation("JobScheduleNeeds", fields: [sourceJobId], references: [id], onDelete: SetNull)
+  preferredTechId String?
+  preferredTech   User?              @relation("ScheduleNeedTech", fields: [preferredTechId], references: [id])
+  scheduledJobId  String?
+  scheduledJob    Job?               @relation("ScheduledFromNeed", fields: [scheduledJobId], references: [id])
+  title           String
+  notes           String?
+  returnInDays    Int
+  dueOn           DateTime
+  status          ScheduleNeedStatus @default(OPEN)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([status, dueOn])
+  @@index([clientId, status])
+}
+
+model AvailabilityBlock {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([date])
 }
 
 model RouteStop {

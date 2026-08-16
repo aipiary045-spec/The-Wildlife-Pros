@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/routing.test.ts src/lib/time.test.ts src/lib/dates.test.ts src/lib/maps.test.ts src/lib/equipment.test.ts src/lib/job-visit.test.ts src/lib/quotes.test.ts src/lib/team.test.ts src/lib/schedule-move.test.ts",
+    "test": "tsx --test src/lib/routing.test.ts src/lib/time.test.ts src/lib/dates.test.ts src/lib/maps.test.ts src/lib/equipment.test.ts src/lib/job-visit.test.ts src/lib/quotes.test.ts src/lib/team.test.ts src/lib/schedule-move.test.ts src/lib/schedule-needs.test.ts src/lib/invoice-aging.test.ts src/lib/hours.test.ts",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AddTeamMemberButton } from "@/components/team/AddTeamMemberButton";
+import { EditTeamMemberButton } from "@/components/team/EditTeamMemberButton";
 import { TeamStatusButton } from "@/components/team/TeamStatusButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getSession } from "@/lib/auth";
@@ -105,7 +106,8 @@ function MemberList({
               </div>
               <StatusBadge status={user.status} label={USER_STATUS_LABEL[user.status]} />
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap gap-2">
+              <EditTeamMemberButton actorRole={actorRole} user={user} />
               <TeamStatusButton actorId={actorId} actorRole={actorRole} user={user} activeOwnerCount={activeOwnerCount} />
             </div>
           </article>
@@ -146,7 +148,10 @@ function MemberList({
                   <StatusBadge status={user.status} label={USER_STATUS_LABEL[user.status]} />
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <TeamStatusButton actorId={actorId} actorRole={actorRole} user={user} activeOwnerCount={activeOwnerCount} />
+                  <div className="flex justify-end gap-2">
+                    <EditTeamMemberButton actorRole={actorRole} user={user} />
+                    <TeamStatusButton actorId={actorId} actorRole={actorRole} user={user} activeOwnerCount={activeOwnerCount} />
+                  </div>
                 </td>
               </tr>
             ))}

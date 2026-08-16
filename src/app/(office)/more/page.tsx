@@ -1,18 +1,91 @@
-import Link from "next/link";
+import { AvailabilityEditor } from "@/components/team/AvailabilityEditor";
+import { ClockCard } from "@/components/timesheets/ClockCard";
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { getSession } from "@/lib/auth";
 import { moreItems } from "@/lib/nav";
+import { prisma } from "@/lib/prisma";
+import { getMyTimesheet } from "@/lib/timesheets";
+import { formatDuration, workedMinutes } from "@/lib/time";
+import { startOfWeek } from "date-fns";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 
 export default async function MorePage() {
   const session = await getSession();
-  const items = moreItems(session?.role ?? "OWNER");
+  if (!session) return null;
+  const items = moreItems(session.role);
+  const myTime = await getMyTimesheet(session.id);
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+
+  const techs = await prisma.user.findMany({
+    where: {
+      organizationId: session.organizationId,
+      status: "ACTIVE",
+      role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] },
+    },
+    include: {
+      availabilityBlocks: {
+        where: { date: { gte: weekStart } },
+        orderBy: { date: "asc" },
+      },
+      timesheets: {
+        where: { date: { gte: weekStart } },
+        include: { punches: true },
+      },
+    },
+    orderBy: { firstName: "asc" },
+  });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div>
         <h1 className="font-display text-3xl tracking-wide">More</h1>
-        <p className="text-stone-600">Quotes, traps, compliance, Sheets, and the field route.</p>
+        <p className="text-stone-600">Clock, crew cards, quotes, traps, and the rest of the office tools.</p>
       </div>
+      <ClockCard initialCurrent={myTime.current} initialRecent={myTime.recent} />
+      <section className="space-y-3">
+        <h2 className="font-semibold">Crew</h2>
+        <div className="grid gap-3 md:grid-cols-2">
+          {techs.map((tech) => {
+            const weekMin = tech.timesheets.reduce((sum, sheet) => sum + workedMinutes(sheet.punches, sheet.breakMin), 0);
+            const mine = tech.id === session.id;
+            return (
+              <article key={tech.id} className="rounded-2xl border border-line bg-panel p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: tech.color }}>
+                      {tech.firstName.charAt(0)}
+                      {tech.lastName.charAt(0)}
+                    </span>
+                    <div>
+                      <p className="font-semibold">
+                        {tech.firstName} {tech.lastName}
+                        {mine ? " · you" : ""}
+                      </p>
+                      <p className="text-xs text-stone-500">{tech.role.toLowerCase()} · {formatDuration(weekMin)} this week</p>
+                    </div>
+                  </div>
+                  <Link href="/team" className="text-xs font-semibold text-orange">
+                    Open
+                  </Link>
+                </div>
+                <div className="mt-3">
+                  <AvailabilityEditor
+                    userId={tech.id}
+                    canEdit={mine || ["OWNER", "ADMIN", "DISPATCHER"].includes(session.role)}
+                    blocks={tech.availabilityBlocks.map((block) => ({
+                      id: block.id,
+                      date: block.date.toISOString(),
+                      reason: block.reason,
+                    }))}
+                  />
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
       <div className="grid gap-2">
         {items.map((item) => {
           const Icon = item.icon;

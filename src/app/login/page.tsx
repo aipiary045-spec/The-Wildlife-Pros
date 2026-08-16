@@ -23,7 +23,7 @@ export default async function LoginPage({
           <Logo size={180} className="mx-auto drop-shadow-xl" />
           <h1 className="mt-6 font-display text-4xl tracking-wide">THE WILDLIFE PROS</h1>
           <p className="mt-3 text-lg text-ink/80">
-            CritterOps runs the office, the truck, and the trapline — quotes, dispatch, compliance, and
+            CritterOps runs the office, the truck, and the trapline — quotes, dispatch, and
             the client hub in one place.
           </p>
         </div>

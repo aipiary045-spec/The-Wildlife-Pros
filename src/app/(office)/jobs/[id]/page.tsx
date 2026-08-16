@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { JobCaptureForm } from "@/components/jobs/JobCaptureForm";
+import { JobEditor } from "@/components/jobs/JobEditor";
 import { RecurringForm } from "@/components/jobs/RecurringForm";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
@@ -27,7 +28,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       captures: { include: { species: true } },
       entryPoints: true,
       exclusions: true,
-      applications: { include: { product: true } },
       photos: { include: { entryPoint: true } },
       invoices: true,
       sourceJob: true,
@@ -157,21 +157,21 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             />
           </div>
         </Card>
-        <Card title="Recurring visits">
+        <Card title="Edit job">
+          <JobEditor job={job} technicians={technicians} />
+        </Card>
+        <Card title="Recurring / return visits">
           <RecurringForm jobId={job.id} />
         </Card>
-        <Card title="Exclusion & chemicals">
-          {job.exclusions.map((work) => (
-            <p key={work.id} className="py-1 text-sm">
-              {work.material} {work.quantity ? `· ${work.quantity}` : ""}
-            </p>
-          ))}
-          {job.applications.map((app) => (
-            <p key={app.id} className="py-1 text-sm">
-              {app.product.name} ({app.product.epaNumber}) · {app.targetPests} · {app.rate}
-            </p>
-          ))}
-        </Card>
+        {job.exclusions.length > 0 ? (
+          <Card title="Exclusion">
+            {job.exclusions.map((work) => (
+              <p key={work.id} className="py-1 text-sm">
+                {work.material} {work.quantity ? `· ${work.quantity}` : ""}
+              </p>
+            ))}
+          </Card>
+        ) : null}
       </section>
       <Card title="Photo documentation">
         <div className="grid gap-3 sm:grid-cols-3">

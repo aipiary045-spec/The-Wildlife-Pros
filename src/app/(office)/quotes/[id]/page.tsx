@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { QuoteActions } from "@/components/quotes/QuoteActions";
+import { EditQuoteButton } from "@/components/quotes/QuoteForm";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id]">) {
   const { id } = await params;
-  const [quote, technicians] = await Promise.all([
+  const [quote, technicians, clients, services] = await Promise.all([
     prisma.quote.findUnique({
       where: { id },
       include: {
@@ -24,6 +25,15 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
       where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
       orderBy: { firstName: "asc" },
       select: { id: true, firstName: true, lastName: true, color: true },
+    }),
+    prisma.client.findMany({
+      include: { properties: { select: { id: true, address1: true, city: true } } },
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    }),
+    prisma.service.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, unitPrice: true, taxable: true },
     }),
   ]);
   if (!quote) notFound();
@@ -45,6 +55,32 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
         </div>
         <div className="space-y-2">
           <StatusBadge status={quote.status} />
+          {quote.status !== "CONVERTED" ? (
+            <EditQuoteButton
+              clients={clients}
+              services={services.map((item) => ({
+                id: item.id,
+                name: item.name,
+                unitPrice: Number(item.unitPrice),
+                taxable: item.taxable,
+              }))}
+              quote={{
+                id: quote.id,
+                title: quote.title,
+                message: quote.message,
+                validUntil: quote.validUntil,
+                clientId: quote.clientId,
+                propertyId: quote.propertyId,
+                lineItems: quote.lineItems.map((item) => ({
+                  name: item.name,
+                  quantity: Number(item.quantity),
+                  unitPrice: Number(item.unitPrice),
+                  taxable: item.taxable,
+                  serviceId: item.serviceId ?? undefined,
+                })),
+              }}
+            />
+          ) : null}
           <QuoteActions
             quoteId={quote.id}
             status={quote.status}

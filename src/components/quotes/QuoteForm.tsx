@@ -30,23 +30,63 @@ export function NewQuoteButton({
   );
 }
 
-function QuoteForm({
+export function EditQuoteButton({
+  clients,
+  services,
+  quote,
+}: {
+  clients: ScheduleClient[];
+  services: ServiceOption[];
+  quote: {
+    id: string;
+    title: string;
+    message: string | null;
+    validUntil: Date | string | null;
+    clientId: string;
+    propertyId: string | null;
+    lineItems: LineDraft[];
+  };
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold">
+        Edit quote
+      </button>
+      {open ? (
+        <QuoteForm clients={clients} services={services} quote={quote} onClose={() => setOpen(false)} />
+      ) : null}
+    </>
+  );
+}
+
+export function QuoteForm({
   clients,
   services,
   onClose,
+  quote,
 }: {
   clients: ScheduleClient[];
   services: ServiceOption[];
   onClose: () => void;
+  quote?: {
+    id: string;
+    title: string;
+    message: string | null;
+    validUntil: Date | string | null;
+    clientId: string;
+    propertyId: string | null;
+    lineItems: LineDraft[];
+  };
 }) {
   const router = useRouter();
-  const [clientId, setClientId] = useState(clients[0]?.id ?? "");
+  const [clientId, setClientId] = useState(quote?.clientId ?? clients[0]?.id ?? "");
   const selected = useMemo(() => clients.find((client) => client.id === clientId), [clients, clientId]);
-  const [propertyId, setPropertyId] = useState(selected?.properties[0]?.id ?? "");
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-  const [validUntil, setValidUntil] = useState(dateKey(addDays(new Date(), 14)));
-  const [items, setItems] = useState<LineDraft[]>([]);
+  const [propertyId, setPropertyId] = useState(quote?.propertyId ?? selected?.properties[0]?.id ?? "");
+  const [title, setTitle] = useState(quote?.title ?? "");
+  const [message, setMessage] = useState(quote?.message ?? "");
+  const [validUntil, setValidUntil] = useState(quote?.validUntil ? dateKey(new Date(quote.validUntil)) : dateKey(addDays(new Date(), 14)));
+  const [items, setItems] = useState<LineDraft[]>(quote?.lineItems ?? []);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -69,8 +109,8 @@ function QuoteForm({
     }
     setSaving(true);
     setError("");
-    const response = await fetch("/api/quotes", {
-      method: "POST",
+    const response = await fetch(quote ? `/api/quotes/${quote.id}` : "/api/quotes", {
+      method: quote ? "PATCH" : "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -90,14 +130,14 @@ function QuoteForm({
     }
     onClose();
     router.refresh();
-    if (data.quote?.id) router.push(`/quotes/${data.quote.id}`);
+    if (data.quote?.id && !quote) router.push(`/quotes/${data.quote.id}`);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center">
       <form onSubmit={submit} className="max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-line bg-panel p-5 shadow-xl">
-        <p className="text-xs font-bold uppercase tracking-widest text-orange">New quote</p>
-        <h2 className="mt-1 font-display text-2xl">Estimate for the customer</h2>
+        <p className="text-xs font-bold uppercase tracking-widest text-orange">{quote ? "Edit quote" : "New quote"}</p>
+        <h2 className="mt-1 font-display text-2xl">{quote ? "Fix it before the customer sees it" : "Estimate for the customer"}</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className="block text-sm sm:col-span-2">
             Client
@@ -142,7 +182,7 @@ function QuoteForm({
             Cancel
           </button>
           <button type="submit" disabled={saving} className="flex-1 rounded-lg bg-orange px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
-            {saving ? "Saving…" : "Save draft"}
+            {saving ? "Saving…" : quote ? "Save changes" : "Save draft"}
           </button>
         </div>
       </form>
