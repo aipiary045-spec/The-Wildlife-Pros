@@ -485,6 +485,17 @@ async function main() {
       userId: jordan.id,
       date: startOfDay(addDays(today, 2)),
       reason: "PTO",
+      status: "APPROVED",
+      reviewedById: owner.id,
+      reviewedAt: new Date(),
+    },
+  });
+  await prisma.availabilityBlock.create({
+    data: {
+      userId: alex.id,
+      date: startOfDay(addDays(today, 4)),
+      reason: "Doctor",
+      status: "REQUESTED",
     },
   });
 

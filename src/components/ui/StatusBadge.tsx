@@ -34,6 +34,8 @@ const TONES: Record<string, string> = {
   CLOCKED_OUT: "bg-stone-200 text-stone-700",
   SUBMITTED: "bg-sky-100 text-sky-800",
   REJECTED: "bg-rose-100 text-rose-800",
+  REQUESTED: "bg-amber-100 text-amber-900",
+  DENIED: "bg-rose-100 text-rose-800",
 };
 
 export function StatusBadge({ status, label }: { status: string; label?: string }) {

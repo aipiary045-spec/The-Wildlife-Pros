@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { jsonError } from "@/lib/api";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
+import { approvedDayOffError } from "@/lib/day-off-guard";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -34,6 +35,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const { id } = await context.params;
   const body = await request.json();
   const type = typeof body.type === "string" && body.type in JOB_TYPE_LABEL ? body.type : undefined;
+  const blocked = await approvedDayOffError(body.technicianId, body.scheduledStart);
+  if (blocked) return blocked;
   const job = await prisma.job.update({
     where: { id },
     data: {

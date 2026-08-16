@@ -119,6 +119,7 @@ export function DayBoard({
                   hours={formatClockDuration(minutes)}
                   technicianId={tech.id}
                   dayKey={dayKey}
+                  off={off}
                   active={drag?.overTechId === tech.id}
                   onAdd={() => onNewJob?.(tech.id, day, nextOpenTime(techJobs))}
                 >
@@ -146,13 +147,6 @@ export function DayBoard({
                         />
                       ))}
                     </div>
-                    {off ? (
-                      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-stone-900/45">
-                        <p className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink">
-                          Off{off.reason ? ` · ${off.reason}` : ""}
-                        </p>
-                      </div>
-                    ) : null}
                     {drag?.overTechId === tech.id && drag.overStartAt ? (
                       <div
                         className="pointer-events-none absolute inset-y-0 z-10 bg-orange/20"
@@ -221,6 +215,7 @@ function Lane({
   hours,
   technicianId,
   dayKey,
+  off,
   active,
   children,
   onAdd,
@@ -231,6 +226,7 @@ function Lane({
   hours: string;
   technicianId: string;
   dayKey: string;
+  off?: { reason: string | null };
   active?: boolean;
   children: React.ReactNode;
   onAdd: () => void;
@@ -260,13 +256,19 @@ function Lane({
             <Clock size={11} />
             {hours}
           </p>
-          <button
-            type="button"
-            className="mt-1 text-[11px] font-semibold text-orange hover:underline"
-            onClick={onAdd}
-          >
-            + Job
-          </button>
+          {off ? (
+            <p className="mt-1 text-[11px] font-semibold text-rose-700">
+              Off{off.reason ? ` · ${off.reason}` : ""}
+            </p>
+          ) : (
+            <button
+              type="button"
+              className="mt-1 text-[11px] font-semibold text-orange hover:underline"
+              onClick={onAdd}
+            >
+              + Job
+            </button>
+          )}
         </div>
       </div>
       {children}

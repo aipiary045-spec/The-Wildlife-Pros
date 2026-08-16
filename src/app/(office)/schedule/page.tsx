@@ -46,7 +46,7 @@ export default async function SchedulePage({
       orderBy: { dueOn: "asc" },
     }),
     prisma.availabilityBlock.findMany({
-      where: { date: { gte: from, lte: to } },
+      where: { date: { gte: from, lte: to }, status: "APPROVED" },
     }),
   ]);
 
@@ -56,7 +56,7 @@ export default async function SchedulePage({
         <div>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
           <p className="text-stone-600">
-            Pull from the needs-scheduled pool, then drop the stop on a time. Off days show as a blocker on that tech&apos;s row.
+            Pull from the needs-scheduled pool, then drop the stop on a time. Approved days off from Timesheets block that tech.
           </p>
         </div>
         <Link

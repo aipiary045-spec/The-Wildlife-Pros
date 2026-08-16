@@ -194,6 +194,12 @@ enum ScheduleNeedStatus {
   CANCELLED
 }
 
+enum DayOffStatus {
+  REQUESTED
+  APPROVED
+  DENIED
+}
+
 model Organization {
   id              String   @id @default(cuid())
   name            String
@@ -263,6 +269,7 @@ model User {
   formSubmissions FormSubmission[]
   scheduleNeeds  ScheduleNeed[] @relation("ScheduleNeedTech")
   availabilityBlocks AvailabilityBlock[]
+  reviewedDayOffs AvailabilityBlock[] @relation("DayOffReviewer")
 
   @@index([organizationId, role])
 }
@@ -886,15 +893,19 @@ model ScheduleNeed {
 }
 
 model AvailabilityBlock {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date      DateTime
-  reason    String?
-  createdAt DateTime @default(now())
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date         DateTime
+  reason       String?
+  status       DayOffStatus @default(REQUESTED)
+  reviewedById String?
+  reviewedBy   User?        @relation("DayOffReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  createdAt    DateTime     @default(now())
 
   @@unique([userId, date])
-  @@index([date])
+  @@index([date, status])
 }
 
 model RouteStop {

@@ -68,12 +68,13 @@ export default async function RoutesPage({
         >
           <ChevronRight size={18} />
         </Link>
-        <Link
-          href={`/routes?date=${dateKey(new Date())}`}
-          className="flex h-11 items-center rounded-xl bg-ink px-3 text-sm font-semibold text-white"
-        >
-          Today
-        </Link>
+        {dateParam === dateKey(new Date()) ? (
+          <p className="text-xs font-semibold text-orange">Today</p>
+        ) : (
+          <Link href={`/routes?date=${dateKey(new Date())}`} className="text-sm font-semibold text-orange hover:underline">
+            Jump to today
+          </Link>
+        )}
       </div>
 
       <RoutePlanner date={dateParam} technicians={technicians} />

@@ -1,12 +1,12 @@
-import { AvailabilityEditor } from "@/components/team/AvailabilityEditor";
 import { ClockCard } from "@/components/timesheets/ClockCard";
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { getSession } from "@/lib/auth";
+import { dateKey } from "@/lib/dates";
 import { moreItems } from "@/lib/nav";
 import { prisma } from "@/lib/prisma";
 import { getMyTimesheet } from "@/lib/timesheets";
 import { formatDuration, workedMinutes } from "@/lib/time";
-import { startOfWeek } from "date-fns";
+import { format, startOfWeek } from "date-fns";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export default async function MorePage() {
     },
     include: {
       availabilityBlocks: {
-        where: { date: { gte: weekStart } },
+        where: { date: { gte: weekStart }, status: "APPROVED" },
         orderBy: { date: "asc" },
       },
       timesheets: {
@@ -70,16 +70,20 @@ export default async function MorePage() {
                     Open
                   </Link>
                 </div>
-                <div className="mt-3">
-                  <AvailabilityEditor
-                    userId={tech.id}
-                    canEdit={mine || ["OWNER", "ADMIN", "DISPATCHER"].includes(session.role)}
-                    blocks={tech.availabilityBlocks.map((block) => ({
-                      id: block.id,
-                      date: block.date.toISOString(),
-                      reason: block.reason,
-                    }))}
-                  />
+                <div className="mt-3 text-sm text-stone-600">
+                  {tech.availabilityBlocks.length === 0 ? (
+                    <p>No approved days off this week.</p>
+                  ) : (
+                    <p>
+                      Off{" "}
+                      {tech.availabilityBlocks
+                        .map((block) => format(new Date(`${dateKey(block.date)}T12:00:00`), "EEE"))
+                        .join(", ")}
+                    </p>
+                  )}
+                  <Link href="/timesheets" className="mt-1 inline-block text-xs font-semibold text-orange">
+                    Request or approve days off
+                  </Link>
                 </div>
               </article>
             );

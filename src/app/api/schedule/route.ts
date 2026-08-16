@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { jsonError, withAuth } from "@/lib/api";
 import { getSchedule } from "@/lib/data";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
+import { approvedDayOffError } from "@/lib/day-off-guard";
 import { duplicateJobTrip } from "@/lib/jobs";
 
 export const GET = withAuth(async (_session, request) => {
@@ -19,6 +20,8 @@ export const POST = withAuth(async (session, request) => {
   if (!body.jobId || !body.scheduledStart) {
     return jsonError("jobId and scheduledStart are required");
   }
+  const blockedCopy = await approvedDayOffError(body.technicianId, body.scheduledStart);
+  if (blockedCopy) return blockedCopy;
   const job = await duplicateJobTrip({
     jobId: body.jobId,
     createdById: session.id,
@@ -34,6 +37,8 @@ export const POST = withAuth(async (session, request) => {
 
 export const PATCH = withAuth(async (_session, request) => {
   const body = await request.json();
+  const blockedMove = await approvedDayOffError(body.technicianId, body.scheduledStart);
+  if (blockedMove) return blockedMove;
   const job = await prisma.job.update({
     where: { id: body.jobId },
     data: {

@@ -2,6 +2,7 @@ import { addMinutes } from "date-fns";
 import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api";
 import { getSession } from "@/lib/auth";
+import { approvedDayOffError } from "@/lib/day-off-guard";
 import { duplicateJobTrip } from "@/lib/jobs";
 import { prisma } from "@/lib/prisma";
 
@@ -37,6 +38,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
   const durationMin = Number(body.durationMin) || 60;
   const technicianId = body.technicianId || need.preferredTechId || undefined;
+  const blocked = await approvedDayOffError(technicianId, scheduledStart);
+  if (blocked) return blocked;
 
   let job = null;
   if (need.sourceJobId) {

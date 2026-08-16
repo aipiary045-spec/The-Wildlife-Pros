@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { jsonError, lineTotals, withAuth } from "@/lib/api";
+import { approvedDayOffError } from "@/lib/day-off-guard";
 import { nextNumber } from "@/lib/utils";
 
 export const GET = withAuth(async (_session, request) => {
@@ -42,6 +43,8 @@ export const POST = withAuth(async (session, request) => {
     serviceId?: string;
   }>;
   const totals = lineTotals(items);
+  const blocked = await approvedDayOffError(body.technicianId, body.scheduledStart);
+  if (blocked) return blocked;
 
   const job = await prisma.job.create({
     data: {

@@ -98,13 +98,11 @@ export function WeekBoard({
                         key={tech.id}
                         data-drop-tech={tech.id}
                         data-drop-day={dateKey(day)}
-                        className={`relative rounded-xl p-1 ${
-                          off ? "bg-stone-900/10" : drag?.overTechId === tech.id ? "bg-orange/10" : ""
-                        }`}
+                        className={`relative rounded-xl p-1 ${drag?.overTechId === tech.id ? "bg-orange/10" : ""}`}
                       >
                         <p className="mb-1 text-xs font-semibold text-stone-600">
                           {tech.firstName} {tech.lastName}
-                          {off ? ` · off${off.reason ? ` (${off.reason})` : ""}` : ""}
+                          {off ? ` · approved off${off.reason ? ` (${off.reason})` : ""}` : ""}
                         </p>
                         <div className="flex gap-2 overflow-x-auto pb-1">
                           {techJobs.map((job) => (
@@ -161,24 +159,25 @@ export function WeekBoard({
                         data-drop-tech={tech.id}
                         data-drop-day={dateKey(day)}
                         className={`relative flex min-h-28 gap-2 overflow-x-auto rounded-xl p-1 ${
-                          off ? "bg-stone-900/15" : drag?.overTechId === tech.id ? "bg-orange/15" : "bg-background/70"
+                          drag?.overTechId === tech.id ? "bg-orange/15" : "bg-background/70"
                         }`}
                       >
-                        {off ? (
-                          <p className="pointer-events-none absolute inset-x-1 top-1 z-10 rounded-full bg-white/90 px-2 py-0.5 text-center text-[10px] font-bold uppercase tracking-wide text-ink">
-                            Off{off.reason ? ` · ${off.reason}` : ""}
-                          </p>
-                        ) : null}
                         {cellJobs.map((job) => (
                           <AppointmentChip key={job.id} {...chipProps(job, day)} />
                         ))}
-                        <button
-                          type="button"
-                          className="w-16 shrink-0 rounded-lg border border-dashed border-line text-[11px] font-semibold text-stone-500 hover:border-orange hover:text-orange"
-                          onClick={() => onNewJob?.(tech.id, day, "09:00")}
-                        >
-                          + Job
-                        </button>
+                        {off ? (
+                          <p className="flex w-20 shrink-0 items-center justify-center rounded-lg bg-rose-50 px-1 text-center text-[11px] font-semibold text-rose-800">
+                            Off{off.reason ? ` · ${off.reason}` : ""}
+                          </p>
+                        ) : (
+                          <button
+                            type="button"
+                            className="w-16 shrink-0 rounded-lg border border-dashed border-line text-[11px] font-semibold text-stone-500 hover:border-orange hover:text-orange"
+                            onClick={() => onNewJob?.(tech.id, day, "09:00")}
+                          >
+                            + Job
+                          </button>
+                        )}
                       </div>
                     </td>
                   );

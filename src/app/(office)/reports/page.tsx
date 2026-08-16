@@ -1,12 +1,22 @@
 import { format, startOfMonth, startOfWeek } from "date-fns";
+import { PeriodToolbar } from "@/components/schedule/PeriodToolbar";
 import { prisma } from "@/lib/prisma";
+import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { hoursByDay } from "@/lib/hours";
 import { formatDuration } from "@/lib/time";
 import { formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function ReportsPage() {
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; date?: string }>;
+}) {
+  const params = await searchParams;
+  const hoursView = parseScheduleView(params.view);
+  const hoursDate = parseDateParam(params.date);
+  const hoursRange = scheduleRange(hoursView, hoursDate);
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const monthStart = startOfMonth(new Date());
 
@@ -29,7 +39,7 @@ export default async function ReportsPage() {
       where: { status: { in: ["DEPLOYED", "ACTIVE_CAPTURE", "NEEDS_CHECK"] } },
     }),
     prisma.timesheet.findMany({
-      where: { date: { gte: weekStart } },
+      where: { date: { gte: hoursRange.from, lte: hoursRange.to } },
       include: { user: true, punches: true },
     }),
   ]);
@@ -68,9 +78,12 @@ export default async function ReportsPage() {
           <p className="mt-3 text-xs text-stone-500">{traps} trap{traps === 1 ? "" : "s"} still in the field.</p>
         </article>
         <article className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Tech hours this week</h2>
+          <h2 className="mb-3 font-semibold">Tech hours</h2>
+          <div className="mb-4">
+            <PeriodToolbar view={hoursView} date={hoursDate} basePath="/reports" dayLabel="Day" weekLabel="Week" />
+          </div>
           {timesheets.length === 0 ? (
-            <p className="text-sm text-stone-500">No punches this week.</p>
+            <p className="text-sm text-stone-500">No punches in this period.</p>
           ) : (
             Object.entries(
               timesheets.reduce<Record<string, typeof timesheets>>((acc, sheet) => {
@@ -87,14 +100,16 @@ export default async function ReportsPage() {
                     <span>{name}</span>
                     <span>{formatDuration(total)}</span>
                   </p>
-                  <ul className="mt-1 space-y-0.5 text-sm text-stone-600">
-                    {days.map((day) => (
-                      <li key={day.date.toISOString()} className="flex justify-between">
-                        <span>{format(day.date, "EEE MMM d")}</span>
-                        <span>{formatDuration(day.minutes)}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {hoursView === "week" ? (
+                    <ul className="mt-1 space-y-0.5 text-sm text-stone-600">
+                      {days.map((day) => (
+                        <li key={day.date.toISOString()} className="flex justify-between">
+                          <span>{format(day.date, "EEE MMM d")}</span>
+                          <span>{formatDuration(day.minutes)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
               );
             })
