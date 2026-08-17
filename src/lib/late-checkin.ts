@@ -1,7 +1,6 @@
 import { visitActionForStatus } from "@/lib/job-visit";
 
 export const LATE_CHECKIN_MS = 60 * 60 * 1000;
-export const LATE_SNOOZE_MS = 15 * 60 * 1000;
 
 export type LateCheckInJob = {
   id: string;
@@ -38,35 +37,7 @@ export function formatMinutesLate(minutes: number) {
   return `${hourPart} ${mins} minute${mins === 1 ? "" : "s"} late`;
 }
 
-export function unsnoozedJobs<T extends { id: string }>(
-  jobs: T[],
-  snoozeUntil: Record<string, number>,
-  now = Date.now(),
-) {
-  return jobs.filter((job) => (snoozeUntil[job.id] ?? 0) <= now);
-}
-
-export function snoozeJobs(
-  current: Record<string, number>,
-  jobIds: string[],
-  now = Date.now(),
-  duration = LATE_SNOOZE_MS,
-) {
-  const next = { ...current };
-  for (const id of jobIds) next[id] = now + duration;
-  return next;
-}
-
-export function parseSnoozeMap(raw: string | null): Record<string, number> {
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const next: Record<string, number> = {};
-    for (const [id, value] of Object.entries(parsed)) {
-      if (typeof value === "number" && Number.isFinite(value)) next[id] = value;
-    }
-    return next;
-  } catch {
-    return {};
-  }
+export function undismissedJobs<T extends { id: string }>(jobs: T[], dismissedIds: Iterable<string>) {
+  const dismissed = new Set(dismissedIds);
+  return jobs.filter((job) => !dismissed.has(job.id));
 }

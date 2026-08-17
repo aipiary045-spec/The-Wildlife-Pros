@@ -5,31 +5,16 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
-import {
-  formatMinutesLate,
-  parseSnoozeMap,
-  snoozeJobs,
-  unsnoozedJobs,
-  type LateCheckInJob,
-} from "@/lib/late-checkin";
+import { formatMinutesLate, undismissedJobs, type LateCheckInJob } from "@/lib/late-checkin";
 import { isTechnician } from "@/lib/paths";
-
-const SNOOZE_KEY = "critterops.late-checkin.snooze";
 
 export function LateCheckInAlert({ role }: { role: string }) {
   const router = useRouter();
   const techView = isTechnician(role);
   const [jobs, setJobs] = useState<LateCheckInJob[]>([]);
-  const [snooze, setSnooze] = useState<Record<string, number>>({});
-  const [now, setNow] = useState(() => Date.now());
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setSnooze(parseSnoozeMap(window.localStorage.getItem(SNOOZE_KEY)));
-    setReady(true);
-  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -44,29 +29,23 @@ export function LateCheckInAlert({ role }: { role: string }) {
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => {
-      setNow(Date.now());
+    const timer = window.setInterval(() => void load(), 60_000);
+    const onReturn = () => {
+      if (document.visibilityState !== "visible") return;
+      setHiddenIds([]);
       void load();
-    }, 60_000);
-    const onFocus = () => void load();
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
+    };
+    document.addEventListener("visibilitychange", onReturn);
     return () => {
       window.clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
+      document.removeEventListener("visibilitychange", onReturn);
     };
   }, [load]);
 
-  const visible = useMemo(() => unsnoozedJobs(jobs, snooze, now), [jobs, snooze, now]);
+  const visible = useMemo(() => undismissedJobs(jobs, hiddenIds), [jobs, hiddenIds]);
 
-  function persistSnooze(next: Record<string, number>) {
-    setSnooze(next);
-    window.localStorage.setItem(SNOOZE_KEY, JSON.stringify(next));
-  }
-
-  function remindLater() {
-    persistSnooze(snoozeJobs(snooze, visible.map((job) => job.id)));
+  function close() {
+    setHiddenIds((current) => [...new Set([...current, ...visible.map((job) => job.id)])]);
   }
 
   async function checkIn(jobId: string) {
@@ -86,11 +65,19 @@ export function LateCheckInAlert({ role }: { role: string }) {
     router.refresh();
   }
 
-  if (!ready || visible.length === 0) return null;
+  if (visible.length === 0) return null;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-3 sm:items-center">
-      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-panel p-5 shadow-xl">
+      <div className="relative max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-panel p-5 pt-12 shadow-xl">
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={close}
+          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-stone-500 hover:bg-background hover:text-ink"
+        >
+          ×
+        </button>
         <p className="text-xs font-bold uppercase tracking-widest text-orange">Late check-in</p>
         <h2 className="mt-1 font-display text-2xl">
           {visible.length === 1 ? "This stop is late for check-in" : `${visible.length} stops are late for check-in`}
@@ -126,6 +113,7 @@ export function LateCheckInAlert({ role }: { role: string }) {
                 ) : null}
                 <Link
                   href={`/jobs/${job.id}`}
+                  onClick={close}
                   className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-3 text-sm font-semibold"
                 >
                   Open job
@@ -135,13 +123,6 @@ export function LateCheckInAlert({ role }: { role: string }) {
           ))}
         </ul>
         {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}
-        <button
-          type="button"
-          onClick={remindLater}
-          className="mt-4 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-semibold"
-        >
-          Remind me in 15 minutes
-        </button>
       </div>
     </div>
   );
