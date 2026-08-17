@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth";
-import { homePath, safeNextPath } from "@/lib/paths";
+import { homePath, isOfficeOnlyPath, isTechnician, safeNextPath } from "@/lib/paths";
 
 const PUBLIC_PREFIXES = [
   "/login",
@@ -29,6 +29,10 @@ export async function proxy(request: NextRequest) {
   }
 
   if ((pathname === "/login" || pathname === "/") && session) {
+    return NextResponse.redirect(new URL(homePath(session.role), request.url));
+  }
+
+  if (session && isTechnician(session.role) && isOfficeOnlyPath(pathname)) {
     return NextResponse.redirect(new URL(homePath(session.role), request.url));
   }
 

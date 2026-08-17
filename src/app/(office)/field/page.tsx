@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
 import { FieldJobList } from "@/components/field/FieldJobList";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
+import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
+import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
+import { getMyTimesheet } from "@/lib/timesheets";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +22,8 @@ export default async function FieldPage({
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
   const { from, to, days } = scheduleRange(view, date);
-  const technicianFilter = session.role === "TECHNICIAN" ? session.id : undefined;
+  const technicianFilter = isTechnician(session.role) ? session.id : undefined;
+  const myTime = await getMyTimesheet(session.id);
   const [jobs, routeDays, technicians] = await Promise.all([
     prisma.job.findMany({
       where: {
@@ -67,10 +71,11 @@ export default async function FieldPage({
           {jobs.length} stop{jobs.length === 1 ? "" : "s"} {view === "week" ? "this week" : "today"}
         </h1>
         <p>
-          {session.firstName}, check in when you arrive. Check out asks if they need a follow-up or if the job is done.
+          {session.firstName}, clock in for the day, then check in when you arrive. Check out asks if they need another visit.
           {optimizedStops > 0 ? " Dispatch saved a driving order for these stops." : ""}
         </p>
       </div>
+      <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
       <ScheduleToolbar view={view} date={date} basePath="/field" />
       <FieldJobList
         jobs={jobs}

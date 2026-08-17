@@ -10,7 +10,9 @@ import { RecurringForm } from "@/components/jobs/RecurringForm";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getSession } from "@/lib/auth";
 import { DISPOSITION_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
+import { isTechnician } from "@/lib/paths";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +37,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
     },
   });
   if (!job) notFound();
+  const session = await getSession();
+  const techView = Boolean(session && isTechnician(session.role));
+  if (techView && job.technicianId && job.technicianId !== session?.id) notFound();
 
   const [stock, allGear, species, technicians] = await Promise.all([
     prisma.equipment.findMany({
@@ -77,7 +82,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             technicianId={job.technicianId}
             technicians={technicians}
           />
-          <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
+          {techView ? null : (
+            <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
+          )}
         </div>
       </div>
       <section className="grid gap-4 md:grid-cols-3">
@@ -103,30 +110,34 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             </div>
           ) : null}
         </Card>
-        <Card title="Value">
-          <p className="font-display text-2xl">{formatMoney(job.total)}</p>
-          <p className="text-sm text-stone-600">Tax {formatMoney(job.taxAmount)}</p>
-          {job.invoices.map((invoice) => (
-            <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
-              Collect {invoice.number} via Square · {formatMoney(invoice.balance)} due
-            </Link>
-          ))}
-        </Card>
+        {techView ? null : (
+          <Card title="Value">
+            <p className="font-display text-2xl">{formatMoney(job.total)}</p>
+            <p className="text-sm text-stone-600">Tax {formatMoney(job.taxAmount)}</p>
+            {job.invoices.map((invoice) => (
+              <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
+                Collect {invoice.number} via Square · {formatMoney(invoice.balance)} due
+              </Link>
+            ))}
+          </Card>
+        )}
         <Card title="Instructions">
           <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
         </Card>
       </section>
       <section className="grid gap-6 lg:grid-cols-2">
-        <Card title="Line items">
-          {job.lineItems.map((item) => (
-            <p key={item.id} className="flex justify-between py-1 text-sm">
-              <span>
-                {item.name} × {Number(item.quantity)}
-              </span>
-              <span>{formatMoney(Number(item.quantity) * Number(item.unitPrice))}</span>
-            </p>
-          ))}
-        </Card>
+        {techView ? null : (
+          <Card title="Line items">
+            {job.lineItems.map((item) => (
+              <p key={item.id} className="flex justify-between py-1 text-sm">
+                <span>
+                  {item.name} × {Number(item.quantity)}
+                </span>
+                <span>{formatMoney(Number(item.quantity) * Number(item.unitPrice))}</span>
+              </p>
+            ))}
+          </Card>
+        )}
         <JobTrapsCard
           jobId={job.id}
           stock={stock.map((item) => ({
@@ -157,12 +168,16 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             />
           </div>
         </Card>
-        <Card title="Edit job">
-          <JobEditor job={job} technicians={technicians} />
-        </Card>
-        <Card title="Recurring / return visits">
-          <RecurringForm jobId={job.id} />
-        </Card>
+        {techView ? null : (
+          <>
+            <Card title="Edit job">
+              <JobEditor job={job} technicians={technicians} />
+            </Card>
+            <Card title="Recurring / return visits">
+              <RecurringForm jobId={job.id} />
+            </Card>
+          </>
+        )}
         {job.exclusions.length > 0 ? (
           <Card title="Exclusion">
             {job.exclusions.map((work) => (

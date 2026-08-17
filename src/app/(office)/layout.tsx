@@ -2,20 +2,24 @@ import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { InstallHint } from "@/components/layout/InstallHint";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
+import { isTechnician } from "@/lib/paths";
+import { getMyTimesheet } from "@/lib/timesheets";
 
 export default async function OfficeLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const myTime = isTechnician(session.role) ? await getMyTimesheet(session.id) : null;
 
   return (
     <div className="flex min-h-dvh">
       <div className="sticky top-0 hidden h-dvh md:block">
-        <Sidebar />
+        <Sidebar role={session.role} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <header
-          className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-panel/95 px-4 py-3 backdrop-blur md:px-6"
+          className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line bg-panel/95 px-4 py-3 backdrop-blur md:px-6"
           style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
         >
           <div className="min-w-0">
@@ -24,6 +28,9 @@ export default async function OfficeLayout({ children }: { children: React.React
               {session.firstName} {session.lastName} · {session.role.toLowerCase()}
             </p>
           </div>
+          {myTime ? (
+            <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
+          ) : null}
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>

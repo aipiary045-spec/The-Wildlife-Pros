@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { adjacentDate, clockLabel, dateKey, dayTimelineSlots, formatClockDuration, hourLabel, jobTimelinePlacement, parseDateParam, parseScheduleView, periodLabel, scheduleRange, slotTimeValue, startAtFromTrackX, timeFromTimelineRatio, tripStartOnDay } from "./dates";
-import { homePath, safeNextPath } from "./paths";
+import { homePath, isOfficeOnlyPath, isTechnician, safeNextPath } from "./paths";
 
 test("parseDateParam reads a local calendar day", () => {
   const date = parseDateParam("2026-08-15");
@@ -47,6 +47,16 @@ test("safeNextPath rejects Chrome DevTools and protocol-relative URLs", () => {
   assert.equal(safeNextPath("/field?view=week"), "/field?view=week");
   assert.equal(homePath("TECHNICIAN"), "/field");
   assert.equal(homePath("OWNER"), "/dashboard");
+});
+
+test("technicians are kept off dispatch and office pages", () => {
+  assert.equal(isTechnician("TECHNICIAN"), true);
+  assert.equal(isTechnician("DISPATCHER"), false);
+  assert.equal(isOfficeOnlyPath("/schedule"), true);
+  assert.equal(isOfficeOnlyPath("/clients/abc"), true);
+  assert.equal(isOfficeOnlyPath("/field"), false);
+  assert.equal(isOfficeOnlyPath("/jobs/abc"), false);
+  assert.equal(isOfficeOnlyPath("/time-off"), false);
 });
 
 test("tripStartOnDay keeps the original clock time on a new calendar day", () => {

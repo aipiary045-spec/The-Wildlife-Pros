@@ -2,13 +2,17 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getSession } from "@/lib/auth";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
+import { isTechnician } from "@/lib/paths";
 import { clientName, formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function JobsPage() {
+  const session = await getSession();
   const jobs = await prisma.job.findMany({
+    where: session && isTechnician(session.role) ? { technicianId: session.id } : undefined,
     include: { client: true, property: true, technician: true },
     orderBy: { scheduledStart: "asc" },
   });
@@ -17,7 +21,11 @@ export default async function JobsPage() {
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Jobs</h1>
-        <p className="text-stone-600">Work orders, visits, and field documentation.</p>
+        <p className="text-stone-600">
+          {session && isTechnician(session.role)
+            ? "Your assigned jobs. Open one to check in, log traps, or record a capture."
+            : "Work orders, visits, and field documentation."}
+        </p>
       </div>
       <div className="space-y-2 md:hidden">
         {jobs.map((job) => (
