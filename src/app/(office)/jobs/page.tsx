@@ -30,11 +30,11 @@ export default async function JobsPage({
         <p className="text-stone-600">
           {techView
             ? "Assigned stops, grouped by today, leftover late jobs, and what's coming."
-            : "The file for every job. Action needed is late leftovers, today, and anything without a day yet. The board is still where you place the time."}
+            : "The file for every job. Action needed is late leftovers, today, and anything without a day yet. The schedule is still where you place the time."}
         </p>
         {techView ? null : (
           <Link href="/schedule" className="mt-2 inline-block text-sm font-semibold text-orange">
-            Open the board
+            Open the schedule
           </Link>
         )}
       </div>

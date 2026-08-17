@@ -1,4 +1,4 @@
-import { addDays, endOfDay, startOfDay, startOfWeek } from "date-fns";
+import { addDays, startOfDay, startOfWeek } from "date-fns";
 import { prisma } from "@/lib/prisma";
 
 function n(value: unknown) {
@@ -12,17 +12,14 @@ function bucketCounts(rows: Array<{ createdAt: Date }>, days: Date[]) {
   });
 }
 
-export async function getDashboardData() {
+export async function getReportsOverview() {
   const today = new Date();
   const from = startOfDay(today);
-  const to = endOfDay(today);
   const sparkStart = startOfDay(addDays(today, -6));
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
   const sparkDays = Array.from({ length: 7 }, (_, index) => addDays(sparkStart, index));
 
   const [
-    jobsToday,
-    technicians,
     requestGroups,
     quoteGroups,
     jobGroups,
@@ -37,21 +34,7 @@ export async function getDashboardData() {
     recentCaptures,
     activeTraps,
     clockedIn,
-    unscheduled,
-    clients,
   ] = await Promise.all([
-    prisma.job.findMany({
-      where: {
-        scheduledStart: { gte: from, lte: to },
-        status: { notIn: ["CANCELLED"] },
-      },
-      include: { client: true, property: true, technician: true },
-      orderBy: { scheduledStart: "asc" },
-    }),
-    prisma.user.findMany({
-      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
-      orderBy: { firstName: "asc" },
-    }),
     prisma.serviceRequest.groupBy({ by: ["status"], _count: true }),
     prisma.quote.groupBy({ by: ["status"], _count: true, _sum: { total: true } }),
     prisma.job.groupBy({ by: ["status"], _count: true, _sum: { total: true } }),
@@ -96,16 +79,6 @@ export async function getDashboardData() {
     prisma.timesheet.count({
       where: { date: from, status: "CLOCKED_IN" },
     }),
-    prisma.job.findMany({
-      where: { status: "UNSCHEDULED" },
-      include: { client: true, property: true },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    }),
-    prisma.client.findMany({
-      include: { properties: { select: { id: true, address1: true, city: true } } },
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-    }),
   ]);
 
   const requestCount = Object.fromEntries(requestGroups.map((row) => [row.status, row._count]));
@@ -144,31 +117,10 @@ export async function getDashboardData() {
     { count: 0, balance: 0 },
   );
 
-  const todayMoney = jobsToday.reduce((sum, job) => sum + n(job.total), 0);
-  const completedToday = jobsToday.filter((job) => job.status === "COMPLETED" || job.status === "INVOICED");
-  const activeToday = jobsToday.filter((job) =>
-    ["EN_ROUTE", "ON_SITE", "IN_PROGRESS"].includes(job.status),
-  );
-  const stillToGo = jobsToday.filter((job) => !["COMPLETED", "INVOICED", "CANCELLED"].includes(job.status));
-
   return {
-    jobsToday,
-    technicians,
-    clients,
-    unscheduled,
     recentCaptures,
     activeTraps,
     clockedIn,
-    today: {
-      total: jobsToday.length,
-      totalMoney: todayMoney,
-      toGo: stillToGo.length,
-      toGoMoney: stillToGo.reduce((sum, job) => sum + n(job.total), 0),
-      active: activeToday.length,
-      activeMoney: activeToday.reduce((sum, job) => sum + n(job.total), 0),
-      completed: completedToday.length,
-      completedMoney: completedToday.reduce((sum, job) => sum + n(job.total), 0),
-    },
     requests: {
       new: requestCount.NEW ?? 0,
       assessed: requestCount.ASSESSED ?? 0,

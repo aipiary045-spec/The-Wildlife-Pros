@@ -88,7 +88,7 @@ export function DayOffPanel({
       <div>
         <h2 className="font-semibold">Request a day</h2>
         <p className="text-sm text-stone-600">
-          Tap a day on the calendar or pick one here. The office approves it, then that day is blocked on the board.
+          Tap a day on the calendar or pick one here. The office approves it, then that day is blocked on the schedule.
         </p>
       </div>
       <form onSubmit={requestOff} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
@@ -182,7 +182,7 @@ export function DayOffPanel({
 
       {canReview && approved.length > 0 ? (
         <div>
-          <h3 className="mb-2 text-sm font-semibold">Approved — blocked on the board</h3>
+          <h3 className="mb-2 text-sm font-semibold">Approved — blocked on the schedule</h3>
           <ul className="space-y-1 text-sm">
             {approved.map((item) => (
               <li key={item.id} className="flex items-center justify-between gap-2 rounded-lg bg-background px-3 py-2">

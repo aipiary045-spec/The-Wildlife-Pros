@@ -34,8 +34,8 @@ export default async function TimeOffPage({
         <h1 className="font-display text-3xl tracking-wide">Time off</h1>
         <p className="text-stone-600">
           {isTechnician(session.role)
-            ? "See your days off on the month, then ask for another. Dispatch blocks the board after they approve it."
-            : "The month shows who is off. Approve a request to block that day on the board."}
+            ? "See your days off on the month, then ask for another. Dispatch blocks the schedule after they approve it."
+            : "The month shows who is off. Approve a request to block that day on the schedule."}
         </p>
       </div>
       <DayOffPanel

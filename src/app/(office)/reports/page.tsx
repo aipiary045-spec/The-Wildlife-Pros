@@ -1,8 +1,10 @@
 import { format, startOfMonth, startOfWeek } from "date-fns";
+import { PipelineOverview } from "@/components/reports/PipelineOverview";
 import { PeriodToolbar } from "@/components/schedule/PeriodToolbar";
-import { prisma } from "@/lib/prisma";
+import { getReportsOverview } from "@/lib/data";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { hoursByDay } from "@/lib/hours";
+import { prisma } from "@/lib/prisma";
 import { formatDuration } from "@/lib/time";
 import { formatMoney } from "@/lib/utils";
 
@@ -20,7 +22,8 @@ export default async function ReportsPage({
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const monthStart = startOfMonth(new Date());
 
-  const [weekPayments, monthPayments, openInvoices, completedWeek, captures, traps, timesheets] = await Promise.all([
+  const [overview, weekPayments, monthPayments, openInvoices, completedWeek, captures, traps, timesheets] = await Promise.all([
+    getReportsOverview(),
     prisma.payment.aggregate({ where: { createdAt: { gte: weekStart } }, _sum: { amount: true } }),
     prisma.payment.aggregate({ where: { createdAt: { gte: monthStart } }, _sum: { amount: true } }),
     prisma.invoice.aggregate({
@@ -53,8 +56,16 @@ export default async function ReportsPage({
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Reports</h1>
-        <p className="text-stone-600">Money collected, work finished, and what came out of the traps this week.</p>
+        <p className="text-stone-600">
+          Pipeline, money collected, work finished, and what came out of the traps.
+        </p>
       </div>
+      <PipelineOverview
+        requests={overview.requests}
+        quotes={overview.quotes}
+        jobs={overview.jobs}
+        invoices={overview.invoices}
+      />
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Collected this week" value={formatMoney(weekPayments._sum.amount ?? 0)} />
         <Stat label="Collected this month" value={formatMoney(monthPayments._sum.amount ?? 0)} />
@@ -65,7 +76,22 @@ export default async function ReportsPage({
         />
         <Stat label="Jobs finished this week" value={String(completedWeek)} />
       </section>
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="grid gap-6 lg:grid-cols-3">
+        <article className="rounded-2xl border border-line bg-panel p-5">
+          <h2 className="mb-3 font-semibold">Field pulse</h2>
+          <p className="text-sm text-stone-600">Traps in the field</p>
+          <p className="font-display text-2xl">{overview.activeTraps}</p>
+          <p className="mt-3 text-sm text-stone-600">Clocked in</p>
+          <p className="font-display text-2xl">{overview.clockedIn}</p>
+          {overview.recentCaptures[0] ? (
+            <p className="mt-3 text-sm text-stone-600">
+              Latest capture: {overview.recentCaptures[0].species.commonName} at{" "}
+              {overview.recentCaptures[0].job.property.address1}
+            </p>
+          ) : (
+            <p className="mt-3 text-sm text-stone-500">No captures logged yet today.</p>
+          )}
+        </article>
         <article className="rounded-2xl border border-line bg-panel p-5">
           <h2 className="mb-3 font-semibold">Captures</h2>
           {captures.length === 0 ? <p className="text-sm text-stone-500">No captures logged yet.</p> : null}

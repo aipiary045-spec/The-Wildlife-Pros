@@ -63,7 +63,7 @@ export default async function LoginPage({
             </label>
             {error ? <p className="text-sm text-rose-700">{error}</p> : null}
             <button type="submit" className="w-full rounded-lg bg-orange py-2.5 font-semibold text-white">
-              Open dispatch board
+              Open schedule
             </button>
             <p className="text-xs text-stone-500">
               Demo logins: admin@, dispatch@, or tech@thewildlifepros.com · password <strong>demo</strong>

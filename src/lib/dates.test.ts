@@ -42,12 +42,12 @@ test("periodLabel and view parser", () => {
 });
 
 test("safeNextPath rejects Chrome DevTools and protocol-relative URLs", () => {
-  assert.equal(safeNextPath("/.well-known/appspecific/com.chrome.devtools.json"), "/dashboard");
-  assert.equal(safeNextPath("//evil.example"), "/dashboard");
+  assert.equal(safeNextPath("/.well-known/appspecific/com.chrome.devtools.json"), "/schedule");
+  assert.equal(safeNextPath("//evil.example"), "/schedule");
   assert.equal(safeNextPath("/schedule"), "/schedule");
   assert.equal(safeNextPath("/field?view=week"), "/field?view=week");
   assert.equal(homePath("TECHNICIAN"), "/field");
-  assert.equal(homePath("OWNER"), "/dashboard");
+  assert.equal(homePath("OWNER"), "/schedule");
 });
 
 test("technicians are kept off dispatch and office pages", () => {
@@ -69,12 +69,15 @@ test("technician time off lives under More, not the main tabs", () => {
   assert.ok(!primaryTabs("DISPATCHER").some((item) => item.href === "/time-off"));
 });
 
-test("office work orders live under More, not next to the board", () => {
+test("office work orders live under More, not next to the schedule", () => {
   const tabs = primaryTabs("DISPATCHER").map((item) => item.href);
   const more = moreItems("DISPATCHER").map((item) => item.href);
-  assert.deepEqual(tabs, ["/dashboard", "/schedule", "/clients", "/more"]);
+  assert.deepEqual(tabs, ["/schedule", "/clients", "/reports", "/more"]);
   assert.equal(more[0], "/jobs");
   assert.ok(!tabs.includes("/jobs"));
+  assert.ok(!tabs.includes("/dashboard"));
+  assert.ok(!more.includes("/reports"));
+  assert.equal(primaryTabs("DISPATCHER")[0]?.label, "Schedule");
 });
 
 test("quote price list is an office page under quotes", () => {

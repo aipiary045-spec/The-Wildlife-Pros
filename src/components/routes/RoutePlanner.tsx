@@ -224,7 +224,7 @@ export function RoutePlanner({
           </button>
         </div>
         <p className="mt-2 text-xs text-stone-500">
-          Preview does not move the board. Apply writes stop order, drive times, and visit start times.
+          Preview does not move the schedule. Apply writes stop order, drive times, and visit start times.
         </p>
         {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
       </div>

@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function TeamPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (!canManageTeam(session.role)) redirect("/dashboard");
+  if (!canManageTeam(session.role)) redirect("/schedule");
 
   const users = await prisma.user.findMany({
     where: { organizationId: session.organizationId },

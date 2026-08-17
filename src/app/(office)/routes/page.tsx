@@ -84,7 +84,7 @@ export default async function RoutesPage({
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="font-semibold">Last applied this day</h2>
           <Link href={`/schedule?view=day&date=${dateParam}`} className="text-sm font-medium text-orange">
-            Open day board
+            Open day schedule
           </Link>
         </div>
         {routes.length === 0 ? (

@@ -5,6 +5,7 @@ import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
 import { getSchedule } from "@/lib/data";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
+import { dayAppointmentStats } from "@/lib/schedule-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,7 @@ export default async function SchedulePage({
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl tracking-wide md:text-3xl">Board</h1>
+          <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule</h1>
           <p className="text-stone-600 sm:hidden">Drag jobs onto a tech and a time. Scroll sideways for the rest of the day.</p>
           <p className="hidden text-stone-600 sm:block">
             Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order, traps, or invoice.
@@ -75,6 +76,9 @@ export default async function SchedulePage({
         technicians={technicians}
       />
       <ScheduleToolbar view={view} date={date} basePath="/schedule" />
+      {view === "day" ? (
+        <DayStats jobs={jobs} />
+      ) : null}
       <ScheduleWorkspace
         view={view}
         date={dateKey(date)}
@@ -89,6 +93,27 @@ export default async function SchedulePage({
           reason: block.reason,
         }))}
       />
+    </div>
+  );
+}
+
+function DayStats({ jobs }: { jobs: Array<{ status: string }> }) {
+  const stats = dayAppointmentStats(jobs);
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <DayStat label="Total" value={stats.total} />
+      <DayStat label="To go" value={stats.toGo} />
+      <DayStat label="Active" value={stats.active} />
+      <DayStat label="Completed" value={stats.completed} />
+    </div>
+  );
+}
+
+function DayStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-line bg-panel px-3 py-2">
+      <p className="text-xs uppercase tracking-wider text-stone-500">{label}</p>
+      <p className="font-display text-xl">{value}</p>
     </div>
   );
 }

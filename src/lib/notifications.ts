@@ -144,8 +144,8 @@ export function buildNotifications(input: {
       countItem("needs_day", input.needsADay ?? 0, {
         title:
           (input.needsADay ?? 0) === 1
-            ? "1 job needs a day on the board"
-            : `${input.needsADay} jobs need a day on the board`,
+            ? "1 job needs a day on the schedule"
+            : `${input.needsADay} jobs need a day on the schedule`,
         body: "Put them on a tech and a time.",
         href: "/jobs?view=needs_day",
       }),

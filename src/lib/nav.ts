@@ -8,7 +8,6 @@ import {
   FileSpreadsheet,
   FileText,
   HardHat,
-  LayoutDashboard,
   MapPinned,
   Menu,
   Receipt,
@@ -23,8 +22,7 @@ import { canManageTeam } from "@/lib/team";
 export type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Today", icon: LayoutDashboard },
-  { href: "/schedule", label: "Board", icon: CalendarDays },
+  { href: "/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/jobs", label: "Work orders", icon: ClipboardList },
   { href: "/quotes", label: "Quotes", icon: FileText },
@@ -50,9 +48,9 @@ export function primaryTabs(role: string): NavItem[] {
     ];
   }
   return [
-    { href: "/dashboard", label: "Today", icon: LayoutDashboard },
-    { href: "/schedule", label: "Board", icon: CalendarDays },
+    { href: "/schedule", label: "Schedule", icon: CalendarDays },
     { href: "/clients", label: "Clients", icon: Users },
+    { href: "/reports", label: "Reports", icon: BarChart3 },
     { href: "/more", label: "More", icon: Menu },
   ];
 }

@@ -54,7 +54,7 @@ test("office sees late check-ins first, then other useful counts", () => {
   assert.equal(items.some((item) => item.kind === "follow_up" && item.title === "Return trip is overdue"), true);
   assert.equal(items.some((item) => item.kind === "time_off" && item.title.includes("Alex Nguyen")), true);
   assert.equal(items.some((item) => item.title === "2 invoices are past due"), true);
-  assert.equal(items.some((item) => item.title === "5 jobs need a day on the board"), true);
+  assert.equal(items.some((item) => item.title === "5 jobs need a day on the schedule"), true);
   assert.equal(items.some((item) => item.title === "3 quotes are waiting on the customer"), true);
   assert.equal(items.some((item) => item.title === "1 finished job still needs an invoice"), true);
 });
