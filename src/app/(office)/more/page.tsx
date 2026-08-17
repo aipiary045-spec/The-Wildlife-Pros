@@ -17,7 +17,7 @@ export default async function MorePage() {
       <div>
         <h1 className="font-display text-3xl tracking-wide">More</h1>
         <p className="text-stone-600">
-          {tech ? "Traps, species log, and sign out." : "Quotes, traps, reports, and the rest of the office tools."}
+          {tech ? "Time off, traps, species log, and sign out." : "Quotes, traps, reports, and the rest of the office tools."}
         </p>
       </div>
       <div className="grid gap-2">

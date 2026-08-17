@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { adjacentDate, clockLabel, dateKey, dayTimelineSlots, formatClockDuration, hourLabel, jobTimelinePlacement, parseDateParam, parseScheduleView, periodLabel, scheduleRange, slotTimeValue, startAtFromTrackX, timeFromTimelineRatio, tripStartOnDay } from "./dates";
+import { moreItems, primaryTabs } from "./nav";
 import { homePath, isOfficeOnlyPath, isTechnician, safeNextPath } from "./paths";
 
 test("parseDateParam reads a local calendar day", () => {
@@ -57,6 +58,15 @@ test("technicians are kept off dispatch and office pages", () => {
   assert.equal(isOfficeOnlyPath("/field"), false);
   assert.equal(isOfficeOnlyPath("/jobs/abc"), false);
   assert.equal(isOfficeOnlyPath("/time-off"), false);
+});
+
+test("technician time off lives under More, not the main tabs", () => {
+  const tabs = primaryTabs("TECHNICIAN").map((item) => item.href);
+  const more = moreItems("TECHNICIAN").map((item) => item.href);
+  assert.deepEqual(tabs, ["/field", "/jobs", "/timesheets", "/more"]);
+  assert.equal(more[0], "/time-off");
+  assert.ok(more.includes("/inventory"));
+  assert.ok(!primaryTabs("DISPATCHER").some((item) => item.href === "/time-off"));
 });
 
 test("tripStartOnDay keeps the original clock time on a new calendar day", () => {

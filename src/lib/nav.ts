@@ -46,7 +46,6 @@ export function primaryTabs(role: string): NavItem[] {
       { href: "/field", label: "Route", icon: Smartphone },
       { href: "/jobs", label: "Jobs", icon: ClipboardList },
       { href: "/timesheets", label: "Time", icon: Clock },
-      { href: "/time-off", label: "Time off", icon: CalendarOff },
       { href: "/more", label: "More", icon: Menu },
     ];
   }
