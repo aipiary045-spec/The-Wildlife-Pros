@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { adjacentDate, clockLabel, dateKey, dayTimelineSlots, formatClockDuration, hourLabel, jobTimelinePlacement, parseDateParam, parseScheduleView, periodLabel, scheduleRange, slotTimeValue, startAtFromTrackX, timeFromTimelineRatio, tripStartOnDay } from "./dates";
+import { adjacentDate, adjacentMonth, clockLabel, dateKey, dayTimelineSlots, formatClockDuration, hourLabel, jobTimelinePlacement, monthGrid, monthKey, parseDateParam, parseMonthParam, parseScheduleView, periodLabel, scheduleRange, slotTimeValue, startAtFromTrackX, timeFromTimelineRatio, tripStartOnDay } from "./dates";
 import { moreItems, primaryTabs } from "./nav";
 import { homePath, isOfficeOnlyPath, isTechnician, safeNextPath } from "./paths";
 
@@ -147,4 +147,14 @@ test("formatClockDuration shows hours and minutes like a timesheet", () => {
   assert.equal(formatClockDuration(0), "0:00");
   assert.equal(formatClockDuration(90), "1:30");
   assert.equal(formatClockDuration(270), "4:30");
+});
+
+test("monthGrid is a Sunday-start wall calendar for the month", () => {
+  const { days, label, monthStart } = monthGrid(parseMonthParam("2026-08"));
+  assert.equal(label, "August 2026");
+  assert.equal(monthKey(monthStart), "2026-08");
+  assert.equal(dateKey(days[0]), "2026-07-26");
+  assert.equal(dateKey(days[days.length - 1]), "2026-09-05");
+  assert.equal(days.length % 7, 0);
+  assert.equal(monthKey(adjacentMonth(monthStart, 1)), "2026-09");
 });

@@ -9,6 +9,15 @@ export const DAY_OFF_LABEL: Record<DayOffStatus, string> = {
   DENIED: "Denied",
 };
 
+export type DayOffRow = {
+  id: string;
+  userId: string;
+  date: string;
+  reason: string | null;
+  status: DayOffStatus;
+  userName: string;
+};
+
 export function parseDayOffDate(value: unknown) {
   if (typeof value !== "string" || !value) {
     throw new Error("Pick the day you need off.");
@@ -37,4 +46,19 @@ export function nextDayOffStatus(bodyStatus: unknown): DayOffStatus | null {
 
 export function offKey(technicianId: string, date: string) {
   return `${technicianId}:${date}`;
+}
+
+export function visibleOnTimeOffCalendar(status: string) {
+  return status === "REQUESTED" || status === "APPROVED";
+}
+
+export function groupTimeOffByDate<T extends { date: string; status: string }>(rows: T[]) {
+  const byDate = new Map<string, T[]>();
+  for (const row of rows) {
+    if (!visibleOnTimeOffCalendar(row.status)) continue;
+    const list = byDate.get(row.date) ?? [];
+    list.push(row);
+    byDate.set(row.date, list);
+  }
+  return byDate;
 }

@@ -3,26 +3,22 @@
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { TimeOffCalendar } from "@/components/timesheets/TimeOffCalendar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { dateKey } from "@/lib/dates";
-import { DAY_OFF_LABEL } from "@/lib/day-off";
+import { dateKey, parseMonthParam } from "@/lib/dates";
+import { DAY_OFF_LABEL, type DayOffRow } from "@/lib/day-off";
 
-export type DayOffRow = {
-  id: string;
-  userId: string;
-  date: string;
-  reason: string | null;
-  status: "REQUESTED" | "APPROVED" | "DENIED";
-  userName: string;
-};
+export type { DayOffRow };
 
 export function DayOffPanel({
   userId,
   canReview,
+  month,
   requests,
 }: {
   userId: string;
   canReview: boolean;
+  month: string;
   requests: DayOffRow[];
 }) {
   const router = useRouter();
@@ -81,11 +77,18 @@ export function DayOffPanel({
   }
 
   return (
-    <section className="space-y-4 rounded-2xl border border-line bg-panel p-5">
+    <section className="space-y-5 rounded-2xl border border-line bg-panel p-5">
+      <TimeOffCalendar
+        month={parseMonthParam(month)}
+        selectedDate={date}
+        requests={requests}
+        showNames={canReview}
+        onSelectDate={setDate}
+      />
       <div>
-        <h2 className="font-semibold">Days off</h2>
+        <h2 className="font-semibold">Request a day</h2>
         <p className="text-sm text-stone-600">
-          Ask for a day off here. The office approves it, then that day is blocked on the schedule.
+          Tap a day on the calendar or pick one here. The office approves it, then that day is blocked on the board.
         </p>
       </div>
       <form onSubmit={requestOff} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">

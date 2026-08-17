@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isApprovedDayOff, nextDayOffStatus, offKey, parseDayOffDate } from "./day-off";
+import { groupTimeOffByDate, isApprovedDayOff, nextDayOffStatus, offKey, parseDayOffDate, visibleOnTimeOffCalendar } from "./day-off";
 
 test("parseDayOffDate reads a local calendar day", () => {
   const date = parseDayOffDate("2026-08-18");
@@ -23,4 +23,17 @@ test("office can approve or deny a request", () => {
 
 test("offKey ties a tech to a calendar day", () => {
   assert.equal(offKey("tech-1", "2026-08-18"), "tech-1:2026-08-18");
+});
+
+test("the month calendar shows requested and approved days, not denied", () => {
+  assert.equal(visibleOnTimeOffCalendar("APPROVED"), true);
+  assert.equal(visibleOnTimeOffCalendar("REQUESTED"), true);
+  assert.equal(visibleOnTimeOffCalendar("DENIED"), false);
+  const grouped = groupTimeOffByDate([
+    { date: "2026-08-20", status: "APPROVED" },
+    { date: "2026-08-20", status: "REQUESTED" },
+    { date: "2026-08-21", status: "DENIED" },
+  ]);
+  assert.equal(grouped.get("2026-08-20")?.length, 2);
+  assert.equal(grouped.has("2026-08-21"), false);
 });

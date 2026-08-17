@@ -1,4 +1,4 @@
-import { addDays, endOfDay, endOfWeek, format, startOfDay, startOfWeek } from "date-fns";
+import { addDays, addMonths, endOfDay, endOfMonth, endOfWeek, format, startOfDay, startOfMonth, startOfWeek } from "date-fns";
 
 export type ScheduleView = "day" | "week";
 
@@ -12,6 +12,38 @@ export function parseDateParam(value?: string | null) {
 
 export function dateKey(value: Date) {
   return format(value, "yyyy-MM-dd");
+}
+
+export function monthKey(value: Date) {
+  return format(value, "yyyy-MM");
+}
+
+export function parseMonthParam(value?: string | null) {
+  if (value && /^\d{4}-\d{2}$/.test(value)) {
+    const [year, month] = value.split("-").map(Number);
+    return startOfMonth(new Date(year, month - 1, 1));
+  }
+  return startOfMonth(new Date());
+}
+
+export function adjacentMonth(month: Date, direction: -1 | 1) {
+  return addMonths(startOfMonth(month), direction);
+}
+
+export function monthGrid(month: Date) {
+  const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 });
+  const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 });
+  const days: Date[] = [];
+  for (let cursor = start; cursor.getTime() <= end.getTime(); cursor = addDays(cursor, 1)) {
+    days.push(cursor);
+  }
+  return {
+    start,
+    end,
+    days,
+    label: format(month, "MMMM yyyy"),
+    monthStart: startOfMonth(month),
+  };
 }
 
 export function parseScheduleView(value?: string | null): ScheduleView {
