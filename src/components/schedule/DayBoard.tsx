@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { Clock } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   dateKey,
   dayTimelineSlots,
@@ -16,7 +16,7 @@ import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
 import { useScheduleBoard } from "./useScheduleBoard";
 
-const TRACK_MIN = "min-w-[99rem]";
+const TRACK_MIN = "min-w-[72rem] md:min-w-[99rem]";
 const SLOT_COUNT = dayTimelineSlots().length;
 
 export function DayBoard({
@@ -52,10 +52,22 @@ export function DayBoard({
   const unassigned = dayJobs.filter((job) => !job.technicianId);
   const draggingJob = drag ? [...jobs, ...unscheduled].find((job) => job.id === drag.jobId) : null;
   const [focusTech, setFocusTech] = useState("all");
+  const [phoneLayout, setPhoneLayout] = useState<"calendar" | "list">("calendar");
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const phoneTechs = useMemo(
     () => (focusTech === "all" ? technicians : technicians.filter((tech) => tech.id === focusTech)),
     [focusTech, technicians],
   );
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const hour = sameDay(day, new Date()) ? Math.max(7, Math.min(16, new Date().getHours())) : 8;
+    const marker = scroller.querySelector<HTMLElement>(`[data-slot-hour="${hour}"]`);
+    if (!marker) return;
+    const left = marker.getBoundingClientRect().left - scroller.getBoundingClientRect().left + scroller.scrollLeft;
+    scroller.scrollLeft = Math.max(0, left - 8);
+  }, [dayKey]);
 
   function chipProps(job: ScheduleJobCard, layout: "card" | "timeline" | "list" = "card") {
     return {
@@ -73,18 +85,42 @@ export function DayBoard({
   return (
     <div className="space-y-3">
       {compact ? (
-        <p className="text-xs text-stone-500">Hold a job and drop it, or pick a name under the job.</p>
+        <p className="text-xs text-stone-500">Hold a job and drop it on a time. Scroll sideways to see the day.</p>
       ) : (
         <p className="text-xs text-stone-500">
           {mode === "copy"
-            ? "Drop a job on a tech to copy that trip."
-            : "On a phone, pick a tech and assign the stop. On a computer, drag it onto the timeline."}{" "}
+            ? "Drop a job on a time slot to copy it there."
+            : "Hold a job (or drag the grip) and drop it on a time. It snaps to the nearest 30 minutes. Scroll sideways for later in the day."}{" "}
           {saving ? "Saving…" : "Changes save immediately."}
         </p>
       )}
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
 
-      <div className="space-y-3 md:hidden">
+      {compact ? null : (
+        <div className="flex rounded-full border border-line bg-panel p-1 md:hidden">
+          <button
+            type="button"
+            onClick={() => setPhoneLayout("calendar")}
+            className={`flex-1 rounded-full py-2 text-sm font-semibold ${
+              phoneLayout === "calendar" ? "bg-orange text-white" : "text-stone-600"
+            }`}
+          >
+            Calendar
+          </button>
+          <button
+            type="button"
+            onClick={() => setPhoneLayout("list")}
+            className={`flex-1 rounded-full py-2 text-sm font-semibold ${
+              phoneLayout === "list" ? "bg-orange text-white" : "text-stone-600"
+            }`}
+          >
+            List
+          </button>
+        </div>
+      )}
+
+      {compact || phoneLayout === "calendar" ? null : (
+        <div className="space-y-3 md:hidden">
         {technicians.length > 1 ? (
           <div className="flex gap-2 overflow-x-auto pb-1">
             <TechFilterChip label="All techs" active={focusTech === "all"} onClick={() => setFocusTech("all")} />
@@ -166,23 +202,29 @@ export function DayBoard({
           );
         })}
       </div>
+      )}
 
-      <div className="hidden overflow-hidden rounded-2xl border border-line bg-panel md:block">
-        <div className="overflow-x-auto">
+      <div
+        className={`overflow-hidden rounded-2xl border border-line bg-panel ${
+          compact || phoneLayout === "calendar" ? "" : "max-md:hidden"
+        }`}
+      >
+        <div ref={scrollerRef} className="overflow-x-auto">
           <div className="min-w-max">
             <div className="flex border-b border-line bg-background">
-              <div className="sticky left-0 z-20 flex w-36 shrink-0 items-end border-r border-line bg-background px-3 py-2 md:w-44">
+              <div className="sticky left-0 z-20 flex w-24 shrink-0 items-end border-r border-line bg-background px-2 py-2 md:w-44 md:px-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">Time</p>
               </div>
               <div className={`relative grid flex-1 ${TRACK_MIN}`} style={{ gridTemplateColumns: `repeat(${SLOT_COUNT}, minmax(0, 1fr))` }}>
                 {slots.map((slot) => (
                   <div
                     key={`${slot.hour}-${slot.minute}`}
+                    data-slot-hour={slot.minute === 0 ? String(slot.hour) : undefined}
                     className={`border-r px-0.5 py-2 text-center last:border-r-0 ${
                       slot.minute === 0 ? "border-stone-300" : "border-stone-200/80"
                     }`}
                   >
-                    <p className={`text-[10px] leading-none ${slot.minute === 0 ? "font-bold text-ink" : "text-stone-400"}`}>
+                    <p className={`text-[10px] leading-none ${slot.minute === 0 ? "font-bold text-ink" : "hidden text-stone-400 md:block"}`}>
                       {slot.label}
                     </p>
                   </div>
@@ -352,12 +394,12 @@ function Lane({
       }`}
     >
       <div
-        className={`sticky left-0 z-30 flex w-36 shrink-0 items-center gap-2 border-r border-line px-3 py-3 md:w-44 ${
+        className={`sticky left-0 z-30 flex w-24 shrink-0 items-center gap-2 border-r border-line px-2 py-3 md:w-44 md:px-3 ${
           active ? "bg-orange/10" : "bg-panel"
         }`}
       >
         <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white md:h-9 md:w-9 md:text-xs"
           style={{ background: color }}
         >
           {initials}

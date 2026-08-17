@@ -1,6 +1,7 @@
 "use client";
 
 import { addDays, format, startOfWeek } from "date-fns";
+import { useState } from "react";
 import { dateKey } from "@/lib/dates";
 import { AppointmentChip, DragGhost } from "./AppointmentChip";
 import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
@@ -34,6 +35,7 @@ export function WeekBoard({
   const start = startOfWeek(new Date(weekOf.includes("T") ? weekOf : `${weekOf}T12:00:00`), { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, index) => addDays(start, index));
   const draggingJob = drag ? [...jobs, ...unscheduled].find((job) => job.id === drag.jobId) : null;
+  const [phoneLayout, setPhoneLayout] = useState<"calendar" | "list">("calendar");
 
   function chipProps(job: ScheduleJobCard, day: Date, layout: "card" | "list" = "card") {
     return {
@@ -54,6 +56,26 @@ export function WeekBoard({
         {saving ? "Saving…" : "Changes save immediately."}
       </p>
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+      <div className="flex rounded-full border border-line bg-panel p-1 md:hidden">
+        <button
+          type="button"
+          onClick={() => setPhoneLayout("calendar")}
+          className={`flex-1 rounded-full py-2 text-sm font-semibold ${
+            phoneLayout === "calendar" ? "bg-orange text-white" : "text-stone-600"
+          }`}
+        >
+          Calendar
+        </button>
+        <button
+          type="button"
+          onClick={() => setPhoneLayout("list")}
+          className={`flex-1 rounded-full py-2 text-sm font-semibold ${
+            phoneLayout === "list" ? "bg-orange text-white" : "text-stone-600"
+          }`}
+        >
+          List
+        </button>
+      </div>
       {unscheduled.length > 0 ? (
         <section className="rounded-2xl border border-dashed border-line bg-panel p-3">
           <h2 className="mb-2 text-sm font-semibold">Unscheduled — drop onto a tech</h2>
@@ -69,6 +91,7 @@ export function WeekBoard({
           </div>
         </section>
       ) : null}
+      {phoneLayout === "list" ? (
       <div className="space-y-3 md:hidden">
         {days.map((day) => {
           const dayJobs = jobs
@@ -124,11 +147,12 @@ export function WeekBoard({
           );
         })}
       </div>
-      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-panel md:block">
+      ) : null}
+      <div className={`overflow-x-auto rounded-2xl border border-line bg-panel ${phoneLayout === "list" ? "max-md:hidden" : ""}`}>
         <table className="min-w-[1100px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-background">
-              <th className="w-40 px-3 py-3 text-left">Technician</th>
+              <th className="sticky left-0 z-20 w-28 bg-background px-2 py-3 text-left md:w-40 md:px-3">Technician</th>
               {days.map((day) => (
                 <th key={day.toISOString()} className="px-3 py-3 text-left">
                   {format(day, "EEE MMM d")}
@@ -139,7 +163,7 @@ export function WeekBoard({
           <tbody>
             {technicians.map((tech) => (
               <tr key={tech.id} className="border-t border-line align-top">
-                <td className="px-3 py-3">
+                <td className="sticky left-0 z-10 bg-panel px-2 py-3 md:px-3">
                   <div className="flex items-center gap-2">
                     <span
                       className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"

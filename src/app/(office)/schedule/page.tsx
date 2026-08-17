@@ -55,7 +55,7 @@ export default async function SchedulePage({
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Board</h1>
-          <p className="text-stone-600 sm:hidden">Who is out, and when. Open a stop to see the work order.</p>
+          <p className="text-stone-600 sm:hidden">Drag jobs onto a tech and a time. Scroll sideways for the rest of the day.</p>
           <p className="hidden text-stone-600 sm:block">
             Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order, traps, or invoice.
           </p>
