@@ -72,6 +72,7 @@ export default async function FieldPage({
         </h1>
         <p>
           {session.firstName}, clock in for the day, then check in when you arrive. Check out asks if they need another visit.
+          No signal is fine: clock, check-in, check-out, and captures stay on this phone and upload when you have data.
           {optimizedStops > 0 ? " Dispatch saved a driving order for these stops." : ""}
         </p>
       </div>

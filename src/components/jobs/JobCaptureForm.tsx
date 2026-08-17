@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DISPOSITION_LABEL } from "@/lib/constants";
+import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 
@@ -23,6 +24,7 @@ export function JobCaptureForm({
   const [deploymentId, setDeploymentId] = useState("");
   const [locationNote, setLocationNote] = useState("");
   const [error, setError] = useState("");
+  const [queuedNote, setQueuedNote] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function submit(event: React.FormEvent) {
@@ -33,9 +35,9 @@ export function JobCaptureForm({
     }
     setSaving(true);
     setError("");
-    const response = await fetch("/api/species-logs", {
+    setQueuedNote("");
+    const response = await fieldFetch("/api/species-logs", {
       method: "POST",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         jobId,
@@ -47,7 +49,7 @@ export function JobCaptureForm({
         locationNote: locationNote.trim() || undefined,
       }),
     });
-    const data = (await response.json()) as { error?: string };
+    const data = (await response.json()) as { error?: string; queued?: boolean };
     setSaving(false);
     if (!response.ok) {
       setError(data.error ?? "Could not log this capture.");
@@ -56,6 +58,10 @@ export function JobCaptureForm({
     setLocationNote("");
     setQuantity(1);
     setNewSpecies("");
+    if (isQueuedResponse(data)) {
+      setQueuedNote("Capture saved on this phone. It uploads when you have data.");
+      return;
+    }
     router.refresh();
   }
 
@@ -115,6 +121,7 @@ export function JobCaptureForm({
         </label>
       </div>
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+      {queuedNote ? <p className="text-sm text-amber-800">{queuedNote}</p> : null}
       <button type="submit" disabled={saving} className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60">
         {saving ? "Saving…" : "Log capture"}
       </button>

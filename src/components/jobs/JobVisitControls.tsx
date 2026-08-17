@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CHECKOUT_WORK, SITE_LEFT_OPTIONS, visitActionForStatus } from "@/lib/job-visit";
+import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
 import type { ScheduleTech } from "@/components/schedule/job-card";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
@@ -19,10 +20,12 @@ export function JobVisitControls({
   compact?: boolean;
 }) {
   const router = useRouter();
-  const action = visitActionForStatus(status);
+  const [localStatus, setLocalStatus] = useState(status);
+  const action = visitActionForStatus(localStatus);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [queuedNote, setQueuedNote] = useState("");
   const [notes, setNotes] = useState("");
   const [workDone, setWorkDone] = useState<string[]>([]);
   const [siteLeft, setSiteLeft] = useState("secure");
@@ -40,7 +43,14 @@ export function JobVisitControls({
 
   const summaryReady = useMemo(() => workDone.length > 0 || notes.trim().length > 0, [workDone, notes]);
 
-  if (!action) return null;
+  useEffect(() => {
+    setLocalStatus(status);
+  }, [status]);
+
+  if (!action) {
+    if (!queuedNote) return null;
+    return <p className="mt-1 text-xs text-amber-800">{queuedNote}</p>;
+  }
 
   function toggleWork(id: string) {
     setWorkDone((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
@@ -49,11 +59,17 @@ export function JobVisitControls({
   async function checkIn() {
     setSaving(true);
     setError("");
-    const response = await fetch(`/api/jobs/${jobId}/check-in`, { method: "POST", credentials: "include" });
-    const data = (await response.json()) as { error?: string };
+    setQueuedNote("");
+    const response = await fieldFetch(`/api/jobs/${jobId}/check-in`, { method: "POST" });
+    const data = (await response.json()) as { error?: string; queued?: boolean };
     setSaving(false);
     if (!response.ok) {
       setError(data.error ?? "Could not check in");
+      return;
+    }
+    if (isQueuedResponse(data)) {
+      setLocalStatus("ON_SITE");
+      setQueuedNote("Check-in saved on this phone. It uploads when you have data.");
       return;
     }
     router.refresh();
@@ -82,9 +98,9 @@ export function JobVisitControls({
   async function sendCheckout() {
     setSaving(true);
     setError("");
-    const response = await fetch(`/api/jobs/${jobId}/check-out`, {
+    setQueuedNote("");
+    const response = await fieldFetch(`/api/jobs/${jobId}/check-out`, {
       method: "POST",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         outcome: needsReturn ? "follow_up" : "complete",
@@ -98,7 +114,7 @@ export function JobVisitControls({
         trapNote: trapPlaced ? trapNote.trim() || undefined : undefined,
       }),
     });
-    const data = (await response.json()) as { error?: string };
+    const data = (await response.json()) as { error?: string; queued?: boolean };
     setSaving(false);
     if (!response.ok) {
       setError(data.error ?? "Could not check out");
@@ -107,6 +123,11 @@ export function JobVisitControls({
     setOpen(false);
     setNotes("");
     setWorkDone([]);
+    if (isQueuedResponse(data)) {
+      setLocalStatus("COMPLETED");
+      setQueuedNote("Check-out saved on this phone. It uploads when you have data.");
+      return;
+    }
     router.refresh();
   }
 
@@ -127,6 +148,7 @@ export function JobVisitControls({
         </button>
       )}
       {error && !open ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
+      {queuedNote && !open ? <p className="mt-1 text-xs text-amber-800">{queuedNote}</p> : null}
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center">

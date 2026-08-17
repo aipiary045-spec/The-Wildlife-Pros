@@ -6,11 +6,16 @@ import { JobVisitError, checkoutSummary, visitActionForStatus, type CheckoutInpu
 
 export { JobVisitError };
 
-async function ensureDayClock(userId: string) {
-  const today = startOfDay(new Date());
-  const now = new Date();
+async function ensureDayClock(userId: string, at: Date) {
+  const open = await prisma.timePunch.findFirst({
+    where: { clockOutAt: null, timesheet: { userId } },
+    include: { timesheet: true },
+  });
+  if (open) return open.timesheet;
+
+  const day = startOfDay(at);
   const existing = await prisma.timesheet.findUnique({
-    where: { userId_date: { userId, date: today } },
+    where: { userId_date: { userId, date: day } },
     include: { punches: { orderBy: { clockInAt: "asc" } } },
   });
 
@@ -18,9 +23,9 @@ async function ensureDayClock(userId: string) {
     return prisma.timesheet.create({
       data: {
         userId,
-        date: today,
+        date: day,
         status: "CLOCKED_IN",
-        punches: { create: { clockInAt: now, note: "Job check-in" } },
+        punches: { create: { clockInAt: at, note: "Job check-in" } },
       },
     });
   }
@@ -31,12 +36,12 @@ async function ensureDayClock(userId: string) {
     where: { id: existing.id },
     data: {
       status: "CLOCKED_IN",
-      punches: { create: { clockInAt: now, note: "Job check-in" } },
+      punches: { create: { clockInAt: at, note: "Job check-in" } },
     },
   });
 }
 
-export async function checkInToJob(jobId: string, user: SessionUser) {
+export async function checkInToJob(jobId: string, user: SessionUser, occurredAt = new Date()) {
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) throw new JobVisitError("Job not found", 404);
 
@@ -56,8 +61,7 @@ export async function checkInToJob(jobId: string, user: SessionUser) {
     throw new JobVisitError("Check out of the job you are on before starting another.");
   }
 
-  const sheet = await ensureDayClock(user.id);
-  const now = new Date();
+  const sheet = await ensureDayClock(user.id, occurredAt);
   const technicianId = job.technicianId ?? user.id;
 
   const [updated] = await prisma.$transaction([
@@ -71,7 +75,7 @@ export async function checkInToJob(jobId: string, user: SessionUser) {
         userId: user.id,
         jobId,
         timesheetId: sheet.id,
-        startedAt: now,
+        startedAt: occurredAt,
         billable: true,
       },
     }),
@@ -80,8 +84,8 @@ export async function checkInToJob(jobId: string, user: SessionUser) {
         jobId,
         technicianId,
         status: "ON_SITE",
-        scheduledStart: job.scheduledStart ?? now,
-        arrivedAt: now,
+        scheduledStart: job.scheduledStart ?? occurredAt,
+        arrivedAt: occurredAt,
       },
     }),
   ]);
@@ -89,7 +93,7 @@ export async function checkInToJob(jobId: string, user: SessionUser) {
   return { job: updated, already: false as const };
 }
 
-export async function checkOutOfJob(jobId: string, user: SessionUser, input: CheckoutInput) {
+export async function checkOutOfJob(jobId: string, user: SessionUser, input: CheckoutInput, occurredAt = new Date()) {
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) throw new JobVisitError("Job not found", 404);
 
@@ -101,7 +105,6 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     throw new JobVisitError("Enter about how many days until they need a return trip.");
   }
 
-  const now = new Date();
   const openEntry = await prisma.timeEntry.findFirst({
     where: { jobId, userId: user.id, endedAt: null },
   });
@@ -115,14 +118,14 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     if (openEntry) {
       await tx.timeEntry.update({
         where: { id: openEntry.id },
-        data: { endedAt: now, notes: summary },
+        data: { endedAt: occurredAt, notes: summary },
       });
     }
     if (openVisit) {
       await tx.visit.update({
         where: { id: openVisit.id },
         data: {
-          departedAt: now,
+          departedAt: occurredAt,
           status: "COMPLETED",
           summary,
           checkoutWork: {
@@ -156,7 +159,7 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
       where: { id: jobId },
       data: {
         status: "COMPLETED",
-        completedAt: now,
+        completedAt: occurredAt,
         ...(input.notes
           ? { instructions: [job.instructions, input.notes].filter(Boolean).join("\n\n") }
           : {}),

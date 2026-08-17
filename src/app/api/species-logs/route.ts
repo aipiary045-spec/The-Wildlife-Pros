@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { jsonError, withAuth } from "@/lib/api";
+import { parseOccurredAt } from "@/lib/offline";
 
 export const GET = withAuth(async () => {
   const captures = await prisma.captureEvent.findMany({
@@ -53,6 +54,7 @@ export const POST = withAuth(async (session, request) => {
       disposition: (body.disposition as never) ?? "RELOCATED",
       dispositionNote: typeof body.dispositionNote === "string" ? body.dispositionNote : undefined,
       locationNote: typeof body.locationNote === "string" ? body.locationNote : undefined,
+      capturedAt: parseOccurredAt(body.occurredAt),
     },
     include: { species: true },
   });
