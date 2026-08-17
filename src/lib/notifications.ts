@@ -131,7 +131,7 @@ export function buildNotifications(input: {
             ? "1 finished job still needs an invoice"
             : `${input.needsInvoice} finished jobs still need an invoice`,
         body: "Close them out when the work is billed.",
-        href: "/invoices",
+        href: "/jobs?view=needs_invoice",
       }),
       countItem("quote_waiting", input.quotesWaiting ?? 0, {
         title:
@@ -147,7 +147,7 @@ export function buildNotifications(input: {
             ? "1 job needs a day on the board"
             : `${input.needsADay} jobs need a day on the board`,
         body: "Put them on a tech and a time.",
-        href: "/jobs",
+        href: "/jobs?view=needs_day",
       }),
     ].filter((item): item is NotificationItem => item != null),
   );
