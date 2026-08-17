@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { InstallHint } from "@/components/layout/InstallHint";
 import { OfflineStatus } from "@/components/layout/OfflineStatus";
+import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { LateCheckInAlert } from "@/components/jobs/LateCheckInAlert";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
 import { isTechnician } from "@/lib/paths";
@@ -31,16 +31,18 @@ export default async function OfficeLayout({ children }: { children: React.React
               <span className="hidden sm:inline"> · {session.role.toLowerCase()}</span>
             </p>
           </div>
-          {myTime ? (
-            <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
-          ) : null}
+          <div className="flex shrink-0 items-center gap-2">
+            <NotificationCenter />
+            {myTime ? (
+              <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
+            ) : null}
+          </div>
         </header>
         <OfflineStatus />
         <main className="min-w-0 flex-1 overflow-x-clip p-3 md:p-6">{children}</main>
       </div>
       <BottomNav role={session.role} />
       <InstallHint />
-      <LateCheckInAlert role={session.role} />
     </div>
   );
 }
