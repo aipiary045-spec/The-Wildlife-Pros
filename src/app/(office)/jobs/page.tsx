@@ -11,8 +11,9 @@ export const dynamic = "force-dynamic";
 
 export default async function JobsPage() {
   const session = await getSession();
+  const techView = Boolean(session && isTechnician(session.role));
   const jobs = await prisma.job.findMany({
-    where: session && isTechnician(session.role) ? { technicianId: session.id } : undefined,
+    where: techView && session ? { technicianId: session.id } : undefined,
     include: { client: true, property: true, technician: true },
     orderBy: { scheduledStart: "asc" },
   });
@@ -20,9 +21,9 @@ export default async function JobsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Jobs</h1>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">{techView ? "My jobs" : "Jobs"}</h1>
         <p className="text-stone-600">
-          {session && isTechnician(session.role)
+          {techView
             ? "Your assigned jobs. Open one to check in, log traps, or record a capture."
             : "Work orders, visits, and field documentation."}
         </p>
@@ -38,9 +39,10 @@ export default async function JobsPage() {
                   {clientName(job.client)} · {job.property.address1}
                 </p>
                 <p className="text-xs text-stone-500">
-                  {job.scheduledStart ? format(job.scheduledStart, "MMM d, h:mm a") : "Unscheduled"} ·{" "}
-                  {job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned"} ·{" "}
-                  {formatMoney(job.total)}
+                  {job.scheduledStart ? format(job.scheduledStart, "MMM d, h:mm a") : "Unscheduled"}
+                  {techView
+                    ? null
+                    : ` · ${job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned"} · ${formatMoney(job.total)}`}
                 </p>
               </div>
               <StatusBadge status={job.status} />
@@ -55,8 +57,8 @@ export default async function JobsPage() {
               <th className="px-4 py-3">Job</th>
               <th className="px-4 py-3">Client / property</th>
               <th className="px-4 py-3">When</th>
-              <th className="px-4 py-3">Tech</th>
-              <th className="px-4 py-3">Total</th>
+              {techView ? null : <th className="px-4 py-3">Tech</th>}
+              {techView ? null : <th className="px-4 py-3">Total</th>}
               <th className="px-4 py-3">Status</th>
             </tr>
           </thead>
@@ -78,10 +80,12 @@ export default async function JobsPage() {
                 <td className="px-4 py-3">
                   {job.scheduledStart ? format(job.scheduledStart, "MMM d, h:mm a") : "Unscheduled"}
                 </td>
-                <td className="px-4 py-3">
-                  {job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "—"}
-                </td>
-                <td className="px-4 py-3">{formatMoney(job.total)}</td>
+                {techView ? null : (
+                  <td className="px-4 py-3">
+                    {job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "—"}
+                  </td>
+                )}
+                {techView ? null : <td className="px-4 py-3">{formatMoney(job.total)}</td>}
                 <td className="px-4 py-3">
                   <StatusBadge status={job.status} />
                 </td>
