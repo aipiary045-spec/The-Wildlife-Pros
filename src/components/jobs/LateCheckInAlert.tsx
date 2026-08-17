@@ -93,12 +93,12 @@ export function LateCheckInAlert({ role }: { role: string }) {
       <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-panel p-5 shadow-xl">
         <p className="text-xs font-bold uppercase tracking-widest text-orange">Late check-in</p>
         <h2 className="mt-1 font-display text-2xl">
-          {visible.length === 1 ? "A stop is an hour late" : `${visible.length} stops are an hour late`}
+          {visible.length === 1 ? "This stop is late for check-in" : `${visible.length} stops are late for check-in`}
         </h2>
         <p className="mt-2 text-sm text-stone-600">
           {techView
-            ? "These jobs still need a check-in, and the scheduled start was more than an hour ago."
-            : "Nobody has checked in yet, and the scheduled start was more than an hour ago."}
+            ? "The scheduled start has passed, and you have not checked in yet."
+            : "The scheduled start has passed, and nobody has checked in yet."}
         </p>
         <ul className="mt-4 space-y-3">
           {visible.map((job) => (
