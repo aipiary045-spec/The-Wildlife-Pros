@@ -59,13 +59,13 @@ export const POST = withAuth(async (session, request) => {
     create: {
       userId,
       date,
-      reason: body.reason?.trim() || "Day off",
+      reason: body.reason?.trim() || null,
       status: autoApprove ? "APPROVED" : "REQUESTED",
       reviewedById: autoApprove ? session.id : null,
       reviewedAt: autoApprove ? now : null,
     },
     update: {
-      reason: body.reason?.trim() || existing?.reason || "Day off",
+      reason: body.reason?.trim() || existing?.reason || null,
       status: autoApprove ? "APPROVED" : "REQUESTED",
       reviewedById: autoApprove ? session.id : null,
       reviewedAt: autoApprove ? now : null,

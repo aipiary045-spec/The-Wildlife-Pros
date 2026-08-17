@@ -43,7 +43,7 @@ export function DayOffPanel({
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date, reason: reason.trim() || "Day off" }),
+      body: JSON.stringify({ date, reason: reason.trim() || undefined }),
     });
     const data = (await response.json()) as { error?: string };
     setSaving(false);
@@ -105,7 +105,6 @@ export function DayOffPanel({
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm"
-            placeholder="PTO, doctor, truck down…"
           />
         </label>
         <button
@@ -129,7 +128,7 @@ export function DayOffPanel({
                   <p className="text-sm font-medium">
                     {item.userName} · {format(new Date(`${item.date}T12:00:00`), "EEE MMM d")}
                   </p>
-                  <p className="text-xs text-stone-500">{item.reason ?? "Day off"}</p>
+                  {item.reason ? <p className="text-xs text-stone-500">{item.reason}</p> : null}
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -162,7 +161,7 @@ export function DayOffPanel({
               <li key={item.id} className="flex items-center justify-between gap-2 rounded-xl bg-background px-3 py-2">
                 <div>
                   <p className="text-sm font-medium">{format(new Date(`${item.date}T12:00:00`), "EEE MMM d")}</p>
-                  <p className="text-xs text-stone-500">{item.reason ?? "Day off"}</p>
+                  {item.reason ? <p className="text-xs text-stone-500">{item.reason}</p> : null}
                 </div>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={item.status} label={DAY_OFF_LABEL[item.status]} />
