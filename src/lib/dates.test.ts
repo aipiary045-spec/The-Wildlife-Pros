@@ -69,6 +69,14 @@ test("technician time off lives under More, not the main tabs", () => {
   assert.ok(!primaryTabs("DISPATCHER").some((item) => item.href === "/time-off"));
 });
 
+test("office work orders live under More, not next to the board", () => {
+  const tabs = primaryTabs("DISPATCHER").map((item) => item.href);
+  const more = moreItems("DISPATCHER").map((item) => item.href);
+  assert.deepEqual(tabs, ["/dashboard", "/schedule", "/clients", "/more"]);
+  assert.equal(more[0], "/jobs");
+  assert.ok(!tabs.includes("/jobs"));
+});
+
 test("tripStartOnDay keeps the original clock time on a new calendar day", () => {
   const start = tripStartOnDay(new Date(2026, 7, 15, 9, 0, 0), new Date(2026, 7, 16));
   assert.equal(dateKey(start), "2026-08-16");

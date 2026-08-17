@@ -24,9 +24,9 @@ export type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Today", icon: LayoutDashboard },
-  { href: "/schedule", label: "Schedule", icon: CalendarDays },
+  { href: "/schedule", label: "Board", icon: CalendarDays },
   { href: "/clients", label: "Clients", icon: Users },
-  { href: "/jobs", label: "Jobs", icon: ClipboardList },
+  { href: "/jobs", label: "Work orders", icon: ClipboardList },
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/reports", label: "Reports", icon: BarChart3 },
@@ -52,7 +52,6 @@ export function primaryTabs(role: string): NavItem[] {
   return [
     { href: "/dashboard", label: "Today", icon: LayoutDashboard },
     { href: "/schedule", label: "Board", icon: CalendarDays },
-    { href: "/jobs", label: "Jobs", icon: ClipboardList },
     { href: "/clients", label: "Clients", icon: Users },
     { href: "/more", label: "More", icon: Menu },
   ];
