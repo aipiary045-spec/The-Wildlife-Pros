@@ -14,7 +14,7 @@ export default async function ClientsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Clients</h1>
           <p className="text-stone-600">CRM with multiple service addresses per customer.</p>

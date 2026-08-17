@@ -9,7 +9,7 @@ export function ScheduleModeToggle({
   onChange: (mode: ScheduleMode) => void;
 }) {
   return (
-    <div className="flex rounded-full border border-line bg-panel p-1">
+    <div className="flex w-full rounded-full border border-line bg-panel p-1 sm:w-auto">
       <button
         type="button"
         onClick={() => onChange("move")}

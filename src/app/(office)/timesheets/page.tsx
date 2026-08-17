@@ -52,7 +52,7 @@ export default async function TimesheetsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl tracking-wide">{techView ? "Clock & hours" : "Timesheets"}</h1>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">{techView ? "Clock & hours" : "Timesheets"}</h1>
         <p className="text-stone-600">
           {techView
             ? "Clock in for the day. Hours break down by day or week."
@@ -129,7 +129,38 @@ export default async function TimesheetsPage({
           );
         })}
       </section>
-      <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
+      <div className="space-y-2 md:hidden">
+        {sheets.map((sheet) => (
+          <article key={sheet.id} className="rounded-2xl border border-line bg-panel p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                {techView ? null : (
+                  <p className="font-semibold">
+                    {sheet.user.firstName} {sheet.user.lastName}
+                  </p>
+                )}
+                <p className={techView ? "font-semibold" : "text-sm text-stone-600"}>{format(sheet.date, "EEE MMM d")}</p>
+                <p className="text-xs text-stone-500">
+                  {sheet.punches.map((punch) => (
+                    <span key={punch.id} className="mr-2">
+                      {format(punch.clockInAt, "h:mm a")}
+                      {punch.clockOutAt ? ` – ${format(punch.clockOutAt, "h:mm a")}` : " – open"}
+                    </span>
+                  ))}
+                </p>
+                <p className="mt-1 text-sm font-medium">{formatDuration(workedMinutes(sheet.punches, sheet.breakMin))}</p>
+              </div>
+              <StatusBadge status={sheet.status} />
+            </div>
+            {canApproveHours && (sheet.status === "CLOCKED_OUT" || sheet.status === "SUBMITTED") ? (
+              <div className="mt-3">
+                <ApproveButton id={sheet.id} />
+              </div>
+            ) : null}
+          </article>
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-panel md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-background text-xs uppercase tracking-wider text-stone-500">
             <tr>

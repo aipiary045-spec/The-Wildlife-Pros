@@ -21,7 +21,23 @@ export default async function ActivityPage() {
         <h1 className="font-display text-3xl tracking-wide">Species & activity log</h1>
         <p className="text-stone-600">Captures, disposition, and which trap or entry they came from.</p>
       </div>
-      <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
+      <div className="space-y-2 md:hidden">
+        {captures.map((capture) => (
+          <article key={capture.id} className="rounded-2xl border border-line bg-panel p-4">
+            <p className="text-xs text-stone-500">{format(capture.capturedAt, "MMM d, h:mm a")}</p>
+            <p className="font-semibold">
+              {capture.quantity} {capture.species.commonName}
+            </p>
+            <p className="text-sm text-stone-600">{DISPOSITION_LABEL[capture.disposition]}</p>
+            <p className="text-xs text-stone-500">
+              {capture.job.property.address1}
+              {capture.locationNote ? ` · ${capture.locationNote}` : ""}
+              {capture.deployment?.equipment.serialNumber ? ` · ${capture.deployment.equipment.serialNumber}` : ""}
+            </p>
+          </article>
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-panel md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-background text-xs uppercase tracking-wider text-stone-500">
             <tr>

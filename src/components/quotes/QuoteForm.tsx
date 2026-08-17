@@ -20,7 +20,7 @@ export function NewQuoteButton({
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white">
+      <button type="button" onClick={() => setOpen(true)} className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white sm:w-auto">
         New quote
       </button>
       {open ? (

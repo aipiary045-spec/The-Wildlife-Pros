@@ -58,7 +58,7 @@ export function HomeDashboard(props: DashboardProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-orange">Home</p>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Today at The Wildlife Pros</h1>
@@ -184,9 +184,8 @@ function TodayStat({ label, value, money }: { label: string; value: number; mone
   return (
     <div className="rounded-xl border border-line bg-panel px-3 py-2">
       <p className="text-xs uppercase tracking-wider text-stone-500">{label}</p>
-      <p className="font-display text-xl">
-        {value} <span className="text-sm font-sans font-normal text-stone-500">{formatMoney(money)}</span>
-      </p>
+      <p className="font-display text-xl">{value}</p>
+      <p className="text-xs text-stone-500">{formatMoney(money)}</p>
     </div>
   );
 }

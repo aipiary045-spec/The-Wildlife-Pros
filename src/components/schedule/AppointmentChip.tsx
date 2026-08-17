@@ -24,21 +24,24 @@ export function AppointmentChip({
   technicians: ScheduleTech[];
   showVisit?: boolean;
   dragging?: boolean;
-  layout?: "card" | "timeline";
+  layout?: "card" | "timeline" | "list";
   onPointerDown: (event: React.PointerEvent, immediate?: boolean) => void;
   onReassign: (technicianId: string) => void;
 }) {
   const start = job.scheduledStart ? new Date(job.scheduledStart) : null;
   const typeLabel = JOB_TYPE_LABEL[job.type ?? ""] ?? job.title;
   const timeline = layout === "timeline";
+  const list = layout === "list";
   return (
     <article
       data-job-chip
       onPointerDown={(event) => onPointerDown(event)}
       className={cn(
-        "touch-manipulation rounded-lg border border-line border-l-4 shadow-sm select-none",
-        timeline ? "flex h-full min-w-0 flex-col overflow-hidden px-1.5 py-1" : "w-40 shrink-0 px-2.5 py-2",
-        JOB_TYPE_BAR[job.type ?? ""] ?? "border-l-orange bg-white",
+        "touch-manipulation rounded-lg border border-line border-l-4 bg-white shadow-sm select-none",
+        timeline && "flex h-full min-w-0 flex-col overflow-hidden px-1.5 py-1",
+        list && "flex w-full min-w-0 flex-col px-3 py-2.5",
+        !timeline && !list && "w-40 shrink-0 px-2.5 py-2",
+        JOB_TYPE_BAR[job.type ?? ""] ?? "border-l-orange",
         DONE.has(job.status) && "opacity-60",
         LIVE.has(job.status) && "ring-2 ring-orange/40",
         dragging && "opacity-30",
@@ -71,14 +74,17 @@ export function AppointmentChip({
       >
         {typeLabel}
       </Link>
-      <p className="truncate text-xs text-stone-500">
+      <p className={cn("text-xs text-stone-500", list ? "leading-snug" : "truncate")}>
         {job.client.lastName}
         {job.property.address1 ? ` · ${job.property.address1}` : ""}
       </p>
       <label className="mt-1 block">
         <span className="sr-only">Move to technician</span>
         <select
-          className="w-full rounded-md border border-line bg-white px-1 py-1 text-[11px]"
+          className={cn(
+            "w-full rounded-md border border-line bg-white px-1 py-1 text-[11px]",
+            list && "min-h-10 px-2 py-2 text-sm",
+          )}
           value={job.technicianId ?? ""}
           onPointerDown={(event) => event.stopPropagation()}
           onChange={(event) => {

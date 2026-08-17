@@ -52,16 +52,17 @@ export default async function SchedulePage({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule & dispatch</h1>
-          <p className="text-stone-600">
+          <p className="text-stone-600 sm:hidden">Pull from the pool, then put the stop on a tech.</p>
+          <p className="hidden text-stone-600 sm:block">
             Pull from the needs-scheduled pool, then drop the stop on a time. Approved days off from Timesheets block that tech.
           </p>
         </div>
         <Link
           href={`/routes?date=${dateKey(date)}`}
-          className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-sm font-semibold"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold sm:w-auto"
         >
           Optimize routes
         </Link>

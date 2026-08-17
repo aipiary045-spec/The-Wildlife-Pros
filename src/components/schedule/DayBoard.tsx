@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { Clock } from "lucide-react";
+import { useMemo, useState } from "react";
 import {
   dateKey,
   dayTimelineSlots,
@@ -50,8 +51,13 @@ export function DayBoard({
   const dayJobs = jobs.filter((job) => job.scheduledStart && sameDay(new Date(job.scheduledStart), day));
   const unassigned = dayJobs.filter((job) => !job.technicianId);
   const draggingJob = drag ? [...jobs, ...unscheduled].find((job) => job.id === drag.jobId) : null;
+  const [focusTech, setFocusTech] = useState("all");
+  const phoneTechs = useMemo(
+    () => (focusTech === "all" ? technicians : technicians.filter((tech) => tech.id === focusTech)),
+    [focusTech, technicians],
+  );
 
-  function chipProps(job: ScheduleJobCard, layout: "card" | "timeline" = "card") {
+  function chipProps(job: ScheduleJobCard, layout: "card" | "timeline" | "list" = "card") {
     return {
       job,
       technicians,
@@ -67,24 +73,105 @@ export function DayBoard({
   return (
     <div className="space-y-3">
       {compact ? (
-        <p className="text-xs text-stone-500">
-          Hold a job and drop it on a time. It snaps to the nearest 30 minutes. Or pick a name under the job.
-        </p>
+        <p className="text-xs text-stone-500">Hold a job and drop it, or pick a name under the job.</p>
       ) : (
         <p className="text-xs text-stone-500">
           {mode === "copy"
-            ? "Drop a job on a time slot to copy it there."
-            : "Hold a job (or drag the grip) and drop it on a time. It snaps to the nearest 30 minutes. You can also pick a name under the job."}{" "}
+            ? "Drop a job on a tech to copy that trip."
+            : "On a phone, pick a tech and assign the stop. On a computer, drag it onto the timeline."}{" "}
           {saving ? "Saving…" : "Changes save immediately."}
         </p>
       )}
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
 
-      <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+      <div className="space-y-3 md:hidden">
+        {technicians.length > 1 ? (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            <TechFilterChip label="All techs" active={focusTech === "all"} onClick={() => setFocusTech("all")} />
+            {technicians.map((tech) => (
+              <TechFilterChip
+                key={tech.id}
+                label={tech.firstName}
+                color={tech.color}
+                active={focusTech === tech.id}
+                onClick={() => setFocusTech(tech.id)}
+              />
+            ))}
+          </div>
+        ) : null}
+        {unassigned.length > 0 || unscheduled.length > 0 ? (
+          <section className="rounded-2xl border border-dashed border-line bg-panel p-3">
+            <h2 className="mb-2 text-sm font-semibold">Needs a tech</h2>
+            <div className="space-y-2">
+              {[...unassigned, ...unscheduled].map((job) => (
+                <AppointmentChip key={job.id} {...chipProps(job, "list")} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+        {phoneTechs.map((tech) => {
+          const techJobs = dayJobs
+            .filter((job) => job.technicianId === tech.id)
+            .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
+          const minutes = techJobs.reduce((sum, job) => sum + (job.durationMin ?? 0), 0);
+          const off = availability.find((block) => block.technicianId === tech.id && block.date === dayKey);
+          return (
+            <section
+              key={tech.id}
+              data-drop-tech={tech.id}
+              data-drop-day={dayKey}
+              className={`rounded-2xl border border-line bg-panel p-3 ${
+                drag?.overTechId === tech.id ? "ring-2 ring-orange" : ""
+              }`}
+            >
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                    style={{ background: tech.color }}
+                  >
+                    {tech.firstName.charAt(0)}
+                    {tech.lastName.charAt(0)}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
+                      {tech.firstName} {tech.lastName}
+                    </p>
+                    <p className="text-[11px] text-stone-500">
+                      {formatClockDuration(minutes)}
+                      {off ? ` · off${off.reason ? ` · ${off.reason}` : ""}` : ""}
+                    </p>
+                  </div>
+                </div>
+                {off ? null : (
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-lg bg-orange px-3 py-1.5 text-xs font-bold text-white"
+                    onClick={() => onNewJob?.(tech.id, day, nextOpenTime(techJobs))}
+                  >
+                    + Job
+                  </button>
+                )}
+              </div>
+              {techJobs.length === 0 ? (
+                <p className="py-4 text-center text-xs text-stone-500">No stops yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {techJobs.map((job) => (
+                    <AppointmentChip key={job.id} {...chipProps(job, "list")} />
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-2xl border border-line bg-panel md:block">
         <div className="overflow-x-auto">
           <div className="min-w-max">
             <div className="flex border-b border-line bg-background">
-              <div className="sticky left-0 z-20 flex w-36 shrink-0 items-end border-r border-line px-3 py-2 md:w-44 bg-background">
+              <div className="sticky left-0 z-20 flex w-36 shrink-0 items-end border-r border-line bg-background px-3 py-2 md:w-44">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">Time</p>
               </div>
               <div className={`relative grid flex-1 ${TRACK_MIN}`} style={{ gridTemplateColumns: `repeat(${SLOT_COUNT}, minmax(0, 1fr))` }}>
@@ -205,6 +292,31 @@ export function DayBoard({
       ) : null}
       <p className="sr-only">{dayKey}</p>
     </div>
+  );
+}
+
+function TechFilterChip({
+  label,
+  color,
+  active,
+  onClick,
+}: {
+  label: string;
+  color?: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+        active ? "border-orange bg-orange text-white" : "border-line bg-panel text-stone-600"
+      }`}
+    >
+      {color ? <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} /> : null}
+      {label}
+    </button>
   );
 }
 

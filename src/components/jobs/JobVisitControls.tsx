@@ -36,7 +36,7 @@ export function JobVisitControls({
 
   const buttonClass = compact
     ? "mt-1 w-full rounded-lg bg-orange px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
-    : "min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60";
+    : "min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto";
 
   const summaryReady = useMemo(() => workDone.length > 0 || notes.trim().length > 0, [workDone, notes]);
 

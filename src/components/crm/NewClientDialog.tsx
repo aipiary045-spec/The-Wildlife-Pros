@@ -142,7 +142,7 @@ export function NewClientButton({ label = "New client" }: { label?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white"
+        className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white sm:w-auto"
       >
         {label}
       </button>

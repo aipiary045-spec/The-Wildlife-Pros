@@ -25,7 +25,7 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
     <div className="space-y-6">
       <div>
         <p className="text-xs uppercase tracking-widest text-orange">Client</p>
-        <h1 className="font-display text-3xl tracking-wide">{clientName(client)}</h1>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">{clientName(client)}</h1>
         <p className="text-stone-600">
           {formatPhone(client.phone)} · {client.email}
         </p>

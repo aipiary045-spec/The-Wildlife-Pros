@@ -14,7 +14,7 @@ export function AddTeamMemberButton({ actorRole }: { actorRole: string }) {
   if (roles.length === 0) return null;
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white">
+      <button type="button" onClick={() => setOpen(true)} className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white sm:w-auto">
         Add team member
       </button>
       {open ? <AddTeamMemberDialog roles={roles} onClose={() => setOpen(false)} /> : null}

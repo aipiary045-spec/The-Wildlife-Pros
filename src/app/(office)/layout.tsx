@@ -25,14 +25,15 @@ export default async function OfficeLayout({ children }: { children: React.React
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.2em] text-orange md:text-xs">The Wildlife Pros</p>
             <p className="truncate text-sm text-stone-600">
-              {session.firstName} {session.lastName} · {session.role.toLowerCase()}
+              {session.firstName} {session.lastName}
+              <span className="hidden sm:inline"> · {session.role.toLowerCase()}</span>
             </p>
           </div>
           {myTime ? (
             <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
           ) : null}
         </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-clip p-3 md:p-6">{children}</main>
       </div>
       <BottomNav role={session.role} />
       <InstallHint />

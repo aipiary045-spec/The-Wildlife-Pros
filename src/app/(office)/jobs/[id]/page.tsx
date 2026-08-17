@@ -60,7 +60,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-widest text-orange">{job.number}</p>
-          <h1 className="font-display text-3xl tracking-wide">{job.title}</h1>
+          <h1 className="font-display text-2xl tracking-wide md:text-3xl">{job.title}</h1>
           <p className="text-stone-600">
             {clientName(job.client)} · {propertyAddress(job.property)}
           </p>
@@ -73,7 +73,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             }}
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <StatusBadge status={job.status} />
           <StatusBadge status={job.type} label={JOB_TYPE_LABEL[job.type]} />
           <JobVisitControls

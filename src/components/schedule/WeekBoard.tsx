@@ -35,10 +35,11 @@ export function WeekBoard({
   const days = Array.from({ length: 7 }, (_, index) => addDays(start, index));
   const draggingJob = drag ? [...jobs, ...unscheduled].find((job) => job.id === drag.jobId) : null;
 
-  function chipProps(job: ScheduleJobCard, day: Date) {
+  function chipProps(job: ScheduleJobCard, day: Date, layout: "card" | "list" = "card") {
     return {
       job,
       technicians,
+      layout,
       dragging: drag?.jobId === job.id,
       onPointerDown: (event: React.PointerEvent, immediate?: boolean) =>
         onChipPointerDown(event, job.id, immediate),
@@ -56,7 +57,12 @@ export function WeekBoard({
       {unscheduled.length > 0 ? (
         <section className="rounded-2xl border border-dashed border-line bg-panel p-3">
           <h2 className="mb-2 text-sm font-semibold">Unscheduled — drop onto a tech</h2>
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="space-y-2 md:hidden">
+            {unscheduled.map((job) => (
+              <AppointmentChip key={job.id} {...chipProps(job, start, "list")} />
+            ))}
+          </div>
+          <div className="hidden gap-2 overflow-x-auto pb-1 md:flex">
             {unscheduled.map((job) => (
               <AppointmentChip key={job.id} {...chipProps(job, start)} />
             ))}
@@ -70,16 +76,16 @@ export function WeekBoard({
             .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
           return (
             <section key={day.toISOString()} className="rounded-2xl border border-line bg-panel p-3">
-              <h2 className="mb-2 flex items-center justify-between text-sm font-semibold">
-                <span>
-                  {format(day, "EEEE, MMM d")}
+              <h2 className="mb-2 flex items-center justify-between gap-2 text-sm font-semibold">
+                <span className="min-w-0">
+                  {format(day, "EEE, MMM d")}
                   <span className="ml-2 text-xs font-normal text-stone-500">
                     {dayJobs.length} stop{dayJobs.length === 1 ? "" : "s"}
                   </span>
                 </span>
                 <button
                   type="button"
-                  className="rounded-lg bg-orange px-2 py-1 text-xs font-bold text-white"
+                  className="shrink-0 rounded-lg bg-orange px-3 py-1.5 text-xs font-bold text-white"
                   onClick={() => onNewJob?.(technicians[0]?.id ?? "", day, "09:00")}
                 >
                   + Job
@@ -102,11 +108,11 @@ export function WeekBoard({
                       >
                         <p className="mb-1 text-xs font-semibold text-stone-600">
                           {tech.firstName} {tech.lastName}
-                          {off ? ` · approved off${off.reason ? ` (${off.reason})` : ""}` : ""}
+                          {off ? ` · off${off.reason ? ` · ${off.reason}` : ""}` : ""}
                         </p>
-                        <div className="flex gap-2 overflow-x-auto pb-1">
+                        <div className="space-y-2">
                           {techJobs.map((job) => (
-                    <AppointmentChip key={job.id} {...chipProps(job, day)} />
+                            <AppointmentChip key={job.id} {...chipProps(job, day, "list")} />
                           ))}
                         </div>
                       </div>

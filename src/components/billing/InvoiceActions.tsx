@@ -41,7 +41,7 @@ export function CreateInvoiceButton({
         type="button"
         disabled={saving}
         onClick={() => void create()}
-        className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60"
+        className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
       >
         {saving ? "Creating…" : "Create invoice"}
       </button>

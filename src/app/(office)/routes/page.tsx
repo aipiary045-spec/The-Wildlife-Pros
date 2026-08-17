@@ -45,14 +45,15 @@ export default async function RoutesPage({
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Route optimization</h1>
-        <p className="text-stone-600">
+        <p className="text-stone-600 sm:hidden">Preview a driving order, then apply it to the schedule.</p>
+        <p className="hidden text-stone-600 sm:block">
           Preview a driving order, then apply it to the schedule. Techs navigate by street address in Google
           or Apple Maps (GPS is only the backup pin). Drive times are straight-line miles at 22 mph unless a
           Mapbox token is set, which snaps the previewed order to road time.
         </p>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Link
           href={`/routes?date=${prev}`}
           className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-panel"

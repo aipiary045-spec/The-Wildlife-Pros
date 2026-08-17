@@ -51,7 +51,7 @@ export function NeedsPool({
           <h2 className="font-semibold">Needs scheduled</h2>
           <p className="text-sm text-stone-500">Pick a customer, put them on a tech and a time. Nothing is pre-loaded on the calendar.</p>
         </div>
-        <div className="flex rounded-full border border-line p-1 text-xs font-semibold">
+        <div className="flex w-full rounded-full border border-line p-1 text-xs font-semibold sm:w-auto">
           {(
             [
               ["all", "All"],
@@ -63,7 +63,7 @@ export function NeedsPool({
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`rounded-full px-3 py-1 ${filter === value ? "bg-orange text-white" : "text-stone-600"}`}
+              className={`flex-1 rounded-full px-3 py-1.5 sm:flex-none ${filter === value ? "bg-orange text-white" : "text-stone-600"}`}
             >
               {label}
             </button>
@@ -174,7 +174,7 @@ function NeedRow({
           </div>
         </form>
       ) : (
-        <button type="button" onClick={() => setOpen(true)} className="mt-3 min-h-10 rounded-lg bg-orange px-3 text-sm font-semibold text-white">
+        <button type="button" onClick={() => setOpen(true)} className="mt-3 min-h-11 w-full rounded-lg bg-orange px-3 text-sm font-semibold text-white">
           Schedule this stop
         </button>
       )}

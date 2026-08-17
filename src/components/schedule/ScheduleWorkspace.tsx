@@ -39,7 +39,7 @@ export function ScheduleWorkspace({
   return (
     <div className="space-y-3">
       {compact ? null : (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <button
             type="button"
             onClick={() =>
@@ -49,7 +49,7 @@ export function ScheduleWorkspace({
                 time: "09:00",
               })
             }
-            className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white"
+            className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white sm:w-auto"
           >
             New job
           </button>
