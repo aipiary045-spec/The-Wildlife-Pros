@@ -77,6 +77,11 @@ test("office work orders live under More, not next to the board", () => {
   assert.ok(!tabs.includes("/jobs"));
 });
 
+test("quote price list is an office page under quotes", () => {
+  assert.equal(isOfficeOnlyPath("/quotes/pricing"), true);
+  assert.ok(!moreItems("TECHNICIAN").some((item) => item.href.startsWith("/quotes")));
+});
+
 test("tripStartOnDay keeps the original clock time on a new calendar day", () => {
   const start = tripStartOnDay(new Date(2026, 7, 15, 9, 0, 0), new Date(2026, 7, 16));
   assert.equal(dateKey(start), "2026-08-16");

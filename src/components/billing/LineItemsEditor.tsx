@@ -117,6 +117,9 @@ export function LineItemsEditor({
         >
           Blank line
         </button>
+        <a href="/quotes/pricing" className="self-center text-sm font-semibold text-orange">
+          Edit price list
+        </a>
       </div>
       <p className="text-xs text-stone-500">
         Blank line is a custom charge: name what you did, how many, and the price for one. Tax is added automatically.

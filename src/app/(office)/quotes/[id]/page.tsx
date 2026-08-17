@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { QuoteActions } from "@/components/quotes/QuoteActions";
 import { EditQuoteButton } from "@/components/quotes/QuoteForm";
+import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
@@ -40,6 +41,7 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
 
   return (
     <div className="space-y-6">
+      <QuotesSubnav current="quotes" />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-widest text-orange">{quote.number}</p>
@@ -52,6 +54,9 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
             Valid {quote.validUntil ? format(quote.validUntil, "PPP") : "—"}
             {quote.sentAt ? ` · sent ${format(quote.sentAt, "MMM d")}` : ""}
           </p>
+          <Link href="/quotes/pricing" className="mt-2 inline-block text-sm font-semibold text-orange">
+            Edit price list
+          </Link>
         </div>
         <div className="space-y-2">
           <StatusBadge status={quote.status} />

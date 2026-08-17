@@ -2,6 +2,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { NewQuoteButton } from "@/components/quotes/QuoteForm";
+import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { clientName, formatMoney } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ export default async function QuotesPage() {
           }))}
         />
       </div>
+      <QuotesSubnav current="quotes" />
       <div className="space-y-2 md:hidden">
         {quotes.map((quote) => (
           <Link key={quote.id} href={`/quotes/${quote.id}`} className="block rounded-2xl border border-line bg-panel p-4">
