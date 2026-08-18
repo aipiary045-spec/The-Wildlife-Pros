@@ -1,10 +1,12 @@
 "use client";
 
-import { addMinutes, format } from "date-fns";
+import { addMinutes } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { dateKey } from "@/lib/dates";
 import { clientName } from "@/lib/utils";
+import { ReturnVisitFields, addReturnVisit } from "@/components/jobs/RecurringForm";
+import { FREQUENCY_RETURN_DAYS } from "@/lib/schedule-needs";
 import { AreaSuggestions } from "./AreaSuggestions";
 import type { ScheduleTech } from "./job-card";
 
@@ -47,6 +49,8 @@ export function NewJobDialog({
   const [time, setTime] = useState("09:00");
   const [technicianId, setTechnicianId] = useState(request?.technicianId ?? technicians[0]?.id ?? "");
   const [durationMin, setDurationMin] = useState(60);
+  const [frequency, setFrequency] = useState("");
+  const [returnInDays, setReturnInDays] = useState(FREQUENCY_RETURN_DAYS.MONTHLY);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -56,6 +60,8 @@ export function NewJobDialog({
     setTime(request.time ?? "09:00");
     setTechnicianId(request.technicianId || technicians[0]?.id || "");
     setTitle("");
+    setFrequency("");
+    setReturnInDays(FREQUENCY_RETURN_DAYS.MONTHLY);
     setError("");
   }, [request, technicians]);
 
@@ -94,13 +100,22 @@ export function NewJobDialog({
         durationMin: Number(durationMin) || 60,
       }),
     });
-    setSaving(false);
-    if (!response.ok) {
-      const data = (await response.json()) as { error?: string };
+    const data = (await response.json()) as { error?: string; job?: { id: string } };
+    if (!response.ok || !data.job?.id) {
+      setSaving(false);
       setError(data.error ?? "Could not create this job");
       return;
     }
+    if (frequency) {
+      try {
+        await addReturnVisit(data.job.id, frequency, returnInDays);
+      } catch (caught) {
+        window.alert(caught instanceof Error ? caught.message : "Job was added, but the return visit was not.");
+      }
+    }
+    setSaving(false);
     setTitle("");
+    setFrequency("");
     onCreated();
   }
 
@@ -193,6 +208,19 @@ export function NewJobDialog({
               className={inputClass}
             />
           </label>
+          <div className="sm:col-span-2 space-y-2 rounded-xl border border-line bg-white/60 p-3">
+            <p className="text-sm font-semibold">Return visits</p>
+            <p className="text-sm text-stone-600">
+              Optional. Does not fill the calendar — it puts this customer in the needs-scheduled pool when the next trip is due.
+            </p>
+            <ReturnVisitFields
+              frequency={frequency}
+              returnInDays={returnInDays}
+              onFrequency={setFrequency}
+              onDays={setReturnInDays}
+              allowNone
+            />
+          </div>
         </div>
         {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
         <div className="mt-4 flex gap-2">
