@@ -45,7 +45,7 @@ export const GET = async () => {
   }
 
   const todayEnd = endOfDay(now);
-  const [followUps, timeOff, invoices, needsInvoice, quotesWaiting, needsADay] = await Promise.all([
+  const [followUps, timeOff, invoices, needsInvoice, quotesWaiting, needsADay, newCalls] = await Promise.all([
     prisma.scheduleNeed.findMany({
       where: { status: "OPEN", dueOn: { lte: todayEnd } },
       include: { client: true, property: true },
@@ -65,6 +65,7 @@ export const GET = async () => {
     prisma.job.count({ where: { status: "COMPLETED", invoices: { none: {} } } }),
     prisma.quote.count({ where: { status: { in: ["SENT", "VIEWED"] } } }),
     prisma.job.count({ where: { status: "UNSCHEDULED" } }),
+    prisma.serviceRequest.count({ where: { status: "NEW" } }),
   ]);
 
   const pastDueInvoices = invoices.filter((invoice) =>
@@ -92,6 +93,7 @@ export const GET = async () => {
       needsInvoice,
       quotesWaiting,
       needsADay,
+      newCalls,
     }),
   });
 };

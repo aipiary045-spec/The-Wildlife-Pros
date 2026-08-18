@@ -46,6 +46,7 @@ test("office sees late check-ins first, then other useful counts", () => {
       needsInvoice: 1,
       quotesWaiting: 3,
       needsADay: 5,
+      newCalls: 2,
     },
     new Date(2026, 7, 17, 12, 0, 0),
   );
@@ -57,6 +58,7 @@ test("office sees late check-ins first, then other useful counts", () => {
   assert.equal(items.some((item) => item.title === "5 jobs need a day on the schedule"), true);
   assert.equal(items.some((item) => item.title === "3 quotes are waiting on the customer"), true);
   assert.equal(items.some((item) => item.title === "1 finished job still needs an invoice"), true);
+  assert.equal(items.some((item) => item.title === "2 new calls are waiting"), true);
 });
 
 test("office with nothing waiting gets an empty list", () => {

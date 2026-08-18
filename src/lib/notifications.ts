@@ -10,6 +10,7 @@ export const NOTIFICATION_KINDS = [
   "needs_invoice",
   "quote_waiting",
   "needs_day",
+  "intake",
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
@@ -76,7 +77,7 @@ export function timeOffItems(
 }
 
 export function countItem(
-  kind: Extract<NotificationKind, "past_due" | "needs_invoice" | "quote_waiting" | "needs_day">,
+  kind: Extract<NotificationKind, "past_due" | "needs_invoice" | "quote_waiting" | "needs_day" | "intake">,
   count: number,
   copy: { title: string; body: string; href: string; urgency?: NotificationUrgency },
 ): NotificationItem | null {
@@ -107,6 +108,7 @@ export function buildNotifications(input: {
   needsInvoice?: number;
   quotesWaiting?: number;
   needsADay?: number;
+  newCalls?: number;
 }, now = new Date()) {
   if (input.techView) {
     return sortNotifications(lateCheckInItems(input.lateJobs, true));
@@ -148,6 +150,12 @@ export function buildNotifications(input: {
             : `${input.needsADay} jobs need a day on the schedule`,
         body: "Put them on a tech and a time.",
         href: "/jobs?view=needs_day",
+      }),
+      countItem("intake", input.newCalls ?? 0, {
+        title:
+          (input.newCalls ?? 0) === 1 ? "1 new call is waiting" : `${input.newCalls} new calls are waiting`,
+        body: "Turn them into a quote or a first trip.",
+        href: "/requests",
       }),
     ].filter((item): item is NotificationItem => item != null),
   );

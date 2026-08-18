@@ -36,6 +36,12 @@ const TONES: Record<string, string> = {
   REJECTED: "bg-rose-100 text-rose-800",
   REQUESTED: "bg-amber-100 text-amber-900",
   DENIED: "bg-rose-100 text-rose-800",
+  NEW: "bg-orange/15 text-orange",
+  ASSESSED: "bg-amber-100 text-amber-900",
+  CONVERTED_QUOTE: "bg-fuchsia-100 text-fuchsia-800",
+  CONVERTED_JOB: "bg-teal-100 text-teal-800",
+  CLOSED: "bg-zinc-200 text-zinc-600",
+  SPAM: "bg-zinc-200 text-zinc-600",
 };
 
 export function StatusBadge({ status, label }: { status: string; label?: string }) {

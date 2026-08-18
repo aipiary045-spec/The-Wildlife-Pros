@@ -20,6 +20,22 @@ export const JOB_STATUS_LABEL: Record<string, string> = {
   ON_HOLD: "On hold",
 };
 
+export const REQUEST_STATUS_LABEL: Record<string, string> = {
+  NEW: "New call",
+  ASSESSED: "Looked at",
+  CONVERTED_QUOTE: "Quote started",
+  CONVERTED_JOB: "Trip started",
+  CLOSED: "Closed",
+  SPAM: "Spam",
+};
+
+export const INTAKE_SOURCE_LABEL: Record<string, string> = {
+  phone: "Phone",
+  web: "Web",
+  "walk-in": "Walk-in",
+  referral: "Referral",
+};
+
 export const QUOTE_STATUS_LABEL: Record<string, string> = {
   DRAFT: "Draft",
   SENT: "Sent",

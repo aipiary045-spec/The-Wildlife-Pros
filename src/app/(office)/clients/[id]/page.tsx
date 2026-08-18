@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ClientEditor } from "@/components/crm/ClientEditor";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { REQUEST_STATUS_LABEL } from "@/lib/constants";
 import { clientName, formatMoney, formatPhone, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
       jobs: { include: { technician: true }, orderBy: { createdAt: "desc" } },
       quotes: { orderBy: { createdAt: "desc" } },
       invoices: { orderBy: { createdAt: "desc" } },
+      requests: { orderBy: { createdAt: "desc" }, take: 8 },
     },
   });
   if (!client) notFound();
@@ -80,6 +82,22 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
           ))}
         </Panel>
       </section>
+      {client.requests.length > 0 ? (
+        <section className="rounded-2xl border border-line bg-panel p-5">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="font-semibold">Calls / intake</h2>
+            <Link href="/requests" className="text-sm font-semibold text-orange">
+              Open intake
+            </Link>
+          </div>
+          {client.requests.map((item) => (
+            <p key={item.id} className="flex justify-between gap-3 py-1 text-sm">
+              <span>{item.title}</span>
+              <StatusBadge status={item.status} label={REQUEST_STATUS_LABEL[item.status]} />
+            </p>
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }

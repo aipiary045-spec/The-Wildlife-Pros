@@ -19,7 +19,15 @@ export default async function ClientsPage() {
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Clients</h1>
           <p className="text-stone-600">CRM with multiple service addresses per customer.</p>
         </div>
-        <NewClientButton />
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Link
+            href="/requests"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold"
+          >
+            Log a call
+          </Link>
+          <NewClientButton />
+        </div>
       </div>
       <div className="space-y-2 md:hidden">
         {clients.map((client) => (
