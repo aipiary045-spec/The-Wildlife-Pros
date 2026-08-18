@@ -84,7 +84,19 @@ export const POST = withAuth(async (session, request) => {
     });
     clientId = client.id;
     propertyId = client.properties[0]?.id;
-  } else if (!propertyId && input.address1) {
+  } else {
+    if (input.firstName && input.lastName) {
+      await prisma.client.update({
+        where: { id: clientId },
+        data: {
+          firstName: input.firstName,
+          lastName: input.lastName,
+          email: input.email ?? undefined,
+          phone: input.phone ?? undefined,
+        },
+      });
+    }
+    if (!propertyId && input.address1) {
     const coords = await resolvePropertyCoordinates({
       address1: input.address1,
       city: input.city,
@@ -104,23 +116,45 @@ export const POST = withAuth(async (session, request) => {
       },
     });
     propertyId = property.id;
+    }
   }
 
   if (!propertyId) {
     return jsonError("Need a street so we can quote or send a tech.");
   }
 
-  const created = await prisma.serviceRequest.create({
-    data: {
-      clientId,
-      propertyId,
-      title: input.title,
-      details: input.details,
-      source: input.source,
-      preferredAt,
-    },
-    include: { client: true, property: true },
-  });
+  const open = match
+    ? await prisma.serviceRequest.findFirst({
+        where: {
+          clientId,
+          status: { in: ["NEW", "ASSESSED"] },
+          createdAt: { gte: new Date(Date.now() - 3 * 60 * 60 * 1000) },
+        },
+      })
+    : null;
+  const saved = open
+    ? await prisma.serviceRequest.update({
+        where: { id: open.id },
+        data: {
+          propertyId,
+          title: input.title,
+          details: input.details,
+          source: input.source,
+          preferredAt,
+        },
+        include: { client: true, property: true },
+      })
+    : await prisma.serviceRequest.create({
+        data: {
+          clientId,
+          propertyId,
+          title: input.title,
+          details: input.details,
+          source: input.source,
+          preferredAt,
+        },
+        include: { client: true, property: true },
+      });
 
-  return NextResponse.json({ request: created, matched: Boolean(match) }, { status: 201 });
+  return NextResponse.json({ request: saved, matched: Boolean(match) }, { status: open ? 200 : 201 });
 });

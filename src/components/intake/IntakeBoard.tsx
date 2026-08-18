@@ -83,6 +83,24 @@ export function IntakeBoard({
     setClientId(undefined);
   }
 
+  function finish(item: IntakeRequest) {
+    const unknown = item.client.firstName === "Unknown";
+    setClientId(item.client.id);
+    setDraft({
+      ...empty,
+      phone: item.client.phone ?? "",
+      firstName: unknown ? "" : item.client.firstName,
+      lastName: unknown ? "" : item.client.lastName,
+      email: item.client.email ?? "",
+      address1: item.property?.address1 ?? "",
+      city: item.property?.city ?? "Charlotte",
+      title: item.title.startsWith("Incoming Quo") ? "" : item.title,
+      details: item.details?.startsWith("Rang on Quo") ? "" : (item.details ?? ""),
+      source: item.source,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function save(event: React.FormEvent) {
     event.preventDefault();
     setSaving(true);
@@ -152,7 +170,7 @@ export function IntakeBoard({
         <div>
           <h2 className="font-semibold">Log a call</h2>
           <p className="text-sm text-stone-600">
-            Answer in your VoIP app, then paste the caller ID here. If they are already a client, we fill the rest.
+            Quo sends the caller ID when it rings. Paste a number yourself if you are logging a call by hand.
           </p>
         </div>
         <label className="block text-sm font-medium">
@@ -318,6 +336,7 @@ export function IntakeBoard({
             key={item.id}
             item={item}
             busy={busyId === item.id}
+            onFinish={() => finish(item)}
             onQuote={() => void convert(item.id, "quote")}
             onTrip={() => void convert(item.id, "job")}
             onClose={() => void patch(item.id, "CLOSED")}
@@ -348,12 +367,14 @@ export function IntakeBoard({
 function RequestCard({
   item,
   busy,
+  onFinish,
   onQuote,
   onTrip,
   onClose,
 }: {
   item: IntakeRequest;
   busy: boolean;
+  onFinish: () => void;
   onQuote: () => void;
   onTrip: () => void;
   onClose: () => void;
@@ -379,6 +400,9 @@ function RequestCard({
         <StatusBadge status={item.status} label={REQUEST_STATUS_LABEL[item.status]} />
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" onClick={onFinish} className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold">
+          Finish details
+        </button>
         <button
           type="button"
           disabled={busy}

@@ -31,6 +31,7 @@ export const REQUEST_STATUS_LABEL: Record<string, string> = {
 
 export const INTAKE_SOURCE_LABEL: Record<string, string> = {
   phone: "Phone",
+  quo: "Quo",
   web: "Web",
   "walk-in": "Walk-in",
   referral: "Referral",

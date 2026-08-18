@@ -1,6 +1,6 @@
 import { isTechnician } from "@/lib/paths";
 
-export const INTAKE_SOURCES = ["phone", "web", "walk-in", "referral"] as const;
+export const INTAKE_SOURCES = ["phone", "quo", "web", "walk-in", "referral"] as const;
 export type IntakeSource = (typeof INTAKE_SOURCES)[number];
 
 export const OPEN_REQUEST_STATUSES = ["NEW", "ASSESSED"] as const;

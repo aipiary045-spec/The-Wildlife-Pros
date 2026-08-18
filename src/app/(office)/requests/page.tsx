@@ -33,7 +33,7 @@ export default async function IntakePage({
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Intake</h1>
         <p className="text-stone-600">
-          Phone rings in your VoIP app. Log it here so you do not rebuild the client every time.
+          Quo can open a call here when the phone rings. You can still paste a number if the webhook is not on yet.
         </p>
       </div>
       <IntakeBoard
