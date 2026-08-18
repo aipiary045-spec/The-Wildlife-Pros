@@ -2,6 +2,7 @@ import { hash } from "bcryptjs";
 import { addDays, addHours, addMinutes, setHours, startOfDay } from "date-fns";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { businessAt } from "../src/lib/timezone";
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -325,9 +326,9 @@ async function main() {
   });
 
   const today = startOfDay(new Date());
-  const morning = setHours(today, 9);
-  const midday = setHours(today, 11);
-  const afternoon = setHours(today, 14);
+  const morning = businessAt(0, 9);
+  const midday = businessAt(0, 11);
+  const afternoon = businessAt(0, 14);
 
   const quote = await prisma.quote.create({
     data: {
@@ -446,12 +447,69 @@ async function main() {
       type: "RECURRING",
       status: "SCHEDULED",
       title: "Rodent station service",
-      scheduledStart: addDays(setHours(today, 10), 1),
+      scheduledStart: businessAt(1, 10),
       durationMin: 40,
       subtotal: 89,
       taxAmount: 6.45,
       total: 95.45,
       lineItems: { create: [{ name: "Rodent baiting visit", quantity: 1, unitPrice: 89 }] },
+    },
+  });
+
+  await prisma.job.create({
+    data: {
+      number: "JOB-0006",
+      clientId: maya.id,
+      propertyId: maya.properties[0].id,
+      technicianId: jordan.id,
+      createdById: dispatch.id,
+      type: "FOLLOW_UP",
+      status: "SCHEDULED",
+      title: "Raccoon follow-up — attic",
+      scheduledStart: businessAt(3, 9),
+      scheduledEnd: addHours(businessAt(3, 9), 1),
+      durationMin: 45,
+      subtotal: 0,
+      taxAmount: 0,
+      total: 0,
+    },
+  });
+
+  await prisma.job.create({
+    data: {
+      number: "JOB-0007",
+      clientId: hoa.id,
+      propertyId: hoa.properties[0].id,
+      technicianId: alex.id,
+      createdById: dispatch.id,
+      type: "INSPECTION",
+      status: "SCHEDULED",
+      title: "Clubhouse wildlife check",
+      scheduledStart: businessAt(10, 13),
+      scheduledEnd: addHours(businessAt(10, 13), 1),
+      durationMin: 60,
+      subtotal: 149,
+      taxAmount: 10.8,
+      total: 159.8,
+    },
+  });
+
+  await prisma.job.create({
+    data: {
+      number: "JOB-0008",
+      clientId: barn.id,
+      propertyId: barn.properties[0].id,
+      technicianId: jordan.id,
+      createdById: dispatch.id,
+      type: "INSPECTION",
+      status: "SCHEDULED",
+      title: "Barn follow-up inspection",
+      scheduledStart: businessAt(21, 9),
+      scheduledEnd: addHours(businessAt(21, 9), 1),
+      durationMin: 75,
+      subtotal: 149,
+      taxAmount: 10.8,
+      total: 159.8,
     },
   });
 

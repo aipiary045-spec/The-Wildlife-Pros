@@ -14,24 +14,44 @@ export function AreaSuggestions({
 }) {
   const [suggestions, setSuggestions] = useState<AreaSuggestion[]>([]);
   const [missingPin, setMissingPin] = useState(false);
+  const [upcomingStops, setUpcomingStops] = useState(0);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!propertyId) {
       setSuggestions([]);
       setMissingPin(false);
+      setUpcomingStops(0);
+      setError("");
       return;
     }
     let cancelled = false;
     setLoading(true);
+    setError("");
     const params = new URLSearchParams({ propertyId });
     if (excludeJobId) params.set("excludeJobId", excludeJobId);
     void fetch(`/api/schedule/suggest?${params}`, { credentials: "include" })
-      .then((response) => response.json())
-      .then((data: { suggestions?: AreaSuggestion[]; missingPin?: boolean }) => {
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          suggestions?: AreaSuggestion[];
+          missingPin?: boolean;
+          upcomingStops?: number;
+          error?: string;
+        };
+        if (!response.ok) throw new Error(data.error || "Could not look at the schedule.");
+        return data;
+      })
+      .then((data) => {
         if (cancelled) return;
         setSuggestions(data.suggestions ?? []);
         setMissingPin(Boolean(data.missingPin));
+        setUpcomingStops(data.upcomingStops ?? 0);
+      })
+      .catch((caught: unknown) => {
+        if (cancelled) return;
+        setSuggestions([]);
+        setError(caught instanceof Error ? caught.message : "Could not look at the schedule.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -47,11 +67,16 @@ export function AreaSuggestions({
     <div className="rounded-xl border border-line bg-background p-3">
       <p className="text-sm font-semibold">Already in the area</p>
       {loading ? <p className="mt-1 text-sm text-stone-500">Looking through the whole schedule…</p> : null}
-      {!loading && missingPin ? (
+      {!loading && error ? <p className="mt-1 text-sm text-rose-700">{error}</p> : null}
+      {!loading && !error && missingPin ? (
         <p className="mt-1 text-sm text-stone-500">Need a map pin on this street before we can suggest a ride-along day.</p>
       ) : null}
-      {!loading && !missingPin && suggestions.length === 0 ? (
-        <p className="mt-1 text-sm text-stone-500">Nobody is booked near this street yet.</p>
+      {!loading && !error && !missingPin && suggestions.length === 0 ? (
+        <p className="mt-1 text-sm text-stone-500">
+          {upcomingStops === 0
+            ? "No upcoming stops on the book yet. Once a tech is scheduled anywhere nearby, that day will show up here."
+            : "Nobody upcoming is booked near this street."}
+        </p>
       ) : null}
       <div className="mt-2 space-y-2">
         {suggestions.map((item) => (

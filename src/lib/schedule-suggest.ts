@@ -1,6 +1,13 @@
-import { addDays, startOfDay } from "date-fns";
-import { dateKey, slotTimeValue, snapMinutes } from "@/lib/dates";
+import { snapMinutes } from "@/lib/dates";
 import { driveMinutes, haversineMiles } from "@/lib/routing";
+import {
+  addZonedDays,
+  dateKeyInZone,
+  fromZonedDateTime,
+  startOfZonedDay,
+  timeValueInZone,
+  zonedParts,
+} from "@/lib/timezone";
 
 export const AREA_NEAR_MILES = 12;
 export const AREA_WORTH_MILES = 30;
@@ -31,22 +38,28 @@ export type AreaSuggestion = {
 };
 
 export function offKey(technicianId: string, day: Date | string) {
-  return `${technicianId}:${typeof day === "string" ? day : dateKey(day)}`;
+  return `${technicianId}:${typeof day === "string" ? day : dateKeyInZone(day)}`;
 }
 
 export function snapClock(value: Date) {
-  const next = new Date(value);
-  const snapped = snapMinutes(next.getHours() * 60 + next.getMinutes(), 30);
-  next.setHours(Math.floor(snapped / 60), snapped % 60, 0, 0);
-  return next;
+  const parts = zonedParts(value);
+  const snapped = snapMinutes(parts.hour * 60 + parts.minute, 30);
+  const hour = Math.floor(snapped / 60);
+  const minute = snapped % 60;
+  if (hour >= 24) {
+    const next = addZonedDays(value, 1);
+    const nextParts = zonedParts(next);
+    return fromZonedDateTime(nextParts.year, nextParts.month, nextParts.day, 0, 0);
+  }
+  return fromZonedDateTime(parts.year, parts.month, parts.day, hour, minute);
 }
 
 export function suggestInsertTime(nearestStart: Date, nearestDurationMin: number, miles: number) {
   const gap = Math.max(15, driveMinutes(miles));
   const after = snapClock(new Date(nearestStart.getTime() + (nearestDurationMin + gap) * 60_000));
-  if (after.getHours() < 18) return after;
+  if (zonedParts(after).hour < 18) return after;
   const before = snapClock(new Date(nearestStart.getTime() - (60 + gap) * 60_000));
-  if (before.getHours() >= 7) return before;
+  if (zonedParts(before).hour >= 7) return before;
   return after;
 }
 
@@ -66,7 +79,8 @@ export function suggestNearbySlots(
   },
 ): AreaSuggestion[] {
   const now = options?.now ?? new Date();
-  const horizon = options?.days != null ? addDays(startOfDay(now), options.days) : null;
+  const today = startOfZonedDay(now);
+  const horizon = options?.days != null ? addZonedDays(today, options.days) : null;
   const blocked = new Set(options?.offKeys ?? []);
   const max = options?.maxSuggestions ?? 6;
 
@@ -75,7 +89,7 @@ export function suggestNearbySlots(
     if (options?.excludeJobId && stop.jobId === options.excludeJobId) continue;
     if (!stop.technicianId) continue;
     const start = new Date(stop.scheduledStart);
-    if (start < startOfDay(now)) continue;
+    if (start < today) continue;
     if (horizon && start > horizon) continue;
     const key = offKey(stop.technicianId, start);
     if (blocked.has(key)) continue;
@@ -100,13 +114,13 @@ export function suggestNearbySlots(
     if (insert.getTime() < now.getTime()) continue;
     const band: AreaSuggestion["band"] = nearestMiles <= AREA_NEAR_MILES ? "near" : "on_the_way";
     const miles = Number(nearestMiles.toFixed(1));
-    const when = insert.getHours() < 12 ? "morning" : "afternoon";
+    const when = zonedParts(insert).hour < 12 ? "morning" : "afternoon";
     const tech = firstName(nearest.technicianName);
     suggestions.push({
       technicianId: nearest.technicianId,
       technicianName: nearest.technicianName,
-      date: dateKey(insert),
-      time: slotTimeValue(insert.getHours(), insert.getMinutes()),
+      date: dateKeyInZone(insert),
+      time: timeValueInZone(insert),
       miles,
       nearbyTitle: nearest.title,
       nearbyAddress: nearest.address,
@@ -116,7 +130,7 @@ export function suggestNearbySlots(
         band === "near"
           ? `${tech} is already at ${nearest.address} that ${when}`
           : `${tech} is ${miles} mi away at ${nearest.address}`,
-      score: nearestMiles + (insert.getTime() - startOfDay(now).getTime()) / 86_400_000 / 2,
+      score: nearestMiles + (insert.getTime() - today.getTime()) / 86_400_000 / 2,
     });
   }
 
