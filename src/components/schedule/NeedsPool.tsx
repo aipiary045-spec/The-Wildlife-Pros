@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { AreaSuggestions } from "@/components/schedule/AreaSuggestions";
 import { dateKey } from "@/lib/dates";
 import { groupNeedsByPriority, needPriority } from "@/lib/schedule-needs";
 import { clientName } from "@/lib/utils";
@@ -16,7 +17,7 @@ export type PoolNeed = {
   dueOn: string;
   preferredTechId: string | null;
   client: { firstName: string; lastName: string; companyName?: string | null };
-  property: { address1: string; city: string };
+  property: { id: string; address1: string; city: string };
   preferredTech?: { firstName: string; lastName: string } | null;
 };
 
@@ -163,6 +164,16 @@ function NeedRow({
               ))}
             </select>
           </label>
+          <div className="sm:col-span-3">
+            <AreaSuggestions
+              propertyId={need.property.id}
+              onPick={(pick) => {
+                setTechnicianId(pick.technicianId);
+                setDate(pick.date);
+                setTime(pick.time);
+              }}
+            />
+          </div>
           {error ? <p className="text-sm text-rose-700 sm:col-span-3">{error}</p> : null}
           <div className="flex gap-2 sm:col-span-3">
             <button type="button" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-line py-2 text-sm font-semibold">

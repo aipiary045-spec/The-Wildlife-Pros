@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AreaSuggestions } from "@/components/schedule/AreaSuggestions";
 import { dateKey } from "@/lib/dates";
 import { JOB_STATUS_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
 import type { ScheduleTech } from "@/components/schedule/job-card";
@@ -21,6 +22,7 @@ export function JobEditor({
     technicianId: string | null;
     scheduledStart: Date | string | null;
     durationMin: number;
+    propertyId: string;
   };
   technicians: ScheduleTech[];
 }) {
@@ -126,6 +128,17 @@ export function JobEditor({
           Minutes on site
           <input type="number" min={15} step={15} value={durationMin} onChange={(event) => setDurationMin(Number(event.target.value))} className={inputClass} />
         </label>
+        <div className="sm:col-span-2">
+          <AreaSuggestions
+            propertyId={job.propertyId}
+            excludeJobId={job.id}
+            onPick={(pick) => {
+              setTechnicianId(pick.technicianId);
+              setDate(pick.date);
+              setTime(pick.time);
+            }}
+          />
+        </div>
         <label className="block text-sm">
           Date
           <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className={inputClass} />

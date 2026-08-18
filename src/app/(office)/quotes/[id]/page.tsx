@@ -91,6 +91,7 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
             status={quote.status}
             technicians={technicians}
             portalToken={quote.client.portalToken}
+            propertyId={quote.propertyId}
           />
         </div>
       </div>

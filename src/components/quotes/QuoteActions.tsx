@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AreaSuggestions } from "@/components/schedule/AreaSuggestions";
 import { dateKey } from "@/lib/dates";
 import { quoteCanConvert } from "@/lib/quotes";
 import type { ScheduleTech } from "@/components/schedule/job-card";
@@ -11,11 +12,13 @@ export function QuoteActions({
   status,
   technicians,
   portalToken,
+  propertyId,
 }: {
   quoteId: string;
   status: string;
   technicians: ScheduleTech[];
   portalToken?: string | null;
+  propertyId?: string | null;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState("");
@@ -70,6 +73,7 @@ export function QuoteActions({
       {convertOpen ? (
         <ConvertDialog
           quoteId={quoteId}
+          propertyId={propertyId}
           technicians={technicians}
           onClose={() => setConvertOpen(false)}
         />
@@ -80,10 +84,12 @@ export function QuoteActions({
 
 function ConvertDialog({
   quoteId,
+  propertyId,
   technicians,
   onClose,
 }: {
   quoteId: string;
+  propertyId?: string | null;
   technicians: ScheduleTech[];
   onClose: () => void;
 }) {
@@ -147,6 +153,16 @@ function ConvertDialog({
             Time
             <input type="time" value={time} onChange={(event) => setTime(event.target.value)} className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2" />
           </label>
+        </div>
+        <div className="mt-3">
+          <AreaSuggestions
+            propertyId={propertyId ?? undefined}
+            onPick={(pick) => {
+              setTechnicianId(pick.technicianId);
+              setDate(pick.date);
+              setTime(pick.time);
+            }}
+          />
         </div>
         {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
         <div className="mt-4 flex gap-2">

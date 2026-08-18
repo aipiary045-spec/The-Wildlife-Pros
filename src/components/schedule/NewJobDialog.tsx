@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { dateKey } from "@/lib/dates";
 import { clientName } from "@/lib/utils";
+import { AreaSuggestions } from "./AreaSuggestions";
 import type { ScheduleTech } from "./job-card";
 
 export type ScheduleClient = {
@@ -171,6 +172,16 @@ export function NewJobDialog({
             Time
             <input type="time" required value={time} onChange={(event) => setTime(event.target.value)} className={inputClass} />
           </label>
+          <div className="sm:col-span-2">
+            <AreaSuggestions
+              propertyId={propertyId || undefined}
+              onPick={(pick) => {
+                setTechnicianId(pick.technicianId);
+                setDate(pick.date);
+                setTime(pick.time);
+              }}
+            />
+          </div>
           <label className="block text-sm">
             Minutes on site
             <input
