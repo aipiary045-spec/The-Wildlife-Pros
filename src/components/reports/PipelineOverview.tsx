@@ -29,14 +29,14 @@ export function PipelineOverview(props: PipelineOverviewData) {
   return (
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <PipelineCard
-        title="Call log"
+        title="Incoming calls"
         accent="#38bdf8"
         rows={[
-          { label: "New calls", count: props.requests.new },
-          { label: "Looked at", count: props.requests.assessed },
-          { label: "Quote or trip started", count: props.requests.converted },
+          { label: "New", count: props.requests.new },
+          { label: "In review", count: props.requests.assessed },
+          { label: "Quoted or scheduled", count: props.requests.converted },
         ]}
-        action="Open call log"
+        action="View call log"
         href="/calls"
         spark={props.requests.spark}
       />
@@ -45,10 +45,10 @@ export function PipelineOverview(props: PipelineOverviewData) {
         accent="#e879f9"
         rows={[
           { label: "Approved", count: props.quotes.approved.count, money: props.quotes.approved.total },
-          { label: "Waiting on client", count: props.quotes.awaiting.count, money: props.quotes.awaiting.total },
+          { label: "Pending approval", count: props.quotes.awaiting.count, money: props.quotes.awaiting.total },
           { label: "Draft", count: props.quotes.draft.count, money: props.quotes.draft.total },
         ]}
-        action="Open quotes"
+        action="View quotes"
         href="/quotes"
         spark={props.quotes.spark}
         compare={props.quotes.converted}
@@ -57,11 +57,11 @@ export function PipelineOverview(props: PipelineOverviewData) {
         title="Work orders"
         accent="#eab308"
         rows={[
-          { label: "Needs invoicing", count: props.jobs.needsInvoice.count, money: props.jobs.needsInvoice.total },
-          { label: "Needs scheduling", count: props.jobs.unscheduled.count, money: props.jobs.unscheduled.total },
-          { label: "On the schedule", count: props.jobs.active.count, money: props.jobs.active.total },
+          { label: "Ready to invoice", count: props.jobs.needsInvoice.count, money: props.jobs.needsInvoice.total },
+          { label: "Unscheduled", count: props.jobs.unscheduled.count, money: props.jobs.unscheduled.total },
+          { label: "Scheduled", count: props.jobs.active.count, money: props.jobs.active.total },
         ]}
-        action="Open work orders"
+        action="View work orders"
         href="/jobs"
         spark={props.jobs.spark}
         compare={props.jobs.completed}
@@ -70,11 +70,11 @@ export function PipelineOverview(props: PipelineOverviewData) {
         title="Invoices"
         accent="#a78bfa"
         rows={[
-          { label: "Past due", count: props.invoices.overdue.count, money: props.invoices.overdue.balance },
-          { label: "Awaiting payment", count: props.invoices.awaiting.count, money: props.invoices.awaiting.balance },
+          { label: "Overdue", count: props.invoices.overdue.count, money: props.invoices.overdue.balance },
+          { label: "Sent, unpaid", count: props.invoices.awaiting.count, money: props.invoices.awaiting.balance },
           { label: "Draft", count: props.invoices.draft.count, money: props.invoices.draft.total },
         ]}
-        action="Open invoices"
+        action="View invoices"
         href="/invoices"
         spark={props.invoices.spark}
         compare={props.invoices.paid}

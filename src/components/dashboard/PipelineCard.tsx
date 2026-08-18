@@ -43,7 +43,7 @@ export function PipelineCard({
         </ul>
         <Link
           href={href}
-          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-line px-3 text-xs font-bold uppercase tracking-wide"
+          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-line px-3 text-sm font-semibold"
         >
           {action}
         </Link>

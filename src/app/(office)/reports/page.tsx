@@ -56,9 +56,7 @@ export default async function ReportsPage({
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Reports</h1>
-        <p className="text-stone-600">
-          Calls, quotes, jobs, collections, and trap activity.
-        </p>
+        <p className="text-stone-600">Open work, collections, and field activity.</p>
       </div>
       <PipelineOverview
         requests={overview.requests}
@@ -67,10 +65,10 @@ export default async function ReportsPage({
         invoices={overview.invoices}
       />
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Collected this week" value={formatMoney(weekPayments._sum.amount ?? 0)} />
-        <Stat label="Collected this month" value={formatMoney(monthPayments._sum.amount ?? 0)} />
+        <Stat label="Payments this week" value={formatMoney(weekPayments._sum.amount ?? 0)} />
+        <Stat label="Payments this month" value={formatMoney(monthPayments._sum.amount ?? 0)} />
         <Stat
-          label="Outstanding invoices"
+          label="Accounts receivable"
           value={formatMoney(openInvoices._sum.balance ?? 0)}
           hint={`${openInvoices._count} unpaid invoice${openInvoices._count === 1 ? "" : "s"}`}
         />
@@ -78,10 +76,10 @@ export default async function ReportsPage({
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
         <article className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">In the field</h2>
-          <p className="text-sm text-stone-600">Traps currently out</p>
+          <h2 className="mb-3 font-semibold">Field activity</h2>
+          <p className="text-sm text-stone-600">Active traps</p>
           <p className="font-display text-2xl">{overview.activeTraps}</p>
-          <p className="mt-3 text-sm text-stone-600">Technicians clocked in</p>
+          <p className="mt-3 text-sm text-stone-600">Technicians on the clock</p>
           <p className="font-display text-2xl">{overview.clockedIn}</p>
           {overview.recentCaptures[0] ? (
             <p className="mt-3 text-sm text-stone-600">
@@ -104,7 +102,7 @@ export default async function ReportsPage({
           <p className="mt-3 text-xs text-stone-500">{traps} trap{traps === 1 ? "" : "s"} still in the field.</p>
         </article>
         <article className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Hours worked</h2>
+          <h2 className="mb-3 font-semibold">Labor hours</h2>
           <div className="mb-4">
             <PeriodToolbar view={hoursView} date={hoursDate} basePath="/reports" dayLabel="Day" weekLabel="Week" />
           </div>
