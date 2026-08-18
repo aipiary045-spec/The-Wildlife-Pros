@@ -1,13 +1,13 @@
 import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
+import {
+  EXPORT_CATEGORY_IDS,
+  type ExportCategoryId,
+  type ExportTab,
+  loadExportTabs,
+} from "@/lib/exports";
 
 export const WORKBOOK_TITLE = "CritterOps — The Wildlife Pros";
-
-type Tab = {
-  name: string;
-  headers: string[];
-  rows: string[][];
-};
 
 function serviceAccount() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -45,128 +45,6 @@ function cell(value: unknown) {
   if (value == null) return "";
   if (value instanceof Date) return value.toISOString();
   return String(value);
-}
-
-async function loadTabs(): Promise<Tab[]> {
-  const [clients, jobs, invoices, payments, traps, captures, timesheets] = await Promise.all([
-    prisma.client.findMany({ include: { properties: true }, orderBy: { lastName: "asc" } }),
-    prisma.job.findMany({
-      include: { client: true, property: true, technician: true },
-      orderBy: { scheduledStart: "asc" },
-    }),
-    prisma.invoice.findMany({ include: { client: true, job: true }, orderBy: { createdAt: "desc" } }),
-    prisma.payment.findMany({ include: { invoice: true }, orderBy: { receivedOn: "desc" } }),
-    prisma.equipment.findMany({
-      include: { deployments: { include: { property: true }, take: 1, orderBy: { deployedAt: "desc" } } },
-      orderBy: { serialNumber: "asc" },
-    }),
-    prisma.captureEvent.findMany({
-      include: { species: true, job: { include: { property: true } } },
-      orderBy: { capturedAt: "desc" },
-    }),
-    prisma.timesheet.findMany({
-      include: { user: true, punches: true },
-      orderBy: { date: "desc" },
-    }),
-  ]);
-
-  return [
-    {
-      name: "Clients",
-      headers: ["id", "firstName", "lastName", "company", "email", "phone", "status", "properties"],
-      rows: clients.map((item) => [
-        item.id,
-        item.firstName,
-        item.lastName,
-        item.companyName ?? "",
-        item.email ?? "",
-        item.phone ?? "",
-        item.status,
-        item.properties.map((property) => `${property.label}: ${property.address1}`).join(" | "),
-      ]),
-    },
-    {
-      name: "Jobs",
-      headers: ["id", "number", "title", "type", "status", "client", "address", "technician", "start", "total"],
-      rows: jobs.map((item) => [
-        item.id,
-        item.number,
-        item.title,
-        item.type,
-        item.status,
-        `${item.client.firstName} ${item.client.lastName}`,
-        item.property.address1,
-        item.technician ? `${item.technician.firstName} ${item.technician.lastName}` : "",
-        item.scheduledStart?.toISOString() ?? "",
-        String(item.total),
-      ]),
-    },
-    {
-      name: "Invoices",
-      headers: ["id", "number", "client", "job", "status", "total", "balance", "dueOn"],
-      rows: invoices.map((item) => [
-        item.id,
-        item.number,
-        `${item.client.firstName} ${item.client.lastName}`,
-        item.job?.number ?? "",
-        item.status,
-        String(item.total),
-        String(item.balance),
-        item.dueOn?.toISOString() ?? "",
-      ]),
-    },
-    {
-      name: "Payments",
-      headers: ["id", "invoice", "amount", "method", "reference", "squarePaymentId", "receivedOn"],
-      rows: payments.map((item) => [
-        item.id,
-        item.invoice.number,
-        String(item.amount),
-        item.method,
-        item.reference ?? "",
-        item.squarePaymentId ?? "",
-        item.receivedOn.toISOString(),
-      ]),
-    },
-    {
-      name: "Traps",
-      headers: ["id", "serialNumber", "name", "type", "status", "location"],
-      rows: traps.map((item) => [
-        item.id,
-        item.serialNumber,
-        item.name,
-        item.type,
-        item.status,
-        item.deployments[0]?.locationNote ?? "",
-      ]),
-    },
-    {
-      name: "Captures",
-      headers: ["id", "species", "quantity", "disposition", "address", "capturedAt"],
-      rows: captures.map((item) => [
-        item.id,
-        item.species.commonName,
-        String(item.quantity),
-        item.disposition,
-        item.job.property.address1,
-        item.capturedAt.toISOString(),
-      ]),
-    },
-    {
-      name: "Timesheets",
-      headers: ["id", "technician", "date", "status", "punches", "breakMin"],
-      rows: timesheets.map((item) => [
-        item.id,
-        `${item.user.firstName} ${item.user.lastName}`,
-        item.date.toISOString(),
-        item.status,
-        item.punches
-          .map((punch) => `${punch.clockInAt.toISOString()}–${punch.clockOutAt?.toISOString() ?? "open"}`)
-          .join(" | "),
-        String(item.breakMin),
-      ]),
-    },
-  ];
 }
 
 async function resolveSpreadsheet(
@@ -257,14 +135,8 @@ function upsertRows(headers: string[], current: string[][], incoming: string[][]
   return next;
 }
 
-export async function syncOrganizationToGoogleSheets() {
-  const { sheets, drive } = sheetsClient();
-  const org = await prisma.organization.findFirst();
-  if (!org) throw new Error("No organization found");
-
-  const tabs = await loadTabs();
-  const resolved = await resolveSpreadsheet(drive, sheets, org.googleSpreadsheetId);
-  const spreadsheetId = resolved.id;
+async function writeTabs(spreadsheetId: string, tabs: ExportTab[]) {
+  const { sheets } = sheetsClient();
   await ensureTabs(
     sheets,
     spreadsheetId,
@@ -284,6 +156,18 @@ export async function syncOrganizationToGoogleSheets() {
       requestBody: { values: merged.map((row) => row.map(cell)) },
     });
   }
+}
+
+export async function syncOrganizationToGoogleSheets(options?: { categories?: ExportCategoryId[] }) {
+  const categories = options?.categories?.length ? options.categories : EXPORT_CATEGORY_IDS;
+  const tabs = await loadExportTabs(categories);
+  const { sheets, drive } = sheetsClient();
+  const org = await prisma.organization.findFirst();
+  if (!org) throw new Error("No organization found");
+
+  const resolved = await resolveSpreadsheet(drive, sheets, org.googleSpreadsheetId);
+  const spreadsheetId = resolved.id;
+  await writeTabs(spreadsheetId, tabs);
 
   const meta = await sheets.spreadsheets.get({ spreadsheetId, fields: "spreadsheetUrl" });
   const url = meta.data.spreadsheetUrl ?? `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
@@ -301,6 +185,7 @@ export async function syncOrganizationToGoogleSheets() {
     spreadsheetUrl: updated.googleSpreadsheetUrl,
     lastSheetsSyncAt: updated.lastSheetsSyncAt,
     tabs: tabs.map((tab) => ({ name: tab.name, rows: tab.rows.length })),
+    categories,
     createdNew: resolved.created,
   };
 }

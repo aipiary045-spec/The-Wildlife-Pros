@@ -38,7 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/team", label: "Team", icon: HardHat, description: "Logins and roles." },
   { href: "/inventory", label: "Traps & gear", icon: Warehouse, description: "What is in the shop and what is in the field." },
   { href: "/activity", label: "Species log", icon: Squirrel, description: "Captures and dispositions." },
-  { href: "/exports", label: "Google Sheets", icon: FileSpreadsheet, description: "Spreadsheet export of the books." },
+  { href: "/exports", label: "Exports", icon: FileSpreadsheet, description: "CSV downloads and Google Sheets sync." },
   { href: "/field", label: "Field route", icon: Smartphone, description: "Today's stops in driving order." },
 ];
 

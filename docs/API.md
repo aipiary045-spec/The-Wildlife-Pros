@@ -74,8 +74,9 @@ Worked minutes = sum of punch spans minus `breakMin`.
 
 ## Client hub (public token)
 
-`GET /api/exports/google-sheets` — whether Sheets is configured and the linked workbook  
-`POST /api/exports/google-sheets` — create the workbook once, then update/append in place
+`GET /api/exports/google-sheets` — whether Sheets is configured, linked workbook, and export categories with row counts  
+`POST /api/exports/google-sheets` — `{ categories?: ["clients","invoices",...] }` syncs selected tabs (or all when omitted) into the shared workbook  
+`GET /api/exports/csv/:category` — download one category as CSV (office roles)
 
 `GET /api/portal/:token` — visits and quotes only  
 `POST /api/portal/:token/actions` `{ type: "approve_quote"|"decline_quote", id, note? }`
