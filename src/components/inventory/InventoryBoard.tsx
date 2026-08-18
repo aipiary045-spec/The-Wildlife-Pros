@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AddEquipmentForm } from "@/components/inventory/AddEquipmentForm";
+import { TrapQrHint } from "@/components/inventory/TrapQrHint";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EQUIPMENT_TYPE_LABEL } from "@/lib/constants";
 
@@ -77,6 +78,7 @@ export function InventoryBoard({
                   ) : (
                     <p className="mt-3 text-sm text-stone-500">{item.location?.name ?? "No location assigned"}</p>
                   )}
+                  <TrapQrHint serial={item.serialNumber} />
                 </article>
               );
             })}

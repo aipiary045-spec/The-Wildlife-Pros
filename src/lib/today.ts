@@ -3,12 +3,14 @@ import { invoiceAge } from "@/lib/invoice-aging";
 import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
 import { isLateForCheckIn, minutesLate } from "@/lib/late-checkin";
 import { prisma } from "@/lib/prisma";
+import { STALE_TRAP_DAYS } from "@/lib/trap-qr";
 import { clientName, propertyAddress } from "@/lib/utils";
 
 export async function getTodayOverview(now = new Date()) {
   const dayStart = startOfDay(now);
   const dayEnd = endOfDay(now);
   const lateCutoff = new Date(now.getTime() - 60 * 60 * 1000);
+  const staleCutoff = new Date(now.getTime() - STALE_TRAP_DAYS * 24 * 60 * 60 * 1000);
 
   const [
     todayJobs,
@@ -19,6 +21,7 @@ export async function getTodayOverview(now = new Date()) {
     openInvoices,
     newCalls,
     needsInvoice,
+    staleTraps,
   ] = await Promise.all([
     prisma.job.findMany({
       where: {
@@ -56,6 +59,15 @@ export async function getTodayOverview(now = new Date()) {
     }),
     prisma.serviceRequest.count({ where: { status: { in: [...OPEN_REQUEST_STATUSES] } } }),
     prisma.job.count({ where: { status: "COMPLETED", invoices: { none: {} } } }),
+    prisma.equipmentDeployment.findMany({
+      where: { retrievedAt: null, deployedAt: { lte: staleCutoff } },
+      include: {
+        equipment: true,
+        job: { include: { client: true } },
+      },
+      orderBy: { deployedAt: "asc" },
+      take: 5,
+    }),
   ]);
 
   const lateJobs = lateRows
@@ -65,6 +77,7 @@ export async function getTodayOverview(now = new Date()) {
       number: job.number,
       title: job.title,
       clientName: clientName(job.client),
+      clientPhone: job.client.phone,
       address: propertyAddress(job.property),
       technicianName: job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned",
       minutesLate: minutesLate(job.scheduledStart ?? now, now),
@@ -86,13 +99,23 @@ export async function getTodayOverview(now = new Date()) {
       status: job.status,
       scheduledStart: job.scheduledStart,
       clientName: clientName(job.client),
+      clientPhone: job.client.phone,
       address: propertyAddress(job.property),
       technicianName: job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned",
     })),
     lateJobs,
+    staleTraps: staleTraps.map((deployment) => ({
+      id: deployment.id,
+      jobId: deployment.jobId,
+      serial: deployment.equipment.serialNumber,
+      locationNote: deployment.locationNote,
+      clientName: clientName(deployment.job.client),
+      deployedAt: deployment.deployedAt,
+    })),
     counts: {
       todayJobs: todayJobs.length,
       lateJobs: lateJobs.length,
+      staleTraps: staleTraps.length,
       unscheduled: unscheduledCount,
       quotesWaiting: quotesWaiting.length,
       quotesApproved,
@@ -106,11 +129,13 @@ export async function getTodayOverview(now = new Date()) {
       number: quote.number,
       title: quote.title,
       clientName: clientName(quote.client),
+      clientPhone: quote.client.phone,
     })),
     pastDueInvoices: pastDueInvoices.map((invoice) => ({
       id: invoice.id,
       number: invoice.number,
       clientName: clientName(invoice.client),
+      clientPhone: invoice.client.phone,
       balance: Number(invoice.balance),
     })),
   };
