@@ -57,7 +57,7 @@ export default async function ReportsPage({
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Reports</h1>
         <p className="text-stone-600">
-          Pipeline, money collected, work finished, and what came out of the traps.
+          Calls, quotes, jobs, collections, and trap activity.
         </p>
       </div>
       <PipelineOverview
@@ -70,18 +70,18 @@ export default async function ReportsPage({
         <Stat label="Collected this week" value={formatMoney(weekPayments._sum.amount ?? 0)} />
         <Stat label="Collected this month" value={formatMoney(monthPayments._sum.amount ?? 0)} />
         <Stat
-          label="Still on the books"
+          label="Outstanding invoices"
           value={formatMoney(openInvoices._sum.balance ?? 0)}
-          hint={`${openInvoices._count} open invoice${openInvoices._count === 1 ? "" : "s"}`}
+          hint={`${openInvoices._count} unpaid invoice${openInvoices._count === 1 ? "" : "s"}`}
         />
-        <Stat label="Jobs finished this week" value={String(completedWeek)} />
+        <Stat label="Jobs completed this week" value={String(completedWeek)} />
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
         <article className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Field pulse</h2>
-          <p className="text-sm text-stone-600">Traps in the field</p>
+          <h2 className="mb-3 font-semibold">In the field</h2>
+          <p className="text-sm text-stone-600">Traps currently out</p>
           <p className="font-display text-2xl">{overview.activeTraps}</p>
-          <p className="mt-3 text-sm text-stone-600">Clocked in</p>
+          <p className="mt-3 text-sm text-stone-600">Technicians clocked in</p>
           <p className="font-display text-2xl">{overview.clockedIn}</p>
           {overview.recentCaptures[0] ? (
             <p className="mt-3 text-sm text-stone-600">
@@ -89,12 +89,12 @@ export default async function ReportsPage({
               {overview.recentCaptures[0].job.property.address1}
             </p>
           ) : (
-            <p className="mt-3 text-sm text-stone-500">No captures logged yet today.</p>
+            <p className="mt-3 text-sm text-stone-500">No captures recorded today.</p>
           )}
         </article>
         <article className="rounded-2xl border border-line bg-panel p-5">
           <h2 className="mb-3 font-semibold">Captures</h2>
-          {captures.length === 0 ? <p className="text-sm text-stone-500">No captures logged yet.</p> : null}
+          {captures.length === 0 ? <p className="text-sm text-stone-500">No captures recorded yet.</p> : null}
           {captures.map((row) => (
             <p key={row.speciesId} className="flex justify-between py-1 text-sm">
               <span>{speciesName[row.speciesId] ?? "Unknown"}</span>
@@ -104,12 +104,12 @@ export default async function ReportsPage({
           <p className="mt-3 text-xs text-stone-500">{traps} trap{traps === 1 ? "" : "s"} still in the field.</p>
         </article>
         <article className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Tech hours</h2>
+          <h2 className="mb-3 font-semibold">Hours worked</h2>
           <div className="mb-4">
             <PeriodToolbar view={hoursView} date={hoursDate} basePath="/reports" dayLabel="Day" weekLabel="Week" />
           </div>
           {timesheets.length === 0 ? (
-            <p className="text-sm text-stone-500">No punches in this period.</p>
+            <p className="text-sm text-stone-500">No hours recorded for this period.</p>
           ) : (
             Object.entries(
               timesheets.reduce<Record<string, typeof timesheets>>((acc, sheet) => {
