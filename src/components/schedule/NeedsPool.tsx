@@ -31,7 +31,7 @@ export function NeedsPool({
 }) {
   const grouped = useMemo(() => groupNeedsByPriority(needs.map((need) => ({ ...need, dueOn: new Date(need.dueOn) }))), [needs]);
   const waiting = grouped.overdue.length + grouped.due.length;
-  const [open, setOpen] = useState(waiting > 0);
+  const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "overdue" | "due">("all");
   const sections = [
     { key: "overdue" as const, title: "Overdue for a trip", items: grouped.overdue },
