@@ -97,43 +97,60 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
         ) : null}
       </button>
       {open ? (
-        <div className="absolute right-0 z-40 mt-2 w-[min(calc(100vw-2rem),22rem)] overflow-hidden rounded-2xl border border-line bg-panel shadow-xl">
-          <div className="flex items-center justify-between border-b border-line px-4 py-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-orange">Alerts</p>
-              <p className="text-sm text-stone-600">{count ? `${count} need attention` : "You're caught up"}</p>
+        <>
+          <button
+            type="button"
+            aria-label="Close alerts"
+            className="fixed inset-0 z-40 bg-black/25 sm:hidden"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className={cn(
+              "z-50 flex flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-xl",
+              "fixed inset-x-4 top-[max(4.25rem,calc(env(safe-area-inset-top)+4rem))]",
+              "max-h-[calc(100dvh-env(safe-area-inset-top)-4.25rem-4.5rem-env(safe-area-inset-bottom))]",
+              "sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-none sm:w-[min(calc(100vw-2rem),22rem)]",
+            )}
+          >
+            <div className="flex shrink-0 items-center justify-between border-b border-line px-4 py-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-orange">Alerts</p>
+                <p className="text-sm text-stone-600">{count ? `${count} need attention` : "You're caught up"}</p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close alerts"
+                onClick={() => setOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-stone-500 hover:bg-background hover:text-ink"
+              >
+                ×
+              </button>
             </div>
-            <button
-              type="button"
-              aria-label="Close alerts"
-              onClick={() => setOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-stone-500 hover:bg-background hover:text-ink"
-            >
-              ×
-            </button>
+            {count === 0 ? (
+              <p className="px-4 py-6 text-sm text-stone-500">
+                Nothing waiting right now. Late check-ins, return trips, and office follow-ups show up here.
+              </p>
+            ) : (
+              <ul className="min-h-0 flex-1 overflow-y-auto sm:max-h-[min(24rem,70dvh)]">
+                {items.map((item) => (
+                  <li key={item.id} className="border-b border-line last:border-b-0">
+                    <Link
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className="block px-4 py-3 hover:bg-background"
+                    >
+                      <p className="text-sm font-semibold">
+                        {item.urgency === "high" ? <span className="mr-1 text-orange">●</span> : null}
+                        {item.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-stone-600">{item.body}</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          {count === 0 ? (
-            <p className="px-4 py-6 text-sm text-stone-500">Nothing waiting right now. Late check-ins, return trips, and office follow-ups show up here.</p>
-          ) : (
-            <ul className="max-h-[min(24rem,70dvh)] overflow-y-auto">
-              {items.map((item) => (
-                <li key={item.id} className="border-b border-line last:border-b-0">
-                  <Link
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="block px-4 py-3 hover:bg-background"
-                  >
-                    <p className="text-sm font-semibold">
-                      {item.urgency === "high" ? <span className="mr-1 text-orange">●</span> : null}
-                      {item.title}
-                    </p>
-                    <p className="mt-0.5 text-xs text-stone-600">{item.body}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        </>
       ) : null}
     </div>
   );

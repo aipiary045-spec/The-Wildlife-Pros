@@ -22,7 +22,7 @@ export default async function OfficeLayout({ children }: { children: React.React
       </div>
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <header
-          className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line bg-panel/95 px-4 py-3 backdrop-blur md:px-6"
+          className="sticky top-0 z-20 flex items-center justify-between gap-3 overflow-visible border-b border-line bg-panel/95 px-4 py-3 backdrop-blur md:px-6"
           style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
         >
           <HeaderContext role={session.role} name={`${session.firstName} ${session.lastName}`} />
