@@ -80,7 +80,7 @@ export function ClientList({ clients }: { clients: ClientListRow[] }) {
                   <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Phone</th>
                   <th className="px-4 py-3">Street</th>
-                  <th className="px-4 py-3">Jobs</th>
+                  <th className="px-4 py-3">Work orders</th>
                   <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>

@@ -12,7 +12,7 @@ import {
 test("office main tabs are schedule, clients, jobs, and more", () => {
   const tabs = primaryTabs("DISPATCHER").map((item) => item.href);
   assert.deepEqual(tabs, ["/schedule", "/clients", "/jobs", "/more"]);
-  assert.equal(primaryTabs("DISPATCHER")[2]?.label, "Jobs");
+  assert.equal(primaryTabs("DISPATCHER")[2]?.label, "Work orders");
 });
 
 test("office reports and call log live under More, not the main tabs", () => {

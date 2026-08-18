@@ -32,10 +32,7 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
         </p>
         <p className="text-sm text-stone-500">Billing is collected by staff in Square — clients do not log in to pay.</p>
       </div>
-      <section className="rounded-2xl border border-line bg-panel p-5">
-        <h2 className="mb-3 font-semibold">Edit client</h2>
-        <ClientEditor client={client} />
-      </section>
+      <ClientEditor client={client} />
       <section className="grid gap-4 md:grid-cols-2">
         {client.properties.map((property) => (
           <article key={property.id} className="rounded-2xl border border-line bg-panel p-5">
@@ -59,7 +56,7 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
         ))}
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
-        <Panel title="Jobs">
+        <Panel title="Work orders">
           {client.jobs.map((job) => (
             <Link key={job.id} href={`/jobs/${job.id}`} className="block py-2 text-sm hover:text-orange">
               {job.number} · {job.title} <StatusBadge status={job.status} />

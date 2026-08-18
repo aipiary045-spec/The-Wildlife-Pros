@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { recordPayment } from "@/lib/billing";
 import { jsonError, withAuth } from "@/lib/api";
+import { canAccessInvoice } from "@/lib/billing-access";
 import { dollarsToCents, getSquareClient, squarePublicConfig } from "@/lib/square";
 
-export const POST = withAuth(async (_session, request) => {
+export const POST = withAuth(async (session, request) => {
   const config = squarePublicConfig();
   if (!config.configured) {
     return jsonError("Square is not configured. Add access token, location, and application ID.", 503);
@@ -22,9 +23,10 @@ export const POST = withAuth(async (_session, request) => {
 
   const invoice = await prisma.invoice.findUnique({
     where: { id: body.invoiceId },
-    include: { client: true },
+    include: { client: true, job: { select: { technicianId: true } } },
   });
   if (!invoice) return jsonError("Invoice not found", 404);
+  if (!canAccessInvoice(session, invoice)) return jsonError("You cannot collect on this invoice.", 403);
 
   const client = getSquareClient();
   if (!client) return jsonError("Square is not configured", 503);

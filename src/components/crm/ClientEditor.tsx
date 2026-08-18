@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -20,6 +21,7 @@ export function ClientEditor({
   };
 }) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState(client.firstName);
   const [lastName, setLastName] = useState(client.lastName);
   const [companyName, setCompanyName] = useState(client.companyName ?? "");
@@ -64,7 +66,23 @@ export function ClientEditor({
   }
 
   return (
-    <form onSubmit={save} className="space-y-3">
+    <section className="rounded-2xl border border-line bg-panel">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+      >
+        <div className="min-w-0">
+          <h2 className="font-semibold">Edit client</h2>
+          {open ? null : (
+            <p className="text-sm text-stone-500">Change the name, phone, email, or status.</p>
+          )}
+        </div>
+        <ChevronDown size={18} className={`shrink-0 text-stone-500 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open ? (
+        <form onSubmit={save} className="space-y-3 border-t border-line px-5 pb-5 pt-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
           First name
@@ -110,5 +128,7 @@ export function ClientEditor({
         </button>
       </div>
     </form>
+      ) : null}
+    </section>
   );
 }

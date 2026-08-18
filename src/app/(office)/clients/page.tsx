@@ -16,7 +16,7 @@ export default async function ClientsPage() {
       <PageHeader
         title="Clients"
         description="Names, phones, and service addresses. Open a person to edit the record or add another property."
-        related={[{ href: "/jobs", label: "Jobs" }]}
+        related={[{ href: "/jobs", label: "Work orders" }]}
         actions={<NewClientButton />}
       />
       <ClientList clients={clients} />

@@ -21,6 +21,10 @@ export const OFFICE_ONLY_PREFIXES = [
 ];
 
 export function isOfficeOnlyPath(pathname: string) {
+  // Technicians can open invoice detail to collect payment on their own jobs (guarded on the page).
+  if (pathname.startsWith("/invoices/") && pathname !== "/invoices") {
+    return false;
+  }
   return OFFICE_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 

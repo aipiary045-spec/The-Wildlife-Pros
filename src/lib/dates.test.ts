@@ -58,6 +58,8 @@ test("technicians are kept off dispatch and office pages", () => {
   assert.equal(isOfficeOnlyPath("/field"), false);
   assert.equal(isOfficeOnlyPath("/jobs/abc"), false);
   assert.equal(isOfficeOnlyPath("/time-off"), false);
+  assert.equal(isOfficeOnlyPath("/invoices"), true);
+  assert.equal(isOfficeOnlyPath("/invoices/abc"), false);
 });
 
 test("technician time off lives under More, not the main tabs", () => {

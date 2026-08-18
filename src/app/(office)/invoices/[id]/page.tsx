@@ -6,6 +6,9 @@ import { InvoiceActions } from "@/components/billing/InvoiceActions";
 import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
+import { canAccessInvoice } from "@/lib/billing-access";
+import { isTechnician } from "@/lib/paths";
 import { squarePublicConfig } from "@/lib/square";
 import { clientName, formatMoney } from "@/lib/utils";
 
@@ -13,23 +16,26 @@ export const dynamic = "force-dynamic";
 
 export default async function InvoiceDetailPage({ params }: PageProps<"/invoices/[id]">) {
   const { id } = await params;
+  const session = await getSession();
   const invoice = await prisma.invoice.findUnique({
     where: { id },
     include: {
       client: true,
       property: true,
-      job: true,
+      job: { select: { id: true, number: true, technicianId: true } },
       lineItems: { orderBy: { sortOrder: "asc" } },
       payments: { orderBy: { receivedOn: "desc" } },
     },
   });
   if (!invoice) notFound();
+  if (!session || !canAccessInvoice(session, invoice)) notFound();
+  const techView = isTechnician(session.role);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <BackLink href="/invoices" label="Invoices" />
+          <BackLink href={techView && invoice.job ? `/jobs/${invoice.job.id}` : "/invoices"} label={techView ? "Work order" : "Invoices"} />
           <p className="mt-2 text-xs uppercase tracking-widest text-orange">{invoice.number}</p>
           <h1 className="font-display text-3xl tracking-wide">{clientName(invoice.client)}</h1>
           <p className="text-stone-600">
@@ -39,7 +45,7 @@ export default async function InvoiceDetailPage({ params }: PageProps<"/invoices
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={invoice.status} />
-          <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
+          {techView ? null : <InvoiceActions invoiceId={invoice.id} status={invoice.status} />}
         </div>
       </div>
       <section className="grid gap-6 lg:grid-cols-2">

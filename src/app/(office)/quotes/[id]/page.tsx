@@ -130,7 +130,7 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
       </article>
       {quote.jobs.length > 0 ? (
         <article className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Jobs from this quote</h2>
+          <h2 className="mb-3 font-semibold">Work orders from this quote</h2>
           {quote.jobs.map((job) => (
             <Link key={job.id} href={`/jobs/${job.id}`} className="block py-1 text-sm font-medium text-orange">
               {job.number} <StatusBadge status={job.status} />

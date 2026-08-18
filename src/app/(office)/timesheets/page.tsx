@@ -56,7 +56,7 @@ export default async function TimesheetsPage({
         description={
           techView
             ? "Clock in for the day. Hours break down by day or week."
-            : "Review punches by day or week. Days off are approved on Time off."
+            : "Review clock entries by day or week. Days off are approved on Time off."
         }
         related={techView ? undefined : [{ href: "/time-off", label: "Time off" }, { href: "/reports", label: "Reports" }]}
       />
@@ -98,7 +98,7 @@ export default async function TimesheetsPage({
       ) : null}
       <section className="rounded-2xl border border-line bg-panel p-5">
         <h2 className="mb-3 font-semibold">{techView ? "Your hours" : "Hours by technician"}</h2>
-        {byUser.length === 0 ? <p className="text-sm text-stone-500">No punches in this period.</p> : null}
+        {byUser.length === 0 ? <p className="text-sm text-stone-500">No clock entries in this period.</p> : null}
         {byUser.map(([userId, userSheets]) => {
           const name = `${userSheets[0]?.user.firstName} ${userSheets[0]?.user.lastName}`;
           const days = hoursByDay(userSheets);
@@ -162,7 +162,7 @@ export default async function TimesheetsPage({
             <tr>
               {techView ? null : <th className="px-4 py-3">Tech</th>}
               <th className="px-4 py-3">Day</th>
-              <th className="px-4 py-3">Punches</th>
+              <th className="px-4 py-3">Clock in / out</th>
               <th className="px-4 py-3">Hours</th>
               <th className="px-4 py-3">Status</th>
               {canApproveHours ? <th className="px-4 py-3">Review</th> : null}

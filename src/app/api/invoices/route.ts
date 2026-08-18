@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { addDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { jsonError, lineTotals, withAuth } from "@/lib/api";
+import { canBillJob } from "@/lib/billing-access";
 import { nextNumber } from "@/lib/utils";
 
 export const GET = withAuth(async () => {
@@ -30,6 +31,7 @@ export const POST = withAuth(async (session, request) => {
       include: { lineItems: true, invoices: { select: { id: true } } },
     });
     if (!job) return jsonError("Job not found", 404);
+    if (!canBillJob(session, job)) return jsonError("You can only invoice your own jobs.", 403);
     if (job.invoices.length > 0) return jsonError("This job already has an invoice.");
     clientId = clientId ?? job.clientId;
     propertyId = propertyId ?? job.propertyId;

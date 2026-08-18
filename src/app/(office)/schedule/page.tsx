@@ -20,6 +20,7 @@ function toCard(job: Awaited<ReturnType<typeof getSchedule>>["jobs"][number]) {
     durationMin: job.durationMin,
     instructions: job.instructions,
     technicianId: job.technicianId,
+    propertyId: job.propertyId,
     sourceJobId: job.sourceJobId,
     client: job.client,
     property: job.property,

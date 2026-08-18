@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { recordPayment } from "@/lib/billing";
 import { jsonError, withAuth } from "@/lib/api";
+import { canAccessInvoice } from "@/lib/billing-access";
+import { prisma } from "@/lib/prisma";
 
-export const POST = withAuth(async (_session, request) => {
+export const POST = withAuth(async (session, request) => {
   const body = (await request.json()) as {
     invoiceId?: string;
     amount?: number;
@@ -13,6 +15,12 @@ export const POST = withAuth(async (_session, request) => {
   if (!body.invoiceId || body.amount == null) {
     return jsonError("invoiceId and amount are required");
   }
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: body.invoiceId },
+    include: { job: { select: { technicianId: true } } },
+  });
+  if (!invoice) return jsonError("Invoice not found", 404);
+  if (!canAccessInvoice(session, invoice)) return jsonError("You cannot collect on this invoice.", 403);
   try {
     const result = await recordPayment({
       invoiceId: body.invoiceId,

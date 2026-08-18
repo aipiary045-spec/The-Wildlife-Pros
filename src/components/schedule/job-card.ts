@@ -8,6 +8,7 @@ export type ScheduleJobCard = {
   durationMin: number;
   instructions?: string | null;
   technicianId: string | null;
+  propertyId?: string;
   sourceJobId?: string | null;
   client: { firstName: string; lastName: string; companyName?: string | null };
   property: { address1: string };

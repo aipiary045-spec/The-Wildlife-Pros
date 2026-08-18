@@ -33,7 +33,7 @@ export function PipelineOverview(props: PipelineOverviewData) {
         accent="#38bdf8"
         rows={[
           { label: "New", count: props.requests.new },
-          { label: "In review", count: props.requests.assessed },
+          { label: "Looked at", count: props.requests.assessed },
           { label: "Quoted or scheduled", count: props.requests.converted },
         ]}
         action="View call log"

@@ -77,7 +77,7 @@ export function primaryTabs(role: string): NavItem[] {
   return [
     { href: "/schedule", label: "Schedule", icon: CalendarDays },
     { href: "/clients", label: "Clients", icon: Users },
-    { href: "/jobs", label: "Jobs", icon: ClipboardList },
+    { href: "/jobs", label: "Work orders", icon: ClipboardList },
     { href: "/more", label: "More", icon: Menu },
   ];
 }

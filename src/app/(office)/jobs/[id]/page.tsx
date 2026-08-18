@@ -4,14 +4,15 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
-import { JobCaptureForm } from "@/components/jobs/JobCaptureForm";
+import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
 import { JobEditor } from "@/components/jobs/JobEditor";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getSession } from "@/lib/auth";
-import { DISPOSITION_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
+import { canBillJob } from "@/lib/billing-access";
+import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { isTechnician } from "@/lib/paths";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   if (!job) notFound();
   const session = await getSession();
   const techView = Boolean(session && isTechnician(session.role));
+  const canBill = session ? canBillJob(session, job) : false;
   if (techView && job.technicianId && job.technicianId !== session?.id) notFound();
 
   const [stock, allGear, species, technicians] = await Promise.all([
@@ -83,9 +85,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             technicianId={job.technicianId}
             technicians={technicians}
           />
-          {techView ? null : (
+          {canBill ? (
             <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
-          )}
+          ) : null}
         </div>
       </div>
       <section className="grid gap-4 md:grid-cols-3">
@@ -111,17 +113,17 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             </div>
           ) : null}
         </Card>
-        {techView ? null : (
+        {canBill ? (
           <Card title="Value">
             <p className="font-display text-2xl">{formatMoney(job.total)}</p>
             <p className="text-sm text-stone-600">Tax {formatMoney(job.taxAmount)}</p>
             {job.invoices.map((invoice) => (
               <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
-                Collect {invoice.number} via Square · {formatMoney(invoice.balance)} due
+                {techView ? "Take payment" : "Collect"} · {invoice.number} · {formatMoney(invoice.balance)} due
               </Link>
             ))}
           </Card>
-        )}
+        ) : null}
         <Card title="Instructions">
           <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
         </Card>
@@ -152,23 +154,15 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           serials={allGear.map((item) => item.serialNumber)}
           species={species.map((item) => item.commonName)}
         />
-        <Card title="Species activity">
-          {job.captures.map((capture) => (
-            <p key={capture.id} className="py-1 text-sm">
-              {capture.quantity} {capture.species.commonName} · {DISPOSITION_LABEL[capture.disposition]}
-            </p>
-          ))}
-          <div className="mt-4 border-t border-line pt-4">
-            <JobCaptureForm
-              jobId={job.id}
-              species={species}
-              deployments={job.deployments.map((item) => ({
-                id: item.id,
-                equipment: { serialNumber: item.equipment.serialNumber },
-              }))}
-            />
-          </div>
-        </Card>
+        <JobSpeciesCard
+          jobId={job.id}
+          captures={job.captures}
+          species={species}
+          deployments={job.deployments.map((item) => ({
+            id: item.id,
+            equipment: { serialNumber: item.equipment.serialNumber },
+          }))}
+        />
         {techView ? null : <JobEditor job={job} technicians={technicians} />}
         {job.exclusions.length > 0 ? (
           <Card title="Exclusion">
