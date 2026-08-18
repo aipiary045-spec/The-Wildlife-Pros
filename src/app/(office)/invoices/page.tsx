@@ -43,8 +43,8 @@ export default async function InvoicesPage() {
                 <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="block rounded-2xl border border-line bg-panel p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold">{invoice.number}</p>
-                      <p className="text-sm text-stone-600">{clientName(invoice.client)}</p>
+                      <p className="font-semibold">{clientName(invoice.client)}</p>
+                      <p className="text-sm text-stone-600">{invoice.number}</p>
                       <p className="text-xs text-stone-500">
                         {formatMoney(invoice.total)} · {formatMoney(invoice.balance)} due{" "}
                         {invoice.dueOn ? format(invoice.dueOn, "MMM d") : "—"}
