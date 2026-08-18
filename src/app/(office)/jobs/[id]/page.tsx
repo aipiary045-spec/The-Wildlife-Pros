@@ -172,9 +172,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         </Card>
         {techView ? null : (
           <>
-            <Card title="Edit job">
-              <JobEditor job={job} technicians={technicians} />
-            </Card>
+            <JobEditor job={job} technicians={technicians} />
             <Card title="Recurring / return visits">
               <RecurringForm jobId={job.id} />
             </Card>
