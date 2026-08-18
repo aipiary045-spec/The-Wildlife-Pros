@@ -15,7 +15,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Could not save that line.");
   }
-  const existing = await prisma.service.findUnique({ where: { id } });
+  const existing = await prisma.service.findFirst({
+    where: { id, organizationId: session.organizationId },
+  });
   if (!existing) return jsonError("That line is gone.", 404);
   const service = await prisma.service.update({
     where: { id },
@@ -29,4 +31,17 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     },
   });
   return NextResponse.json({ service });
+}
+
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const session = await getSession();
+  if (!session) return jsonError("Sign in required", 401);
+  if (!canManagePriceList(session.role)) return jsonError("Office only.", 403);
+  const { id } = await context.params;
+  const existing = await prisma.service.findFirst({
+    where: { id, organizationId: session.organizationId },
+  });
+  if (!existing) return jsonError("That line is gone.", 404);
+  await prisma.service.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
 }

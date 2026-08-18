@@ -32,6 +32,7 @@ export function PriceListBoard({ items }: { items: PriceListItem[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   function startEdit(item: PriceListItem) {
     setEditingId(item.id);
@@ -76,6 +77,21 @@ export function PriceListBoard({ items }: { items: PriceListItem[] }) {
       return;
     }
     reset();
+    router.refresh();
+  }
+
+  async function remove(item: PriceListItem) {
+    if (!confirm(`Remove "${item.name}" from the price list? Quotes and invoices that already use it keep their line.`)) return;
+    setRemovingId(item.id);
+    setError("");
+    const response = await fetch(`/api/services/${item.id}`, { method: "DELETE", credentials: "include" });
+    const data = (await response.json()) as { error?: string };
+    setRemovingId(null);
+    if (!response.ok) {
+      setError(data.error ?? "Could not remove that line.");
+      return;
+    }
+    if (editingId === item.id) reset();
     router.refresh();
   }
 
@@ -173,20 +189,30 @@ export function PriceListBoard({ items }: { items: PriceListItem[] }) {
       ) : null}
       <div className="space-y-2 md:hidden">
         {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => startEdit(item)}
-            className="block w-full rounded-2xl border border-line bg-panel p-4 text-left"
-          >
-            <p className="font-semibold">{item.name}</p>
-            <p className="text-sm text-stone-600">
-              {formatMoney(item.unitPrice)} · {JOB_TYPE_LABEL[item.jobType] ?? item.jobType}
-              {item.taxable ? "" : " · no tax"}
-              {item.active ? "" : " · hidden"}
-            </p>
-            {item.description ? <p className="mt-1 text-xs text-stone-500">{item.description}</p> : null}
-          </button>
+          <div key={item.id} className="rounded-2xl border border-line bg-panel p-4">
+            <button type="button" onClick={() => startEdit(item)} className="block w-full text-left">
+              <p className="font-semibold">{item.name}</p>
+              <p className="text-sm text-stone-600">
+                {formatMoney(item.unitPrice)} · {JOB_TYPE_LABEL[item.jobType] ?? item.jobType}
+                {item.taxable ? "" : " · no tax"}
+                {item.active ? "" : " · hidden"}
+              </p>
+              {item.description ? <p className="mt-1 text-xs text-stone-500">{item.description}</p> : null}
+            </button>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={() => startEdit(item)} className="text-sm font-semibold text-orange">
+                Edit
+              </button>
+              <button
+                type="button"
+                disabled={removingId === item.id}
+                onClick={() => void remove(item)}
+                className="text-sm font-semibold text-rose-700 disabled:opacity-60"
+              >
+                {removingId === item.id ? "Removing…" : "Remove"}
+              </button>
+            </div>
+          </div>
         ))}
       </div>
       <div className="hidden overflow-hidden rounded-2xl border border-line bg-panel md:block">
@@ -213,9 +239,19 @@ export function PriceListBoard({ items }: { items: PriceListItem[] }) {
                 <td className="px-4 py-3">{item.taxable ? "Yes" : "No"}</td>
                 <td className="px-4 py-3">{item.active ? "Yes" : "Hidden"}</td>
                 <td className="px-4 py-3">
-                  <button type="button" onClick={() => startEdit(item)} className="text-sm font-semibold text-orange">
-                    Edit
-                  </button>
+                  <div className="flex flex-wrap gap-3">
+                    <button type="button" onClick={() => startEdit(item)} className="text-sm font-semibold text-orange">
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      disabled={removingId === item.id}
+                      onClick={() => void remove(item)}
+                      className="text-sm font-semibold text-rose-700 disabled:opacity-60"
+                    >
+                      {removingId === item.id ? "Removing…" : "Remove"}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
