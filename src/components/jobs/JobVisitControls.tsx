@@ -37,6 +37,7 @@ export function JobVisitControls({
   const [trapLat, setTrapLat] = useState("");
   const [trapLng, setTrapLng] = useState("");
   const [geoBusy, setGeoBusy] = useState(false);
+  const [geoHint, setGeoHint] = useState("");
 
   const buttonClass = compact
     ? "mt-1 w-full rounded-lg bg-orange px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
@@ -45,6 +46,11 @@ export function JobVisitControls({
   useEffect(() => {
     setLocalStatus(status);
   }, [status]);
+
+  useEffect(() => {
+    if (!open || !trapOpen || !trapPlaced || trapLat || trapLng) return;
+    fillMyLocation(true);
+  }, [open, trapOpen, trapPlaced, trapLat, trapLng]);
 
   function resetForm() {
     setNotes("");
@@ -56,6 +62,7 @@ export function JobVisitControls({
     setTrapNote("");
     setTrapLat("");
     setTrapLng("");
+    setGeoHint("");
     setError("");
   }
 
@@ -92,21 +99,25 @@ export function JobVisitControls({
     router.refresh();
   }
 
-  function useMyLocation() {
+  function fillMyLocation(silent = false) {
     if (!navigator.geolocation) {
-      setError("This phone is not sharing GPS.");
+      if (!silent) setError("This phone is not sharing GPS.");
+      else setGeoHint("GPS not available on this phone — enter coordinates manually if you have them.");
       return;
     }
     setGeoBusy(true);
+    if (!silent) setError("");
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setTrapLat(position.coords.latitude.toFixed(6));
         setTrapLng(position.coords.longitude.toFixed(6));
         setGeoBusy(false);
+        setGeoHint("Filled from your phone. Edit the numbers if you need to.");
       },
       () => {
         setGeoBusy(false);
-        setError("Could not read GPS. You can leave coordinates blank.");
+        if (!silent) setError("Could not read GPS. You can enter coordinates manually.");
+        else setGeoHint("Could not read GPS — enter coordinates manually if you have them.");
       },
       { enableHighAccuracy: true, timeout: 8000 },
     );
@@ -271,8 +282,9 @@ export function JobVisitControls({
                 <button
                   type="button"
                   onClick={() => {
-                    setTrapOpen((current) => !current);
-                    if (!trapOpen) setTrapPlaced(true);
+                    const next = !trapOpen;
+                    setTrapOpen(next);
+                    if (next) setTrapPlaced(true);
                   }}
                   className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold"
                 >
@@ -282,13 +294,20 @@ export function JobVisitControls({
                 {trapOpen ? (
                   <div className="space-y-3 border-t border-line px-4 pb-4 pt-3">
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={trapPlaced} onChange={(event) => setTrapPlaced(event.target.checked)} />
+                      <input
+                        type="checkbox"
+                        checked={trapPlaced}
+                        onChange={(event) => {
+                          setTrapPlaced(event.target.checked);
+                          if (event.target.checked && !trapLat && !trapLng) fillMyLocation(true);
+                        }}
+                      />
                       Log a trap on this visit
                     </label>
                     {trapPlaced ? (
                       <>
                         <label className="block text-sm">
-                          Where
+                          Where (description)
                           <input
                             value={trapNote}
                             onChange={(event) => setTrapNote(event.target.value)}
@@ -296,8 +315,31 @@ export function JobVisitControls({
                             placeholder="South eave, behind the HVAC"
                           />
                         </label>
-                        <button type="button" onClick={useMyLocation} className="text-sm font-semibold text-orange">
-                          {geoBusy ? "Reading GPS…" : "Use my GPS"}
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="block text-sm">
+                            Latitude
+                            <input
+                              value={trapLat}
+                              onChange={(event) => setTrapLat(event.target.value)}
+                              className={inputClass}
+                              placeholder="35.227086"
+                              inputMode="decimal"
+                            />
+                          </label>
+                          <label className="block text-sm">
+                            Longitude
+                            <input
+                              value={trapLng}
+                              onChange={(event) => setTrapLng(event.target.value)}
+                              className={inputClass}
+                              placeholder="-80.843127"
+                              inputMode="decimal"
+                            />
+                          </label>
+                        </div>
+                        {geoHint ? <p className="text-xs text-stone-500">{geoHint}</p> : null}
+                        <button type="button" onClick={() => fillMyLocation()} className="text-sm font-semibold text-orange">
+                          {geoBusy ? "Reading GPS…" : "Refresh GPS"}
                         </button>
                       </>
                     ) : null}
