@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { groupPhotoPairs } from "@/lib/photo-pairs";
 
 const PHOTO_KINDS = ["BEFORE", "AFTER", "DURING", "DAMAGE", "ENTRY_POINT", "CAPTURE", "OTHER"] as const;
 
@@ -41,6 +42,20 @@ async function resizeDataUrl(dataUrl: string, maxEdge = 1200): Promise<string> {
   return canvas.toDataURL("image/jpeg", 0.85);
 }
 
+function PhotoTile({ photo, label }: { photo: PhotoRow; label?: string }) {
+  return (
+    <figure className="overflow-hidden rounded-xl border border-line">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={photo.url} alt={photo.caption ?? photo.kind} className="h-36 w-full object-cover" />
+      <figcaption className="px-3 py-2 text-xs">
+        {label ?? photo.kind.replace(/_/g, " ").toLowerCase()}
+        {photo.entryPoint ? ` · ${photo.entryPoint.label}` : ""}
+        {photo.caption ? ` · ${photo.caption}` : ""}
+      </figcaption>
+    </figure>
+  );
+}
+
 export function JobPhotosCard({
   jobId,
   propertyId,
@@ -59,6 +74,7 @@ export function JobPhotosCard({
   const [caption, setCaption] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const { pairs, other } = groupPhotoPairs(photos);
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -106,20 +122,46 @@ export function JobPhotosCard({
   return (
     <section className="rounded-2xl border border-line bg-panel p-5">
       <h2 className="mb-3 font-semibold">Photo documentation</h2>
+
+      {pairs.length > 0 ? (
+        <div className="mb-4 space-y-4">
+          <p className="text-sm font-medium">Before / after pairs</p>
+          {pairs.map((pair) => (
+            <div key={pair.key} className="rounded-xl border border-line bg-background p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">{pair.label}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {pair.before ? (
+                  <PhotoTile photo={pair.before} label="Before" />
+                ) : (
+                  <div className="flex h-36 items-center justify-center rounded-xl border border-dashed border-line text-xs text-stone-500">
+                    Before not uploaded
+                  </div>
+                )}
+                {pair.after ? (
+                  <PhotoTile photo={pair.after} label="After" />
+                ) : (
+                  <div className="flex h-36 items-center justify-center rounded-xl border border-dashed border-line text-xs text-stone-500">
+                    After not uploaded
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {other.length > 0 ? (
+        <div className="mb-4">
+          {pairs.length > 0 ? <p className="mb-2 text-sm font-medium">Other photos</p> : null}
+          <div className="grid gap-3 sm:grid-cols-3">
+            {other.map((photo) => (
+              <PhotoTile key={photo.id} photo={photo} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {photos.length === 0 ? <p className="text-sm text-stone-500">No photos yet.</p> : null}
-      <div className="grid gap-3 sm:grid-cols-3">
-        {photos.map((photo) => (
-          <figure key={photo.id} className="overflow-hidden rounded-xl border border-line">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photo.url} alt={photo.caption ?? photo.kind} className="h-36 w-full object-cover" />
-            <figcaption className="px-3 py-2 text-xs">
-              {photo.kind.replace(/_/g, " ").toLowerCase()}
-              {photo.entryPoint ? ` · ${photo.entryPoint.label}` : ""}
-              {photo.caption ? ` · ${photo.caption}` : ""}
-            </figcaption>
-          </figure>
-        ))}
-      </div>
 
       <div className="mt-4 space-y-3 border-t border-line pt-4">
         <p className="text-sm font-medium">Add photo</p>
