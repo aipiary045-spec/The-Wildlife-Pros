@@ -1,10 +1,10 @@
-import { addDays, endOfDay, startOfDay } from "date-fns";
+import { startOfDay } from "date-fns";
 import { NextResponse } from "next/server";
 import { jsonError, withAuth } from "@/lib/api";
 import { resolvePropertyCoordinates } from "@/lib/geocode";
 import { canManageIntake } from "@/lib/intake";
 import { prisma } from "@/lib/prisma";
-import { AREA_LOOKAHEAD_DAYS, offKey, suggestNearbySlots } from "@/lib/schedule-suggest";
+import { offKey, suggestNearbySlots } from "@/lib/schedule-suggest";
 import { propertyAddress } from "@/lib/utils";
 
 export const GET = withAuth(async (session, request) => {
@@ -38,11 +38,10 @@ export const GET = withAuth(async (session, request) => {
 
   const now = new Date();
   const from = startOfDay(now);
-  const to = endOfDay(addDays(from, AREA_LOOKAHEAD_DAYS));
   const [jobs, blocks] = await Promise.all([
     prisma.job.findMany({
       where: {
-        scheduledStart: { gte: from, lte: to },
+        scheduledStart: { gte: from },
         status: { notIn: ["CANCELLED", "COMPLETED", "INVOICED"] },
         technicianId: { not: null },
       },
@@ -52,7 +51,7 @@ export const GET = withAuth(async (session, request) => {
       },
     }),
     prisma.availabilityBlock.findMany({
-      where: { date: { gte: from, lte: to }, status: "APPROVED" },
+      where: { date: { gte: from }, status: "APPROVED" },
       select: { userId: true, date: true },
     }),
   ]);

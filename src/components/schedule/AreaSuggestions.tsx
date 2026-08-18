@@ -46,12 +46,12 @@ export function AreaSuggestions({
   return (
     <div className="rounded-xl border border-line bg-background p-3">
       <p className="text-sm font-semibold">Already in the area</p>
-      {loading ? <p className="mt-1 text-sm text-stone-500">Looking at the next two weeks…</p> : null}
+      {loading ? <p className="mt-1 text-sm text-stone-500">Looking through the whole schedule…</p> : null}
       {!loading && missingPin ? (
         <p className="mt-1 text-sm text-stone-500">Need a map pin on this street before we can suggest a ride-along day.</p>
       ) : null}
       {!loading && !missingPin && suggestions.length === 0 ? (
-        <p className="mt-1 text-sm text-stone-500">Nobody is booked near this street in the next two weeks.</p>
+        <p className="mt-1 text-sm text-stone-500">Nobody is booked near this street yet.</p>
       ) : null}
       <div className="mt-2 space-y-2">
         {suggestions.map((item) => (
@@ -74,7 +74,13 @@ export function AreaSuggestions({
 
 function labelDay(value: string) {
   const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: year !== new Date().getFullYear() ? "numeric" : undefined,
+  });
 }
 
 function labelTime(value: string) {

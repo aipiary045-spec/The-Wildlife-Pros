@@ -2,9 +2,8 @@ import { addDays, startOfDay } from "date-fns";
 import { dateKey, slotTimeValue, snapMinutes } from "@/lib/dates";
 import { driveMinutes, haversineMiles } from "@/lib/routing";
 
-export const AREA_NEAR_MILES = 5;
-export const AREA_WORTH_MILES = 12;
-export const AREA_LOOKAHEAD_DAYS = 14;
+export const AREA_NEAR_MILES = 12;
+export const AREA_WORTH_MILES = 30;
 
 export type AreaStop = {
   jobId: string;
@@ -67,16 +66,17 @@ export function suggestNearbySlots(
   },
 ): AreaSuggestion[] {
   const now = options?.now ?? new Date();
-  const horizon = addDays(startOfDay(now), options?.days ?? AREA_LOOKAHEAD_DAYS);
+  const horizon = options?.days != null ? addDays(startOfDay(now), options.days) : null;
   const blocked = new Set(options?.offKeys ?? []);
-  const max = options?.maxSuggestions ?? 4;
+  const max = options?.maxSuggestions ?? 6;
 
   const byDay = new Map<string, AreaStop[]>();
   for (const stop of stops) {
     if (options?.excludeJobId && stop.jobId === options.excludeJobId) continue;
     if (!stop.technicianId) continue;
     const start = new Date(stop.scheduledStart);
-    if (start < startOfDay(now) || start > horizon) continue;
+    if (start < startOfDay(now)) continue;
+    if (horizon && start > horizon) continue;
     const key = offKey(stop.technicianId, start);
     if (blocked.has(key)) continue;
     const bucket = byDay.get(key) ?? [];
@@ -97,7 +97,7 @@ export function suggestNearbySlots(
     }
     if (nearestMiles > AREA_WORTH_MILES) continue;
     const insert = suggestInsertTime(new Date(nearest.scheduledStart), nearest.durationMin, nearestMiles);
-    if (dateKey(insert) === dateKey(now) && insert.getTime() < now.getTime() + 30 * 60_000) continue;
+    if (insert.getTime() < now.getTime()) continue;
     const band: AreaSuggestion["band"] = nearestMiles <= AREA_NEAR_MILES ? "near" : "on_the_way";
     const miles = Number(nearestMiles.toFixed(1));
     const when = insert.getHours() < 12 ? "morning" : "afternoon";
