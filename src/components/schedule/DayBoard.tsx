@@ -79,21 +79,20 @@ export function DayBoard({
       onPointerDown: (event: React.PointerEvent, immediate?: boolean) =>
         onChipPointerDown(event, job.id, immediate),
       onReassign: (technicianId: string) => void placeJob(job.id, technicianId, day),
+      onCopyTrip: onCopyRequest
+        ? () =>
+            onCopyRequest({
+              job,
+              technicianId: job.technicianId ?? technicians[0]?.id ?? "",
+              day: job.scheduledStart ? new Date(job.scheduledStart) : day,
+            })
+        : undefined,
     };
   }
 
   return (
     <div className="space-y-3">
-      {compact ? (
-        <p className="text-xs text-stone-500">Hold a job and drop it on a time. Scroll sideways to see the day.</p>
-      ) : (
-        <p className="text-xs text-stone-500">
-          {mode === "copy"
-            ? "Drop a job on a time slot to copy it there."
-            : "Hold a job (or drag the grip) and drop it on a time. It snaps to the nearest 30 minutes. Scroll sideways for later in the day."}{" "}
-          {saving ? "Saving…" : "Changes save immediately."}
-        </p>
-      )}
+      {saving ? <p className="text-xs text-stone-500">Saving…</p> : null}
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
 
       {compact ? null : (

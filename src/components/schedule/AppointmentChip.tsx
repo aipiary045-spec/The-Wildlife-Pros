@@ -19,6 +19,7 @@ export function AppointmentChip({
   layout = "card",
   onPointerDown,
   onReassign,
+  onCopyTrip,
 }: {
   job: ScheduleJobCard;
   technicians: ScheduleTech[];
@@ -27,6 +28,7 @@ export function AppointmentChip({
   layout?: "card" | "timeline" | "list";
   onPointerDown: (event: React.PointerEvent, immediate?: boolean) => void;
   onReassign: (technicianId: string) => void;
+  onCopyTrip?: () => void;
 }) {
   const start = job.scheduledStart ? new Date(job.scheduledStart) : null;
   const typeLabel = JOB_TYPE_LABEL[job.type ?? ""] ?? job.title;
@@ -99,6 +101,23 @@ export function AppointmentChip({
           ))}
         </select>
       </label>
+      {onCopyTrip ? (
+        <button
+          type="button"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onCopyTrip();
+          }}
+          className={cn(
+            "mt-1 text-left font-semibold text-orange",
+            timeline ? "text-[10px] leading-tight" : "text-xs",
+            list && "min-h-10",
+          )}
+        >
+          Copy trip
+        </button>
+      ) : null}
       {showVisit ? (
         <JobVisitControls
           jobId={job.id}

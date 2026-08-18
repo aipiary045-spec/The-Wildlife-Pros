@@ -46,15 +46,20 @@ export function WeekBoard({
       onPointerDown: (event: React.PointerEvent, immediate?: boolean) =>
         onChipPointerDown(event, job.id, immediate),
       onReassign: (technicianId: string) => void placeJob(job.id, technicianId, day),
+      onCopyTrip: onCopyRequest
+        ? () =>
+            onCopyRequest({
+              job,
+              technicianId: job.technicianId ?? technicians[0]?.id ?? "",
+              day: job.scheduledStart ? new Date(job.scheduledStart) : day,
+            })
+        : undefined,
     };
   }
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-stone-500">
-        Hold a job or drag the grip onto a tech and day. You can also pick a name under the job.{" "}
-        {saving ? "Saving…" : "Changes save immediately."}
-      </p>
+      {saving ? <p className="text-xs text-stone-500">Saving…</p> : null}
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       <div className="flex rounded-full border border-line bg-panel p-1 md:hidden">
         <button
