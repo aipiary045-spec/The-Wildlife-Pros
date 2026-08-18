@@ -24,7 +24,7 @@ export function JobSpeciesCard({
   const [open, setOpen] = useState(captures.length > 0);
 
   return (
-    <section className="rounded-2xl border border-line bg-panel">
+    <section id="species" className="rounded-2xl border border-line bg-panel">
       <button
         type="button"
         aria-expanded={open}

@@ -73,6 +73,10 @@ export const GET = async () => {
     invoiceAge({ status: invoice.status, dueOn: invoice.dueOn, balance: Number(invoice.balance) }, now) === "past_due",
   ).length;
 
+  const quotesApproved = await prisma.quote.count({
+    where: { status: "APPROVED", jobs: { none: {} } },
+  });
+
   return NextResponse.json({
     notifications: buildNotifications({
       techView: false,
@@ -93,6 +97,7 @@ export const GET = async () => {
       pastDueInvoices,
       needsInvoice,
       quotesWaiting,
+      quotesApproved,
       needsADay,
       newCalls,
     }),

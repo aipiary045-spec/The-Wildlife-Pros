@@ -74,19 +74,17 @@ test("technician time off lives under More, not the main tabs", () => {
   assert.ok(!primaryTabs("DISPATCHER").some((item) => item.href === "/time-off"));
 });
 
-test("office jobs sit next to the schedule; reports and call log live under More", () => {
+test("office dispatch prioritizes today, schedule, and calls on mobile", () => {
   const tabs = primaryTabs("DISPATCHER").map((item) => item.href);
   const more = moreItems("DISPATCHER").map((item) => item.href);
-  assert.deepEqual(tabs, ["/schedule", "/clients", "/jobs", "/more"]);
-  assert.equal(more[0], "/calls");
-  assert.ok(tabs.includes("/jobs"));
+  assert.deepEqual(tabs, ["/dashboard", "/schedule", "/calls", "/more"]);
   assert.ok(!tabs.includes("/reports"));
   assert.ok(more.includes("/reports"));
+  assert.ok(more.includes("/jobs"));
+  assert.ok(!more.includes("/calls"));
   assert.ok(!moreItems("TECHNICIAN").some((item) => item.href === "/calls"));
   assert.equal(isOfficeOnlyPath("/calls"), true);
-  assert.ok(!tabs.includes("/dashboard"));
-  assert.ok(more.includes("/reports"));
-  assert.equal(primaryTabs("DISPATCHER")[0]?.label, "Schedule");
+  assert.equal(primaryTabs("DISPATCHER")[0]?.label, "Today");
 });
 
 test("quote price list is an office page under quotes", () => {

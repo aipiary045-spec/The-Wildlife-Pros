@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { HeaderContext } from "@/components/layout/HeaderContext";
 import { InstallHint } from "@/components/layout/InstallHint";
 import { OfflineStatus } from "@/components/layout/OfflineStatus";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
+import { RecentTracker } from "@/components/layout/RecentTracker";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
@@ -27,6 +29,7 @@ export default async function OfficeLayout({ children }: { children: React.React
         >
           <HeaderContext role={session.role} name={`${session.firstName} ${session.lastName}`} />
           <div className="flex shrink-0 items-center gap-2">
+            <GlobalSearch />
             <NotificationCenter showIntake={!isTechnician(session.role)} />
             {myTime ? (
               <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
@@ -37,6 +40,7 @@ export default async function OfficeLayout({ children }: { children: React.React
         <main className="min-w-0 flex-1 overflow-x-clip p-3 md:p-6">{children}</main>
       </div>
       <BottomNav role={session.role} />
+      <RecentTracker role={session.role} />
       <InstallHint />
     </div>
   );

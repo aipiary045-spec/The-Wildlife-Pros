@@ -13,18 +13,28 @@ const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2
 export function NewQuoteButton({
   clients,
   services,
+  initialClientId,
+  onClose,
 }: {
   clients: ScheduleClient[];
   services: ServiceOption[];
+  initialClientId?: string;
+  onClose?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(initialClientId));
+  function close() {
+    setOpen(false);
+    onClose?.();
+  }
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white sm:w-auto">
-        New quote
-      </button>
+      {initialClientId ? null : (
+        <button type="button" onClick={() => setOpen(true)} className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white sm:w-auto">
+          New quote
+        </button>
+      )}
       {open ? (
-        <QuoteForm clients={clients} services={services} onClose={() => setOpen(false)} />
+        <QuoteForm clients={clients} services={services} initialClientId={initialClientId} onClose={close} />
       ) : null}
     </>
   );
@@ -65,10 +75,12 @@ export function QuoteForm({
   services,
   onClose,
   quote,
+  initialClientId,
 }: {
   clients: ScheduleClient[];
   services: ServiceOption[];
   onClose: () => void;
+  initialClientId?: string;
   quote?: {
     id: string;
     title: string;
@@ -80,7 +92,7 @@ export function QuoteForm({
   };
 }) {
   const router = useRouter();
-  const [clientId, setClientId] = useState(quote?.clientId ?? clients[0]?.id ?? "");
+  const [clientId, setClientId] = useState(quote?.clientId ?? initialClientId ?? clients[0]?.id ?? "");
   const selected = useMemo(() => clients.find((client) => client.id === clientId), [clients, clientId]);
   const [propertyId, setPropertyId] = useState(quote?.propertyId ?? selected?.properties[0]?.id ?? "");
   const [title, setTitle] = useState(quote?.title ?? "");

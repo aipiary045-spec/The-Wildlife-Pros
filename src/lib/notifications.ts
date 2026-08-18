@@ -9,6 +9,7 @@ export const NOTIFICATION_KINDS = [
   "past_due",
   "needs_invoice",
   "quote_waiting",
+  "quote_approved",
   "needs_day",
   "intake",
 ] as const;
@@ -77,7 +78,10 @@ export function timeOffItems(
 }
 
 export function countItem(
-  kind: Extract<NotificationKind, "past_due" | "needs_invoice" | "quote_waiting" | "needs_day" | "intake">,
+  kind: Extract<
+    NotificationKind,
+    "past_due" | "needs_invoice" | "quote_waiting" | "quote_approved" | "needs_day" | "intake"
+  >,
   count: number,
   copy: { title: string; body: string; href: string; urgency?: NotificationUrgency },
 ): NotificationItem | null {
@@ -107,6 +111,7 @@ export function buildNotifications(input: {
   pastDueInvoices?: number;
   needsInvoice?: number;
   quotesWaiting?: number;
+  quotesApproved?: number;
   needsADay?: number;
   newCalls?: number;
 }, now = new Date()) {
@@ -124,7 +129,7 @@ export function buildNotifications(input: {
             ? "1 invoice is past due"
             : `${input.pastDueInvoices} invoices are past due`,
         body: "Open invoices to collect.",
-        href: "/invoices",
+        href: "/invoices?view=past_due",
         urgency: "high",
       }),
       countItem("needs_invoice", input.needsInvoice ?? 0, {
@@ -141,7 +146,15 @@ export function buildNotifications(input: {
             ? "1 quote is waiting on the customer"
             : `${input.quotesWaiting} quotes are waiting on the customer`,
         body: "Sent or viewed, not approved yet.",
-        href: "/quotes",
+        href: "/quotes?view=waiting",
+      }),
+      countItem("quote_approved", input.quotesApproved ?? 0, {
+        title:
+          (input.quotesApproved ?? 0) === 1
+            ? "1 approved quote still needs a work order"
+            : `${input.quotesApproved} approved quotes still need a work order`,
+        body: "Schedule the job or convert from the quote.",
+        href: "/quotes?view=approved",
       }),
       countItem("needs_day", input.needsADay ?? 0, {
         title:
@@ -158,6 +171,7 @@ export function buildNotifications(input: {
             : `${input.newCalls} calls still need a next step`,
         body: "New or looked at — not a quote or trip yet.",
         href: "/calls",
+        urgency: input.newCalls ? "high" : "normal",
       }),
     ].filter((item): item is NotificationItem => item != null),
   );

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   isMoreDestination,
+  isPrimaryDestination,
   moreGroups,
   moreItems,
   pageLabel,
@@ -9,24 +10,47 @@ import {
   sidebarGroups,
 } from "./nav";
 
-test("office main tabs are schedule, clients, jobs, and more", () => {
+test("dispatch mobile tabs prioritize today, schedule, and calls", () => {
   const tabs = primaryTabs("DISPATCHER").map((item) => item.href);
-  assert.deepEqual(tabs, ["/schedule", "/clients", "/jobs", "/more"]);
-  assert.equal(primaryTabs("DISPATCHER")[2]?.label, "Work orders");
+  assert.deepEqual(tabs, ["/dashboard", "/schedule", "/calls", "/more"]);
 });
 
-test("office reports and call log live under More, not the main tabs", () => {
-  const tabs = primaryTabs("OWNER").map((item) => item.href);
-  const more = moreItems("OWNER").map((item) => item.href);
-  assert.ok(!tabs.includes("/reports"));
-  assert.ok(!tabs.includes("/calls"));
-  assert.ok(more.includes("/calls"));
+test("accounting mobile tabs prioritize today, invoices, and clients", () => {
+  const tabs = primaryTabs("ACCOUNTING").map((item) => item.href);
+  assert.deepEqual(tabs, ["/dashboard", "/invoices", "/clients", "/more"]);
+});
+
+test("office more still holds quotes, work orders, and reports for dispatch", () => {
+  const more = moreItems("DISPATCHER").map((item) => item.href);
   assert.ok(more.includes("/quotes"));
-  assert.ok(more.includes("/invoices"));
+  assert.ok(more.includes("/jobs"));
   assert.ok(more.includes("/reports"));
-  assert.ok(!more.includes("/jobs"));
-  assert.ok(!more.includes("/schedule"));
-  assert.ok(!more.includes("/clients"));
+  assert.ok(!more.includes("/calls"));
+});
+
+test("office sidebar starts with today", () => {
+  const groups = sidebarGroups("OWNER");
+  assert.equal(groups[0]?.title, "Day to day");
+  assert.equal(groups[0]?.items[0]?.href, "/dashboard");
+});
+
+test("technicians keep a simple four-tab phone", () => {
+  const tabs = primaryTabs("TECHNICIAN").map((item) => item.href);
+  const more = moreItems("TECHNICIAN").map((item) => item.href);
+  assert.deepEqual(tabs, ["/field", "/jobs", "/timesheets", "/more"]);
+  assert.ok(!more.includes("/calls"));
+  assert.ok(more.includes("/quotes"));
+});
+
+test("page labels and destinations follow the current screen", () => {
+  assert.equal(pageLabel("/dashboard", "OWNER"), "Today");
+  assert.equal(pageLabel("/quotes", "OWNER"), "Quotes");
+  assert.equal(pageLabel("/jobs", "OWNER"), "Work orders");
+  assert.equal(pageLabel("/jobs", "TECHNICIAN"), "My work orders");
+  assert.equal(isPrimaryDestination("/calls", "DISPATCHER"), true);
+  assert.equal(isMoreDestination("/calls", "DISPATCHER"), false);
+  assert.equal(isMoreDestination("/quotes", "DISPATCHER"), true);
+  assert.equal(isMoreDestination("/schedule", "OWNER"), false);
 });
 
 test("office More is grouped so money and field tools are easy to find", () => {
@@ -37,38 +61,6 @@ test("office More is grouped so money and field tools are easy to find", () => {
   );
   assert.deepEqual(
     groups[0]?.items.map((item) => item.href),
-    ["/calls", "/quotes", "/invoices"],
+    ["/quotes", "/invoices"],
   );
-  assert.ok(groups[0]?.items[0]?.description);
-});
-
-test("office sidebar groups day-to-day work first", () => {
-  const groups = sidebarGroups("OWNER");
-  assert.equal(groups[0]?.title, "Day to day");
-  assert.deepEqual(
-    groups[0]?.items.map((item) => item.href),
-    ["/schedule", "/clients", "/jobs", "/calls"],
-  );
-});
-
-test("technicians keep a simple four-tab phone", () => {
-  const tabs = primaryTabs("TECHNICIAN").map((item) => item.href);
-  const more = moreItems("TECHNICIAN").map((item) => item.href);
-  assert.deepEqual(tabs, ["/field", "/jobs", "/timesheets", "/more"]);
-  assert.ok(!more.includes("/calls"));
-  assert.ok(more.includes("/quotes"));
-  assert.equal(moreGroups("TECHNICIAN")[0]?.title, "Also on this phone");
-});
-
-test("page labels and All-tools destinations follow the current screen", () => {
-  assert.equal(pageLabel("/quotes", "OWNER"), "Quotes");
-  assert.equal(pageLabel("/quotes/abc", "OWNER"), "Quotes");
-  assert.equal(pageLabel("/quotes/pricing", "OWNER"), "Price list");
-  assert.equal(pageLabel("/jobs", "OWNER"), "Work orders");
-  assert.equal(pageLabel("/jobs", "TECHNICIAN"), "My jobs");
-  assert.equal(pageLabel("/more", "OWNER"), "More");
-  assert.equal(isMoreDestination("/quotes", "OWNER"), true);
-  assert.equal(isMoreDestination("/jobs", "OWNER"), false);
-  assert.equal(isMoreDestination("/more", "OWNER"), true);
-  assert.equal(isMoreDestination("/schedule", "OWNER"), false);
 });

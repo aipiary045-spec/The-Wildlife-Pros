@@ -2,6 +2,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { NewQuoteButton } from "@/components/quotes/QuoteForm";
+import { QuoteClientLauncher } from "@/components/quotes/QuoteClientLauncher";
 import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -11,8 +12,13 @@ import { clientName, formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function QuotesPage() {
+export default async function QuotesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clientId?: string }>;
+}) {
   const session = await getSession();
+  const params = await searchParams;
   const techView = Boolean(session && isTechnician(session.role));
   const [quotes, clients, services] = await Promise.all([
     prisma.quote.findMany({
@@ -63,6 +69,16 @@ export default async function QuotesPage() {
         }
       />
       {techView ? null : <QuotesSubnav current="quotes" />}
+      <QuoteClientLauncher
+        clientId={params.clientId}
+        clients={clients}
+        services={services.map((item) => ({
+          id: item.id,
+          name: item.name,
+          unitPrice: Number(item.unitPrice),
+          taxable: item.taxable,
+        }))}
+      />
       <div className="space-y-2 md:hidden">
         {quotes.map((quote) => (
           <Link key={quote.id} href={`/quotes/${quote.id}`} className="block rounded-2xl border border-line bg-panel p-4">

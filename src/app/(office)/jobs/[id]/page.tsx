@@ -4,12 +4,13 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
+import { JobFieldBar } from "@/components/jobs/JobFieldBar";
 import { JobQuoteBillingBanner } from "@/components/jobs/JobQuoteBillingBanner";
 import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
 import { JobEditor } from "@/components/jobs/JobEditor";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
-import { BackLink } from "@/components/layout/BackLink";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getSession } from "@/lib/auth";
 import { canBillJob } from "@/lib/billing-access";
@@ -78,11 +79,17 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${techView ? "pb-24 md:pb-0" : ""}`}>
+      <Breadcrumbs
+        items={[
+          { label: techView ? "My work orders" : "Work orders", href: "/jobs" },
+          { label: clientName(job.client), href: `/clients/${job.clientId}` },
+          { label: job.number },
+        ]}
+      />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <BackLink href="/jobs" label={techView ? "My jobs" : "Work orders"} />
-          <p className="mt-2 text-xs uppercase tracking-widest text-orange">{job.number}</p>
+          <p className="text-xs uppercase tracking-widest text-orange">{job.number}</p>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">{job.title}</h1>
           <p className="text-stone-600">
             {clientName(job.client)} · {propertyAddress(job.property)}
@@ -234,6 +241,15 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           ))}
         </div>
       </Card>
+      {techView ? (
+        <JobFieldBar
+          jobId={job.id}
+          status={job.status}
+          address={propertyAddress(job.property)}
+          lat={job.property.lat}
+          lng={job.property.lng}
+        />
+      ) : null}
     </div>
   );
 }

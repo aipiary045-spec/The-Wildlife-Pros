@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { QuoteActions } from "@/components/quotes/QuoteActions";
 import { EditQuoteButton } from "@/components/quotes/QuoteForm";
 import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
-import { BackLink } from "@/components/layout/BackLink";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getSession } from "@/lib/auth";
 import { isTechnician } from "@/lib/paths";
@@ -49,10 +49,16 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
   return (
     <div className="space-y-6">
       {techView ? null : <QuotesSubnav current="quotes" />}
+      <Breadcrumbs
+        items={[
+          { label: "Quotes", href: "/quotes" },
+          { label: clientName(quote.client), href: `/clients/${quote.clientId}` },
+          { label: quote.number },
+        ]}
+      />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <BackLink href="/quotes" label="Quotes" />
-          <p className="mt-2 text-xs uppercase tracking-widest text-orange">{quote.number}</p>
+          <p className="text-xs uppercase tracking-widest text-orange">{quote.number}</p>
           <h1 className="font-display text-3xl tracking-wide">{quote.title}</h1>
           <p className="text-stone-600">
             {clientName(quote.client)}

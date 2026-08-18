@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   FileText,
   HardHat,
+  Home,
   MapPinned,
   Menu,
   Phone,
@@ -25,6 +26,7 @@ export type NavItem = { href: string; label: string; icon: LucideIcon; descripti
 export type NavGroup = { title: string; items: NavItem[] };
 
 export const NAV_ITEMS: NavItem[] = [
+  { href: "/dashboard", label: "Today", icon: Home, description: "What needs attention right now." },
   { href: "/schedule", label: "Schedule", icon: CalendarDays, description: "Place jobs on a technician and a time." },
   { href: "/clients", label: "Clients", icon: Users, description: "Names, phones, and service addresses." },
   { href: "/jobs", label: "Work orders", icon: ClipboardList, description: "The file for every job." },
@@ -43,7 +45,7 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 const OFFICE_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Day to day", hrefs: ["/schedule", "/clients", "/jobs", "/calls"] },
+  { title: "Day to day", hrefs: ["/dashboard", "/schedule", "/clients", "/jobs", "/calls"] },
   { title: "Money", hrefs: ["/quotes", "/invoices", "/reports"] },
   { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
   { title: "Field", hrefs: ["/routes", "/inventory", "/activity", "/exports"] },
@@ -69,15 +71,31 @@ export function primaryTabs(role: string): NavItem[] {
   if (isTechnician(role)) {
     return [
       { href: "/field", label: "Route", icon: Smartphone },
-      { href: "/jobs", label: "Jobs", icon: ClipboardList },
+      { href: "/jobs", label: "Orders", icon: ClipboardList },
       { href: "/timesheets", label: "Time", icon: Clock },
       { href: "/more", label: "More", icon: Menu },
     ];
   }
+  if (role === "DISPATCHER" || role === "OWNER" || role === "ADMIN") {
+    return [
+      { href: "/dashboard", label: "Today", icon: Home },
+      { href: "/schedule", label: "Schedule", icon: CalendarDays },
+      { href: "/calls", label: "Calls", icon: Phone },
+      { href: "/more", label: "More", icon: Menu },
+    ];
+  }
+  if (role === "ACCOUNTING") {
+    return [
+      { href: "/dashboard", label: "Today", icon: Home },
+      { href: "/invoices", label: "Invoices", icon: Receipt },
+      { href: "/clients", label: "Clients", icon: Users },
+      { href: "/more", label: "More", icon: Menu },
+    ];
+  }
   return [
+    { href: "/dashboard", label: "Today", icon: Home },
     { href: "/schedule", label: "Schedule", icon: CalendarDays },
     { href: "/clients", label: "Clients", icon: Users },
-    { href: "/jobs", label: "Work orders", icon: ClipboardList },
     { href: "/more", label: "More", icon: Menu },
   ];
 }
@@ -86,7 +104,7 @@ export function navForRole(role: string): NavItem[] {
   if (isTechnician(role)) {
     return [
       { href: "/field", label: "My route", icon: Smartphone, description: "Today's stops in driving order." },
-      { href: "/jobs", label: "My jobs", icon: ClipboardList, description: "Assigned work, including leftovers." },
+      { href: "/jobs", label: "My work orders", icon: ClipboardList, description: "Assigned work, including leftovers." },
       { href: "/quotes", label: "Quotes", icon: FileText, description: "Turn an approved quote into an invoice and collect payment." },
       { href: "/timesheets", label: "Clock & hours", icon: Clock, description: "Clock in and see hours by day." },
       { href: "/time-off", label: "Time off", icon: CalendarOff, description: "Ask for a day off." },
@@ -130,15 +148,21 @@ export function pathMatches(pathname: string, href: string) {
 
 export function isMoreDestination(pathname: string, role: string) {
   if (pathname === "/more") return true;
+  if (isPrimaryDestination(pathname, role)) return false;
   return moreItems(role).some((item) => pathMatches(pathname, item.href));
 }
 
 export function pageLabel(pathname: string, role: string) {
   if (pathname === "/more") return "More";
+  if (pathname === "/dashboard") return "Today";
   if (pathMatches(pathname, "/quotes/pricing")) return "Price list";
   const catalog = [...navForRole(role), ...primaryTabs(role)];
   const match = catalog
     .filter((item) => pathMatches(pathname, item.href))
     .sort((left, right) => right.href.length - left.href.length)[0];
   return match?.label ?? "The Wildlife Pros";
+}
+
+export function isPrimaryDestination(pathname: string, role: string) {
+  return primaryTabs(role).some((item) => pathMatches(pathname, item.href));
 }

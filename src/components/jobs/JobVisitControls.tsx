@@ -164,11 +164,11 @@ export function JobVisitControls({
   return (
     <div onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
       {action === "check-in" ? (
-        <button type="button" disabled={saving} className={buttonClass} onClick={() => void checkIn()}>
+        <button id="check-in" type="button" disabled={saving} className={buttonClass} onClick={() => void checkIn()}>
           {saving ? "Checking in…" : "Check in"}
         </button>
       ) : (
-        <button type="button" disabled={saving} className={buttonClass} onClick={() => setOpen(true)}>
+        <button id="check-out" type="button" disabled={saving} className={buttonClass} onClick={() => setOpen(true)}>
           Check out
         </button>
       )}

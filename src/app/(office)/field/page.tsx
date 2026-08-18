@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { FieldJobList } from "@/components/field/FieldJobList";
+import { RecentPanel } from "@/components/layout/RecentPanel";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
@@ -77,6 +78,7 @@ export default async function FieldPage({
         </p>
       </div>
       <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
+      <RecentPanel title="Recent stops" />
       <ScheduleToolbar view={view} date={date} basePath="/field" />
       <FieldJobList
         jobs={jobs}

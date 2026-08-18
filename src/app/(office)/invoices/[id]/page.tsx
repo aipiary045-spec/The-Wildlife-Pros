@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { CollectPayment } from "@/components/billing/CollectPayment";
 import { InvoiceActions } from "@/components/billing/InvoiceActions";
-import { BackLink } from "@/components/layout/BackLink";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
@@ -34,19 +34,16 @@ export default async function InvoiceDetailPage({ params }: PageProps<"/invoices
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: techView ? "Work order" : "Invoices", href: techView && invoice.job ? `/jobs/${invoice.job.id}` : "/invoices" },
+          { label: clientName(invoice.client), href: `/clients/${invoice.clientId}` },
+          { label: invoice.number },
+        ]}
+      />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <BackLink
-            href={
-              techView && invoice.quote
-                ? `/quotes/${invoice.quote.id}`
-                : techView && invoice.job
-                  ? `/jobs/${invoice.job.id}`
-                  : "/invoices"
-            }
-            label={techView && invoice.quote ? "Quote" : techView ? "Work order" : "Invoices"}
-          />
-          <p className="mt-2 text-xs uppercase tracking-widest text-orange">{invoice.number}</p>
+          <p className="text-xs uppercase tracking-widest text-orange">{invoice.number}</p>
           <h1 className="font-display text-3xl tracking-wide">{clientName(invoice.client)}</h1>
           <p className="text-stone-600">
             {invoice.quote?.number ? `From quote ${invoice.quote.number}` : invoice.job?.number ?? "Manual invoice"}
