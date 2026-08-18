@@ -17,7 +17,9 @@ export async function getTodayOverview(now = new Date()) {
     lateRows,
     unscheduledCount,
     quotesWaiting,
+    quotesApprovedRows,
     quotesApproved,
+    needsInvoiceRows,
     openInvoices,
     newCalls,
     needsInvoice,
@@ -48,8 +50,20 @@ export async function getTodayOverview(now = new Date()) {
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),
+    prisma.quote.findMany({
+      where: { status: "APPROVED", jobs: { none: {} } },
+      include: { client: true },
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    }),
     prisma.quote.count({
       where: { status: "APPROVED", jobs: { none: {} } },
+    }),
+    prisma.job.findMany({
+      where: { status: "COMPLETED", invoices: { none: {} } },
+      include: { client: true, property: true },
+      orderBy: { completedAt: "desc" },
+      take: 5,
     }),
     prisma.invoice.findMany({
       where: { status: { notIn: ["PAID", "VOID"] } },
@@ -130,6 +144,22 @@ export async function getTodayOverview(now = new Date()) {
       title: quote.title,
       clientName: clientName(quote.client),
       clientPhone: quote.client.phone,
+    })),
+    quotesApproved: quotesApprovedRows.map((quote) => ({
+      id: quote.id,
+      number: quote.number,
+      title: quote.title,
+      clientName: clientName(quote.client),
+      clientPhone: quote.client.phone,
+    })),
+    needsInvoiceJobs: needsInvoiceRows.map((job) => ({
+      id: job.id,
+      number: job.number,
+      title: job.title,
+      clientName: clientName(job.client),
+      clientPhone: job.client.phone,
+      address: propertyAddress(job.property),
+      completedAt: job.completedAt,
     })),
     pastDueInvoices: pastDueInvoices.map((invoice) => ({
       id: invoice.id,

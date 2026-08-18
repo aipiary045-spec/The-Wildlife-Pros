@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { lineTotals } from "@/lib/money";
+import { QUOTE_PACKAGES, packageAvailability, resolvePackageLines } from "@/lib/quote-packages";
 import { formatMoney } from "@/lib/utils";
 import { PriceListPicker } from "@/components/billing/PriceListPicker";
 
@@ -127,6 +128,21 @@ export function LineItemsEditor({
         >
           Add from price list…
         </button>
+        {QUOTE_PACKAGES.map((pkg) => {
+          const { available } = packageAvailability(pkg, services);
+          return (
+            <button
+              key={pkg.id}
+              type="button"
+              disabled={!available}
+              title={available ? pkg.description : "Add missing services to your price list first."}
+              className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => onChange([...items, ...resolvePackageLines(pkg, services)])}
+            >
+              {pkg.label}
+            </button>
+          );
+        })}
         <button
           type="button"
           className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold"

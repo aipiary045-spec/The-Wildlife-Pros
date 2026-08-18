@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { NeedsPool } from "@/components/schedule/NeedsPool";
+import { CalendarFeedLink } from "@/components/schedule/CalendarFeedLink";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
+import { getSession } from "@/lib/auth";
 import { getSchedule } from "@/lib/data";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
@@ -32,6 +34,7 @@ export default async function SchedulePage({
 }: {
   searchParams: Promise<{ view?: string; date?: string }>;
 }) {
+  const session = await getSession();
   const params = await searchParams;
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
@@ -78,6 +81,7 @@ export default async function SchedulePage({
         </Link>
       </div>
       <ScheduleToolbar view={view} date={date} basePath="/schedule" />
+      {session ? <CalendarFeedLink userId={session.id} /> : null}
       {view === "day" ? (
         <DayStats jobs={jobs} />
       ) : null}

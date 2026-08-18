@@ -1,5 +1,6 @@
 import { format, startOfMonth, startOfWeek } from "date-fns";
 import { PipelineOverview } from "@/components/reports/PipelineOverview";
+import { AreaDensityReport } from "@/components/reports/AreaDensityReport";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PeriodToolbar } from "@/components/schedule/PeriodToolbar";
 import { getReportsOverview } from "@/lib/data";
@@ -80,6 +81,11 @@ export default async function ReportsPage({
         <Stat label="Jobs completed this week" value={String(completedWeek)} />
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
+        <article className="rounded-2xl border border-line bg-panel p-5 lg:col-span-2">
+          <h2 className="mb-3 font-semibold">Service area density</h2>
+          <p className="mb-4 text-sm text-stone-600">Where open and completed jobs cluster by city and ZIP.</p>
+          <AreaDensityReport />
+        </article>
         <article className="rounded-2xl border border-line bg-panel p-5">
           <h2 className="mb-3 font-semibold">Field activity</h2>
           <p className="text-sm text-stone-600">Active traps</p>

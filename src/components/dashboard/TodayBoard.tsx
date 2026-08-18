@@ -41,6 +41,40 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
           )}
         </Panel>
 
+        <Panel title="Billing follow-up" href="/invoices">
+          {data.quotesApproved.length === 0 && data.needsInvoiceJobs.length === 0 ? (
+            <p className="text-sm text-stone-500">No approved quotes or finished jobs waiting on billing.</p>
+          ) : (
+            <>
+              {data.quotesApproved.map((quote) => (
+                <TodayRow
+                  key={quote.id}
+                  href={`/quotes/${quote.id}`}
+                  primary={`Approved · ${quote.number} · ${quote.clientName}`}
+                  secondary={quote.title}
+                  phone={quote.clientPhone}
+                />
+              ))}
+              {data.needsInvoiceJobs.map((job) => (
+                <TodayRow
+                  key={job.id}
+                  href={`/jobs/${job.id}`}
+                  primary={`Needs invoice · ${job.number} · ${job.clientName}`}
+                  secondary={
+                    job.completedAt
+                      ? `${job.title} · finished ${format(job.completedAt, "MMM d")}`
+                      : job.title
+                  }
+                  phone={job.clientPhone}
+                  address={job.address}
+                />
+              ))}
+            </>
+          )}
+        </Panel>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Needs attention" href="/more">
           {data.lateJobs.length === 0 &&
           data.quotesWaiting.length === 0 &&
