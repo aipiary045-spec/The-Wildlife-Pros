@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { NewClientButton } from "@/components/crm/NewClientDialog";
 import { ClientList } from "@/components/crm/ClientList";
@@ -18,15 +17,7 @@ export default async function ClientsPage() {
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">Clients</h1>
           <p className="text-stone-600">CRM with multiple service addresses per customer.</p>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Link
-            href="/calls"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold"
-          >
-            Call log
-          </Link>
           <NewClientButton />
-        </div>
       </div>
       <ClientList clients={clients} />
     </div>
