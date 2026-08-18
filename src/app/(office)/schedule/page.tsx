@@ -68,13 +68,6 @@ export default async function SchedulePage({
           Optimize routes
         </Link>
       </div>
-      <NeedsPool
-        needs={needs.map((need) => ({
-          ...need,
-          dueOn: need.dueOn.toISOString(),
-        }))}
-        technicians={technicians}
-      />
       <ScheduleToolbar view={view} date={date} basePath="/schedule" />
       {view === "day" ? (
         <DayStats jobs={jobs} />
@@ -92,6 +85,13 @@ export default async function SchedulePage({
           date: dateKey(block.date),
           reason: block.reason,
         }))}
+      />
+      <NeedsPool
+        needs={needs.map((need) => ({
+          ...need,
+          dueOn: need.dueOn.toISOString(),
+        }))}
+        technicians={technicians}
       />
     </div>
   );

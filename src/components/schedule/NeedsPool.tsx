@@ -1,6 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
+import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AreaSuggestions } from "@/components/schedule/AreaSuggestions";
@@ -29,6 +30,8 @@ export function NeedsPool({
   technicians: ScheduleTech[];
 }) {
   const grouped = useMemo(() => groupNeedsByPriority(needs.map((need) => ({ ...need, dueOn: new Date(need.dueOn) }))), [needs]);
+  const waiting = grouped.overdue.length + grouped.due.length;
+  const [open, setOpen] = useState(waiting > 0);
   const [filter, setFilter] = useState<"all" | "overdue" | "due">("all");
   const sections = [
     { key: "overdue" as const, title: "Overdue for a trip", items: grouped.overdue },
@@ -36,53 +39,62 @@ export function NeedsPool({
     { key: "upcoming" as const, title: "Coming up", items: grouped.upcoming },
   ].filter((section) => filter === "all" || section.key === filter);
 
-  if (needs.length === 0) {
-    return (
-      <section className="rounded-2xl border border-dashed border-line bg-panel p-4">
-        <h2 className="font-semibold">Needs scheduled</h2>
-        <p className="mt-1 text-sm text-stone-500">When a tech says a customer needs another visit, they land here for dispatch to pick a day.</p>
-      </section>
-    );
-  }
+  if (needs.length === 0) return null;
+
+  const summary =
+    waiting > 0
+      ? `${waiting === 1 ? "1 stop needs a day" : `${waiting} stops need a day`}`
+      : `${needs.length === 1 ? "1 upcoming return" : `${needs.length} upcoming returns`}`;
 
   return (
-    <section className="space-y-3 rounded-2xl border border-line bg-panel p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+    <section className="rounded-2xl border border-line bg-panel">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <div className="min-w-0">
           <h2 className="font-semibold">Needs scheduled</h2>
+          <p className={`text-sm ${waiting > 0 ? "font-medium text-orange" : "text-stone-500"}`}>{summary}</p>
+        </div>
+        <ChevronDown size={18} className={`shrink-0 text-stone-500 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open ? (
+        <div className="space-y-3 border-t border-line px-4 pb-4 pt-3">
           <p className="text-sm text-stone-500">Pick a customer, put them on a tech and a time. Nothing is pre-loaded on the calendar.</p>
-        </div>
-        <div className="flex w-full rounded-full border border-line p-1 text-xs font-semibold sm:w-auto">
-          {(
-            [
-              ["all", "All"],
-              ["overdue", "Overdue"],
-              ["due", "Due today"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setFilter(value)}
-              className={`flex-1 rounded-full px-3 py-1.5 sm:flex-none ${filter === value ? "bg-orange text-white" : "text-stone-600"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-      {sections.map((section) =>
-        section.items.length === 0 ? null : (
-          <div key={section.key}>
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-stone-500">{section.title}</p>
-            <div className="space-y-2">
-              {section.items.map((need) => (
-                <NeedRow key={need.id} need={need} technicians={technicians} />
-              ))}
-            </div>
+          <div className="flex w-full rounded-full border border-line p-1 text-xs font-semibold sm:w-auto">
+            {(
+              [
+                ["all", "All"],
+                ["overdue", "Overdue"],
+                ["due", "Due today"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                className={`flex-1 rounded-full px-3 py-1.5 sm:flex-none ${filter === value ? "bg-orange text-white" : "text-stone-600"}`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-        ),
-      )}
+          {sections.map((section) =>
+            section.items.length === 0 ? null : (
+              <div key={section.key}>
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-stone-500">{section.title}</p>
+                <div className="space-y-2">
+                  {section.items.map((need) => (
+                    <NeedRow key={need.id} need={need} technicians={technicians} />
+                  ))}
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }
