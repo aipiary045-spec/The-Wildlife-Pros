@@ -85,7 +85,7 @@ export function GlobalSearch() {
                 ref={inputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Client, phone, job #, quote, invoice…"
+                placeholder="Client, phone, job #, trap serial, quote…"
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none"
               />
               <button type="button" onClick={() => setOpen(false)} className="text-sm font-semibold text-stone-500">

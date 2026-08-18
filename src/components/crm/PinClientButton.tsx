@@ -2,16 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { Pin } from "lucide-react";
-import { PINNED_STORAGE_KEY, togglePinned } from "@/lib/recent";
+import { PINNED_STORAGE_KEY, parsePinned, togglePinnedClients } from "@/lib/recent";
 
-export function PinClientButton({ clientId }: { clientId: string }) {
+export function PinClientButton({ clientId, label }: { clientId: string; label: string }) {
   const [pinned, setPinned] = useState(false);
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(PINNED_STORAGE_KEY);
-      const ids = raw ? (JSON.parse(raw) as string[]) : [];
-      setPinned(ids.includes(clientId));
+      const list = parsePinned(window.localStorage.getItem(PINNED_STORAGE_KEY));
+      setPinned(list.some((item) => item.id === clientId));
     } catch {
       setPinned(false);
     }
@@ -19,11 +18,10 @@ export function PinClientButton({ clientId }: { clientId: string }) {
 
   function toggle() {
     try {
-      const raw = window.localStorage.getItem(PINNED_STORAGE_KEY);
-      const ids = raw ? (JSON.parse(raw) as string[]) : [];
-      const next = togglePinned(ids, clientId);
+      const list = parsePinned(window.localStorage.getItem(PINNED_STORAGE_KEY));
+      const next = togglePinnedClients(list, clientId, label);
       window.localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(next));
-      setPinned(next.includes(clientId));
+      setPinned(next.some((item) => item.id === clientId));
       window.dispatchEvent(new Event("critterops-pinned"));
     } catch {
       // ignore

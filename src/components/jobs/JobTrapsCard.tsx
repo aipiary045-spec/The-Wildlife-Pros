@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EQUIPMENT_TYPE_LABEL, EQUIPMENT_TYPES } from "@/lib/constants";
 import { suggestSerial } from "@/lib/equipment";
+import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 
@@ -65,11 +66,15 @@ export function JobTrapsCard({
     event.preventDefault();
     setSaving(true);
     setError("");
+    if (addingNew && typeof navigator !== "undefined" && !navigator.onLine) {
+      setSaving(false);
+      setError("Need a signal to add a brand-new trap to inventory. Pick one already on the truck.");
+      return;
+    }
     let nextEquipmentId = equipmentId;
     if (addingNew) {
-      const created = await fetch("/api/traps", {
+      const created = await fieldFetch("/api/traps", {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serialNumber: serialNumber.trim(),
@@ -85,9 +90,8 @@ export function JobTrapsCard({
       }
       nextEquipmentId = createdData.equipment.id;
     }
-    const response = await fetch("/api/deployments", {
+    const response = await fieldFetch("/api/deployments", {
       method: "POST",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         equipmentId: nextEquipmentId,
@@ -97,9 +101,9 @@ export function JobTrapsCard({
         baitUsed: baitUsed.trim() || undefined,
       }),
     });
-    const data = (await response.json()) as { error?: string };
+    const data = (await response.json()) as { error?: string; queued?: boolean };
     setSaving(false);
-    if (!response.ok) {
+    if (!response.ok && !isQueuedResponse(data)) {
       setError(data.error ?? "Could not deploy this trap.");
       return;
     }
@@ -112,15 +116,14 @@ export function JobTrapsCard({
   async function retrieve(id: string) {
     setRetrieving(id);
     setError("");
-    const response = await fetch("/api/deployments", {
+    const response = await fieldFetch("/api/deployments", {
       method: "PATCH",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status: "RETRIEVED" }),
     });
     setRetrieving(null);
-    if (!response.ok) {
-      const data = (await response.json()) as { error?: string };
+    const data = (await response.json()) as { error?: string; queued?: boolean };
+    if (!response.ok && !isQueuedResponse(data)) {
       setError(data.error ?? "Could not retrieve this trap.");
       return;
     }

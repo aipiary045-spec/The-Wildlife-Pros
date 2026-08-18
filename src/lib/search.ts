@@ -1,7 +1,7 @@
 import { phoneDigits } from "@/lib/intake";
 import { clientName, propertyAddress } from "@/lib/utils";
 
-export type SearchResultKind = "client" | "job" | "quote" | "invoice";
+export type SearchResultKind = "client" | "job" | "quote" | "invoice" | "equipment";
 
 export type SearchResult = {
   id: string;
@@ -23,7 +23,7 @@ export function searchQueryReady(query: string) {
 }
 
 export function groupSearchResults(results: SearchResult[]) {
-  const order: SearchResultKind[] = ["client", "job", "quote", "invoice"];
+  const order: SearchResultKind[] = ["client", "job", "quote", "invoice", "equipment"];
   return order
     .map((kind) => ({
       kind,
@@ -37,6 +37,7 @@ export const SEARCH_KIND_LABEL: Record<SearchResultKind, string> = {
   job: "Work orders",
   quote: "Quotes",
   invoice: "Invoices",
+  equipment: "Traps & gear",
 };
 
 export function clientSearchResult(client: {
@@ -100,6 +101,22 @@ export function invoiceSearchResult(invoice: {
     title: invoice.number,
     subtitle: `${clientName(invoice.client)} · $${Number(invoice.balance).toFixed(2)} due`,
     href: `/invoices/${invoice.id}`,
+  };
+}
+
+export function equipmentSearchResult(item: {
+  id: string;
+  serialNumber: string;
+  name: string;
+  type: string;
+  status: string;
+}): SearchResult {
+  return {
+    id: item.id,
+    kind: "equipment",
+    title: `${item.serialNumber} · ${item.name}`,
+    subtitle: `${item.type.replace(/_/g, " ").toLowerCase()} · ${item.status.replace(/_/g, " ").toLowerCase()}`,
+    href: `/inventory?serial=${encodeURIComponent(item.serialNumber)}`,
   };
 }
 

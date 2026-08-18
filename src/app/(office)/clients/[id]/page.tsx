@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ClientEditor } from "@/components/crm/ClientEditor";
+import { ClientPortalLink } from "@/components/crm/ClientPortalLink";
 import { ClientSpeciesCard } from "@/components/crm/ClientSpeciesCard";
+import { PropertyEditor } from "@/components/crm/PropertyEditor";
 import {
   ClientHubPanel,
   ClientPipeline,
@@ -63,8 +65,10 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
           </p>
           <p className="text-sm text-stone-500">Billing is collected by staff in Square — clients do not log in to pay.</p>
         </div>
-        <PinClientButton clientId={client.id} />
+        <PinClientButton clientId={client.id} label={clientName(client)} />
       </div>
+
+      <ClientPortalLink portalToken={client.portalToken} />
 
       <ClientQuickActions clientId={client.id} phone={client.phone} />
       <ClientPipeline
@@ -129,27 +133,22 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
 
       <section className="grid gap-4 md:grid-cols-2">
         {client.properties.map((property) => (
-          <article key={property.id} className="rounded-2xl border border-line bg-panel p-5">
-            <h2 className="font-semibold">{property.label}</h2>
-            <p className="text-sm text-stone-600">{propertyAddress(property)}</p>
+          <div key={property.id} className="space-y-3">
+            <PropertyEditor property={property} />
             <NavigateLink
-              className="mt-3"
               destination={{
                 address: propertyAddress(property),
                 lat: property.lat,
                 lng: property.lng,
               }}
             />
-            <p className="mt-2 text-xs text-stone-500">
-              {property.accessNotes ?? "No access notes"} · {property.petsOnSite ? "Pets on site" : "No pets noted"}
-            </p>
-            <p className="mt-3 text-sm">
+            <p className="px-1 text-sm text-stone-600">
               {property.entryPoints.length} entry points · {property.deployments.length} active/recent deployments
             </p>
-            <Link href="/activity" className="mt-2 inline-block text-sm font-semibold text-orange hover:underline">
+            <Link href="/activity" className="inline-block px-1 text-sm font-semibold text-orange hover:underline">
               Office species log
             </Link>
-          </article>
+          </div>
         ))}
       </section>
 

@@ -33,17 +33,24 @@ test("field mutations that can wait for a signal", () => {
   assert.equal(isQueueableFieldRequest("POST", "/api/jobs/job_1/check-in"), true);
   assert.equal(isQueueableFieldRequest("POST", "/api/jobs/job_1/check-out"), true);
   assert.equal(isQueueableFieldRequest("POST", "/api/species-logs"), true);
+  assert.equal(isQueueableFieldRequest("POST", "/api/deployments"), true);
+  assert.equal(isQueueableFieldRequest("PATCH", "/api/deployments"), true);
   assert.equal(isQueueableFieldRequest("POST", "/api/traps"), false);
   assert.equal(isQueueableFieldRequest("GET", "/api/jobs"), false);
   assert.equal(mutationLabel("/api/jobs/abc/check-in"), "Check-in");
+  assert.equal(mutationLabel("/api/deployments"), "Trap");
 });
 
 test("pages and GETs the technician phone can reuse offline", () => {
   assert.equal(isCacheableFieldPath("/field"), true);
   assert.equal(isCacheableFieldPath("/jobs/abc"), true);
+  assert.equal(isCacheableFieldPath("/quotes/abc"), true);
+  assert.equal(isCacheableFieldPath("/invoices/abc"), true);
   assert.equal(isCacheableFieldPath("/dashboard"), false);
   assert.equal(isCacheableApiGet("/api/timesheets/me"), true);
   assert.equal(isCacheableApiGet("/api/jobs/late-checkin"), true);
+  assert.equal(isCacheableApiGet("/api/quotes/q1"), true);
+  assert.equal(isCacheableApiGet("/api/invoices/i1"), true);
   assert.equal(isCacheableApiGet("/api/clients"), false);
 });
 

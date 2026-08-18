@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   clientSearchResult,
+  equipmentSearchResult,
   invoiceSearchResult,
   jobSearchResult,
   normalizeSearchQuery,
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
 
   const phone = phoneSearchFilter(query);
 
-  const [clients, jobs, quotes, invoices] = await Promise.all([
+  const [clients, jobs, quotes, invoices, equipment] = await Promise.all([
     prisma.client.findMany({
       where: phone
         ? {
@@ -93,6 +94,16 @@ export async function GET(request: Request) {
           take: 5,
         })
       : Promise.resolve([]),
+    prisma.equipment.findMany({
+      where: {
+        OR: [
+          { serialNumber: { contains: query, mode: "insensitive" } },
+          { name: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      orderBy: { serialNumber: "asc" },
+      take: 5,
+    }),
   ]);
 
   const results = [
@@ -100,6 +111,7 @@ export async function GET(request: Request) {
     ...jobs.map(jobSearchResult),
     ...quotes.map(quoteSearchResult),
     ...invoices.map(invoiceSearchResult),
+    ...equipment.map(equipmentSearchResult),
   ];
 
   return NextResponse.json({ results });
