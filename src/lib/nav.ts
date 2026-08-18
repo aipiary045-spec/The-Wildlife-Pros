@@ -62,7 +62,7 @@ const TECH_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
 ];
 
 const TECH_MORE_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Also on this phone", hrefs: ["/time-off", "/inventory", "/activity"] },
+  { title: "Also on this phone", hrefs: ["/quotes", "/time-off", "/inventory", "/activity"] },
 ];
 
 export function primaryTabs(role: string): NavItem[] {
@@ -87,6 +87,7 @@ export function navForRole(role: string): NavItem[] {
     return [
       { href: "/field", label: "My route", icon: Smartphone, description: "Today's stops in driving order." },
       { href: "/jobs", label: "My jobs", icon: ClipboardList, description: "Assigned work, including leftovers." },
+      { href: "/quotes", label: "Quotes", icon: FileText, description: "Turn an approved quote into an invoice and collect payment." },
       { href: "/timesheets", label: "Clock & hours", icon: Clock, description: "Clock in and see hours by day." },
       { href: "/time-off", label: "Time off", icon: CalendarOff, description: "Ask for a day off." },
       { href: "/inventory", label: "Traps & gear", icon: Warehouse, description: "What is in the shop and what is in the field." },

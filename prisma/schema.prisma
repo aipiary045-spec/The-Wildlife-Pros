@@ -410,6 +410,7 @@ model Quote {
 
   lineItems   QuoteLineItem[]
   jobs        Job[]
+  invoices    Invoice[]
 
   @@index([clientId, status])
 }
@@ -537,6 +538,8 @@ model Invoice {
   property    Property?     @relation(fields: [propertyId], references: [id])
   jobId       String?
   job         Job?          @relation(fields: [jobId], references: [id])
+  quoteId     String?
+  quote       Quote?        @relation(fields: [quoteId], references: [id])
   createdById String?
   createdBy   User?         @relation("InvoiceCreatedBy", fields: [createdById], references: [id])
   status      InvoiceStatus @default(DRAFT)
@@ -558,6 +561,7 @@ model Invoice {
 
   @@index([clientId, status])
   @@index([status, dueOn])
+  @@index([quoteId])
 }
 
 model InvoiceLineItem {

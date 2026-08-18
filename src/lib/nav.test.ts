@@ -53,8 +53,10 @@ test("office sidebar groups day-to-day work first", () => {
 
 test("technicians keep a simple four-tab phone", () => {
   const tabs = primaryTabs("TECHNICIAN").map((item) => item.href);
+  const more = moreItems("TECHNICIAN").map((item) => item.href);
   assert.deepEqual(tabs, ["/field", "/jobs", "/timesheets", "/more"]);
-  assert.ok(!moreItems("TECHNICIAN").some((item) => item.href === "/calls"));
+  assert.ok(!more.includes("/calls"));
+  assert.ok(more.includes("/quotes"));
   assert.equal(moreGroups("TECHNICIAN")[0]?.title, "Also on this phone");
 });
 

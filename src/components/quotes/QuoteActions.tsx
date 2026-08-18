@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { ReturnVisitFields, addReturnVisit } from "@/components/jobs/RecurringForm";
 import { FREQUENCY_RETURN_DAYS } from "@/lib/schedule-needs";
 import { AreaSuggestions } from "@/components/schedule/AreaSuggestions";
 import { dateKey } from "@/lib/dates";
-import { quoteCanConvert } from "@/lib/quotes";
+import { quoteCanConvert, quoteCanInvoice } from "@/lib/quotes";
 import type { ScheduleTech } from "@/components/schedule/job-card";
 
 export function QuoteActions({
@@ -15,17 +17,22 @@ export function QuoteActions({
   technicians,
   portalToken,
   propertyId,
+  techView = false,
+  invoice,
 }: {
   quoteId: string;
   status: string;
   technicians: ScheduleTech[];
   portalToken?: string | null;
   propertyId?: string | null;
+  techView?: boolean;
+  invoice?: { id: string; balance: number } | null;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState("");
   const [error, setError] = useState("");
   const [convertOpen, setConvertOpen] = useState(false);
+  const canInvoice = quoteCanInvoice(status) && !invoice;
 
   async function send() {
     setSaving("send");
@@ -45,11 +52,11 @@ export function QuoteActions({
     router.refresh();
   }
 
-  if (status === "CONVERTED") return null;
+  if (status === "CONVERTED" && !invoice && !techView) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {status === "DRAFT" || status === "DECLINED" ? (
+      {techView ? null : status === "DRAFT" || status === "DECLINED" ? (
         <button
           type="button"
           disabled={Boolean(saving)}
@@ -59,7 +66,7 @@ export function QuoteActions({
           {saving === "send" ? "Sending…" : "Send to customer"}
         </button>
       ) : null}
-      {quoteCanConvert(status) ? (
+      {techView ? null : quoteCanConvert(status) ? (
         <button
           type="button"
           onClick={() => setConvertOpen(true)}
@@ -68,9 +75,23 @@ export function QuoteActions({
           Convert to job
         </button>
       ) : null}
-      {portalToken && (status === "SENT" || status === "VIEWED") ? (
-        <p className="text-xs text-stone-500">Customer hub: /portal/{portalToken}</p>
+      {canInvoice ? (
+        <CreateInvoiceButton
+          quoteId={quoteId}
+          label={techView ? "Turn into invoice" : "Create invoice"}
+        />
       ) : null}
+      {invoice ? (
+        <Link
+          href={`/invoices/${invoice.id}`}
+          className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center"
+        >
+          {Number(invoice.balance) > 0 ? "Take payment" : "View invoice"}
+        </Link>
+      ) : null}
+      {techView || !portalToken || (status !== "SENT" && status !== "VIEWED") ? null : (
+        <p className="text-xs text-stone-500">Customer hub: /portal/{portalToken}</p>
+      )}
       {error ? <p className="w-full text-sm text-rose-700">{error}</p> : null}
       {convertOpen ? (
         <ConvertDialog

@@ -5,14 +5,26 @@ import { NewQuoteButton } from "@/components/quotes/QuoteForm";
 import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getSession } from "@/lib/auth";
+import { isTechnician } from "@/lib/paths";
 import { clientName, formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuotesPage() {
+  const session = await getSession();
+  const techView = Boolean(session && isTechnician(session.role));
   const [quotes, clients, services] = await Promise.all([
     prisma.quote.findMany({
-      include: { client: true, property: true },
+      where: techView
+        ? {
+            OR: [
+              { status: { in: ["SENT", "VIEWED", "APPROVED"] }, invoices: { none: {} } },
+              { invoices: { some: { balance: { gt: 0 } } } },
+            ],
+          }
+        : undefined,
+      include: { client: true, property: true, invoices: { select: { id: true, balance: true }, take: 1 } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.client.findMany({
@@ -30,21 +42,27 @@ export default async function QuotesPage() {
     <div className="space-y-5">
       <PageHeader
         title="Quotes"
-        description="Send estimates clients can approve in the hub, then convert to a job."
-        related={[{ href: "/jobs", label: "Work orders" }]}
+        description={
+          techView
+            ? "Approved estimates you can turn into an invoice and collect on site."
+            : "Send estimates clients can approve in the hub, then convert to a job or invoice."
+        }
+        related={techView ? undefined : [{ href: "/jobs", label: "Work orders" }]}
         actions={
-          <NewQuoteButton
-            clients={clients}
-            services={services.map((item) => ({
-              id: item.id,
-              name: item.name,
-              unitPrice: Number(item.unitPrice),
-              taxable: item.taxable,
-            }))}
-          />
+          techView ? undefined : (
+            <NewQuoteButton
+              clients={clients}
+              services={services.map((item) => ({
+                id: item.id,
+                name: item.name,
+                unitPrice: Number(item.unitPrice),
+                taxable: item.taxable,
+              }))}
+            />
+          )
         }
       />
-      <QuotesSubnav current="quotes" />
+      {techView ? null : <QuotesSubnav current="quotes" />}
       <div className="space-y-2 md:hidden">
         {quotes.map((quote) => (
           <Link key={quote.id} href={`/quotes/${quote.id}`} className="block rounded-2xl border border-line bg-panel p-4">

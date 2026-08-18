@@ -5,10 +5,14 @@ import { useState } from "react";
 
 export function CreateInvoiceButton({
   jobId,
+  quoteId,
   disabled,
+  label = "Create invoice",
 }: {
-  jobId: string;
+  jobId?: string;
+  quoteId?: string;
   disabled?: boolean;
+  label?: string;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -23,7 +27,7 @@ export function CreateInvoiceButton({
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId }),
+      body: JSON.stringify(quoteId ? { quoteId } : { jobId }),
     });
     const data = (await response.json()) as { invoice?: { id: string }; error?: string };
     setSaving(false);
@@ -43,7 +47,7 @@ export function CreateInvoiceButton({
         onClick={() => void create()}
         className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
       >
-        {saving ? "Creating…" : "Create invoice"}
+        {saving ? "Creating…" : label}
       </button>
       {error ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
     </div>

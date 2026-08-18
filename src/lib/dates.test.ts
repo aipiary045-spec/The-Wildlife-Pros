@@ -60,14 +60,17 @@ test("technicians are kept off dispatch and office pages", () => {
   assert.equal(isOfficeOnlyPath("/time-off"), false);
   assert.equal(isOfficeOnlyPath("/invoices"), true);
   assert.equal(isOfficeOnlyPath("/invoices/abc"), false);
+  assert.equal(isOfficeOnlyPath("/quotes"), false);
+  assert.equal(isOfficeOnlyPath("/quotes/abc"), false);
+  assert.equal(isOfficeOnlyPath("/quotes/pricing"), true);
 });
 
 test("technician time off lives under More, not the main tabs", () => {
   const tabs = primaryTabs("TECHNICIAN").map((item) => item.href);
   const more = moreItems("TECHNICIAN").map((item) => item.href);
   assert.deepEqual(tabs, ["/field", "/jobs", "/timesheets", "/more"]);
-  assert.equal(more[0], "/time-off");
-  assert.ok(more.includes("/inventory"));
+  assert.equal(more[0], "/quotes");
+  assert.ok(more.includes("/time-off"));
   assert.ok(!primaryTabs("DISPATCHER").some((item) => item.href === "/time-off"));
 });
 
@@ -88,7 +91,7 @@ test("office jobs sit next to the schedule; reports and call log live under More
 
 test("quote price list is an office page under quotes", () => {
   assert.equal(isOfficeOnlyPath("/quotes/pricing"), true);
-  assert.ok(!moreItems("TECHNICIAN").some((item) => item.href.startsWith("/quotes")));
+  assert.ok(moreItems("TECHNICIAN").some((item) => item.href === "/quotes"));
 });
 
 test("tripStartOnDay keeps the original clock time on a new calendar day", () => {

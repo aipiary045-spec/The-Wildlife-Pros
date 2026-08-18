@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { jobTypeFromQuoteLines, quoteCanConvert } from "./quotes";
+import { jobTypeFromQuoteLines, quoteCanConvert, quoteCanInvoice } from "./quotes";
 import { nextOccurrences } from "./recurring";
 
 test("jobTypeFromQuoteLines uses the catalog job type", () => {
@@ -19,6 +19,14 @@ test("quoteCanConvert blocks declined, expired, and already converted", () => {
   assert.equal(quoteCanConvert("DRAFT"), true);
   assert.equal(quoteCanConvert("CONVERTED"), false);
   assert.equal(quoteCanConvert("DECLINED"), false);
+});
+
+test("quoteCanInvoice only allows sent, viewed, or approved quotes", () => {
+  assert.equal(quoteCanInvoice("APPROVED"), true);
+  assert.equal(quoteCanInvoice("SENT"), true);
+  assert.equal(quoteCanInvoice("VIEWED"), true);
+  assert.equal(quoteCanInvoice("DRAFT"), false);
+  assert.equal(quoteCanInvoice("CONVERTED"), false);
 });
 
 test("nextOccurrences skips the seed date and steps by frequency", () => {

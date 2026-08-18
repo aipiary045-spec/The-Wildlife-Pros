@@ -15,3 +15,7 @@ export function jobTypeFromQuoteLines(items: QuoteLineForJob[]) {
 export function quoteCanConvert(status: string) {
   return !["DECLINED", "EXPIRED", "CONVERTED"].includes(status);
 }
+
+export function quoteCanInvoice(status: string) {
+  return ["SENT", "VIEWED", "APPROVED"].includes(status);
+}

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { addDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { jsonError, lineTotals, withAuth } from "@/lib/api";
-import { canBillJob } from "@/lib/billing-access";
+import { canBillJob, canBillQuote } from "@/lib/billing-access";
+import { QuoteInvoiceError, convertQuoteToInvoice } from "@/lib/quote-invoice";
 import { nextNumber } from "@/lib/utils";
 
 export const GET = withAuth(async () => {
@@ -25,13 +26,24 @@ export const POST = withAuth(async (session, request) => {
     serviceId?: string;
   }>;
 
+  if (body.quoteId) {
+    if (!canBillQuote(session)) return jsonError("You cannot invoice quotes.", 403);
+    try {
+      const invoice = await convertQuoteToInvoice({ quoteId: body.quoteId, createdById: session.id });
+      return NextResponse.json({ invoice }, { status: 201 });
+    } catch (error) {
+      if (error instanceof QuoteInvoiceError) return jsonError(error.message, error.status);
+      throw error;
+    }
+  }
+
   if (body.jobId) {
     const job = await prisma.job.findUnique({
       where: { id: body.jobId },
       include: { lineItems: true, invoices: { select: { id: true } } },
     });
     if (!job) return jsonError("Job not found", 404);
-    if (!canBillJob(session, job)) return jsonError("You can only invoice your own jobs.", 403);
+    if (!canBillJob(session, job)) return jsonError("You cannot invoice from a work order in the field. Bill from the quote instead.", 403);
     if (job.invoices.length > 0) return jsonError("This job already has an invoice.");
     clientId = clientId ?? job.clientId;
     propertyId = propertyId ?? job.propertyId;

@@ -6,6 +6,8 @@ import { EditQuoteButton } from "@/components/quotes/QuoteForm";
 import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
 import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getSession } from "@/lib/auth";
+import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
@@ -21,6 +23,7 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
         property: true,
         lineItems: { orderBy: { sortOrder: "asc" } },
         jobs: { select: { id: true, number: true, status: true } },
+        invoices: { orderBy: { createdAt: "desc" }, take: 1 },
       },
     }),
     prisma.user.findMany({
@@ -39,10 +42,13 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
     }),
   ]);
   if (!quote) notFound();
+  const session = await getSession();
+  const techView = Boolean(session && isTechnician(session.role));
+  const invoice = quote.invoices[0] ?? null;
 
   return (
     <div className="space-y-6">
-      <QuotesSubnav current="quotes" />
+      {techView ? null : <QuotesSubnav current="quotes" />}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <BackLink href="/quotes" label="Quotes" />
@@ -56,13 +62,15 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
             Valid {quote.validUntil ? format(quote.validUntil, "PPP") : "—"}
             {quote.sentAt ? ` · sent ${format(quote.sentAt, "MMM d")}` : ""}
           </p>
-          <Link href="/quotes/pricing" className="mt-2 inline-block text-sm font-semibold text-orange">
-            Edit price list
-          </Link>
+          {techView ? null : (
+            <Link href="/quotes/pricing" className="mt-2 inline-block text-sm font-semibold text-orange">
+              Edit price list
+            </Link>
+          )}
         </div>
         <div className="space-y-2">
           <StatusBadge status={quote.status} />
-          {quote.status !== "CONVERTED" ? (
+          {techView || quote.status === "CONVERTED" ? null : (
             <EditQuoteButton
               clients={clients}
               services={services.map((item) => ({
@@ -87,13 +95,15 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
                 })),
               }}
             />
-          ) : null}
+          )}
           <QuoteActions
             quoteId={quote.id}
             status={quote.status}
             technicians={technicians}
             portalToken={quote.client.portalToken}
             propertyId={quote.propertyId}
+            techView={techView}
+            invoice={invoice ? { id: invoice.id, balance: Number(invoice.balance) } : null}
           />
         </div>
       </div>
