@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { lineTotals } from "@/lib/money";
 import { formatMoney } from "@/lib/utils";
+import { PriceListPicker } from "@/components/billing/PriceListPicker";
 
 export type ServiceOption = {
   id: string;
@@ -20,6 +22,16 @@ export type LineDraft = {
 
 const inputClass = "w-full rounded-lg border border-line bg-white px-2 py-1.5 text-sm";
 
+export function serviceToLineDraft(service: ServiceOption): LineDraft {
+  return {
+    name: service.name,
+    quantity: 1,
+    unitPrice: Number(service.unitPrice),
+    taxable: service.taxable,
+    serviceId: service.id,
+  };
+}
+
 export function LineItemsEditor({
   items,
   services,
@@ -29,21 +41,16 @@ export function LineItemsEditor({
   services: ServiceOption[];
   onChange: (items: LineDraft[]) => void;
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
   const totals = lineTotals(items);
 
-  function addService(serviceId: string) {
-    const service = services.find((item) => item.id === serviceId);
-    if (!service) return;
-    onChange([
-      ...items,
-      {
-        name: service.name,
-        quantity: 1,
-        unitPrice: Number(service.unitPrice),
-        taxable: service.taxable,
-        serviceId: service.id,
-      },
-    ]);
+  function addServices(serviceIds: string[]) {
+    const next = serviceIds
+      .map((serviceId) => services.find((service) => service.id === serviceId))
+      .filter((service): service is ServiceOption => Boolean(service))
+      .map(serviceToLineDraft);
+    if (next.length === 0) return;
+    onChange([...items, ...next]);
   }
 
   function update(index: number, patch: Partial<LineDraft>) {
@@ -51,65 +58,75 @@ export function LineItemsEditor({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {items.length > 0 ? (
+        <div className="hidden gap-2 px-1 text-[11px] font-medium text-stone-500 sm:grid sm:grid-cols-[minmax(0,1fr)_4.5rem_6rem_4.5rem]">
+          <span>What you are charging for</span>
+          <span>Qty</span>
+          <span>Price each</span>
+          <span className="sr-only">Remove</span>
+        </div>
+      ) : null}
+
       {items.map((item, index) => (
-        <div key={`${item.serviceId ?? item.name}-${index}`} className="grid grid-cols-12 gap-2">
-          <label className="col-span-5 text-[11px] font-medium text-stone-500">
-            What you are charging for
+        <div
+          key={`${item.serviceId ?? item.name}-${index}`}
+          className="rounded-xl border border-line bg-white p-3 sm:grid sm:grid-cols-[minmax(0,1fr)_4.5rem_6rem_4.5rem] sm:items-end sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0"
+        >
+          <label className="block text-[11px] font-medium text-stone-500 sm:min-w-0">
+            <span className="sm:sr-only">What you are charging for</span>
             <input
-              className={`mt-1 ${inputClass}`}
+              className={`mt-1 ${inputClass} sm:mt-0`}
               value={item.name}
               placeholder="Live trap check"
               onChange={(event) => update(index, { name: event.target.value })}
             />
           </label>
-          <label className="col-span-2 text-[11px] font-medium text-stone-500">
-            Qty
-            <input
-              type="number"
-              min={0}
-              step={1}
-              className={`mt-1 ${inputClass}`}
-              value={item.quantity}
-              onChange={(event) => update(index, { quantity: Number(event.target.value) })}
-            />
-          </label>
-          <label className="col-span-3 text-[11px] font-medium text-stone-500">
-            Price each
-            <input
-              type="number"
-              min={0}
-              step={0.01}
-              className={`mt-1 ${inputClass}`}
-              value={item.unitPrice}
-              onChange={(event) => update(index, { unitPrice: Number(event.target.value) })}
-            />
-          </label>
-          <button
-            type="button"
-            className="col-span-2 self-end rounded-lg border border-line py-1.5 text-xs font-semibold"
-            onClick={() => onChange(items.filter((_, i) => i !== index))}
-          >
-            Remove
-          </button>
+
+          <div className="mt-2 grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-end gap-2 sm:contents">
+            <label className="text-[11px] font-medium text-stone-500">
+              Qty
+              <input
+                type="number"
+                min={0}
+                step={1}
+                inputMode="numeric"
+                className={`mt-1 ${inputClass}`}
+                value={item.quantity}
+                onChange={(event) => update(index, { quantity: Number(event.target.value) })}
+              />
+            </label>
+            <label className="text-[11px] font-medium text-stone-500">
+              Price each
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                inputMode="decimal"
+                className={`mt-1 ${inputClass}`}
+                value={item.unitPrice}
+                onChange={(event) => update(index, { unitPrice: Number(event.target.value) })}
+              />
+            </label>
+            <button
+              type="button"
+              className="min-h-9 rounded-lg border border-line px-2 text-xs font-semibold sm:min-h-0 sm:py-1.5"
+              onClick={() => onChange(items.filter((_, i) => i !== index))}
+            >
+              Remove
+            </button>
+          </div>
         </div>
       ))}
+
       <div className="flex flex-wrap gap-2">
-        <select
-          className={inputClass}
-          defaultValue=""
-          onChange={(event) => {
-            if (event.target.value) addService(event.target.value);
-            event.target.value = "";
-          }}
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className={`${inputClass} text-left font-semibold`}
         >
-          <option value="">Add from price list…</option>
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.name} · {formatMoney(service.unitPrice)}
-            </option>
-          ))}
-        </select>
+          Add from price list…
+        </button>
         <button
           type="button"
           className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold"
@@ -121,6 +138,14 @@ export function LineItemsEditor({
           Edit price list
         </a>
       </div>
+
+      <PriceListPicker
+        open={pickerOpen}
+        services={services}
+        onClose={() => setPickerOpen(false)}
+        onAdd={addServices}
+      />
+
       <p className="text-xs text-stone-500">
         Blank line is a custom charge: name what you did, how many, and the price for one. Tax is added automatically.
       </p>
