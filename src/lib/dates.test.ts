@@ -42,12 +42,12 @@ test("periodLabel and view parser", () => {
 });
 
 test("safeNextPath rejects Chrome DevTools and protocol-relative URLs", () => {
-  assert.equal(safeNextPath("/.well-known/appspecific/com.chrome.devtools.json"), "/schedule");
-  assert.equal(safeNextPath("//evil.example"), "/schedule");
+  assert.equal(safeNextPath("/.well-known/appspecific/com.chrome.devtools.json"), "/dashboard");
+  assert.equal(safeNextPath("//evil.example"), "/dashboard");
   assert.equal(safeNextPath("/schedule"), "/schedule");
   assert.equal(safeNextPath("/field?view=week"), "/field?view=week");
   assert.equal(homePath("TECHNICIAN"), "/field");
-  assert.equal(homePath("OWNER"), "/schedule");
+  assert.equal(homePath("OWNER"), "/dashboard");
 });
 
 test("technicians are kept off dispatch and office pages", () => {

@@ -52,8 +52,8 @@ const OFFICE_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
 ];
 
 const OFFICE_MORE_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Daily office", hrefs: ["/calls", "/quotes", "/invoices"] },
-  { title: "Business", hrefs: ["/reports", "/routes", "/exports"] },
+  { title: "Daily office", hrefs: ["/calls", "/quotes", "/invoices", "/routes"] },
+  { title: "Business", hrefs: ["/reports", "/exports"] },
   { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
   { title: "Field records", hrefs: ["/inventory", "/activity"] },
 ];

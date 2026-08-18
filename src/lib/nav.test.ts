@@ -61,6 +61,6 @@ test("office More is grouped so money and field tools are easy to find", () => {
   );
   assert.deepEqual(
     groups[0]?.items.map((item) => item.href),
-    ["/quotes", "/invoices"],
+    ["/quotes", "/invoices", "/routes"],
   );
 });
