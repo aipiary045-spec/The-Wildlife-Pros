@@ -4,6 +4,8 @@ export const MAX_OCCURRED_FUTURE_MS = 2 * 60 * 1000;
 export const CACHEABLE_FIELD_PREFIXES = [
   "/field",
   "/jobs",
+  "/quotes",
+  "/invoices",
   "/timesheets",
   "/more",
   "/time-off",
@@ -27,17 +29,23 @@ export function requestPath(url: string) {
 }
 
 export function isQueueableFieldRequest(method: string, url: string) {
-  if (method.toUpperCase() !== "POST") return false;
+  const upper = method.toUpperCase();
   const path = requestPath(url);
-  if (path === "/api/timesheets/clock") return true;
-  if (path === "/api/species-logs") return true;
-  return /^\/api\/jobs\/[^/]+\/check-(?:in|out)$/.test(path);
+  if (upper === "POST") {
+    if (path === "/api/timesheets/clock") return true;
+    if (path === "/api/species-logs") return true;
+    if (path === "/api/deployments") return true;
+    return /^\/api\/jobs\/[^/]+\/check-(?:in|out)$/.test(path);
+  }
+  if (upper === "PATCH" && path === "/api/deployments") return true;
+  return false;
 }
 
 export function mutationLabel(url: string) {
   const path = requestPath(url);
   if (path === "/api/timesheets/clock") return "Clock";
   if (path === "/api/species-logs") return "Capture";
+  if (path === "/api/deployments") return "Trap";
   if (path.endsWith("/check-in")) return "Check-in";
   if (path.endsWith("/check-out")) return "Check-out";
   return "Saved work";
@@ -51,6 +59,8 @@ export function isCacheableApiGet(pathname: string) {
   if (pathname === "/api/timesheets/me") return true;
   if (pathname === "/api/jobs/late-checkin") return true;
   if (pathname === "/api/jobs") return true;
+  if (/^\/api\/quotes\/[^/]+$/.test(pathname)) return true;
+  if (/^\/api\/invoices\/[^/]+$/.test(pathname)) return true;
   return /^\/api\/jobs\/[^/]+$/.test(pathname);
 }
 

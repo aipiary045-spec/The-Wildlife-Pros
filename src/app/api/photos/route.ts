@@ -15,6 +15,9 @@ export const GET = withAuth(async (_session, request) => {
 
 export const POST = withAuth(async (session, request) => {
   const body = await request.json();
+  const url = typeof body.url === "string" ? body.url.trim() : "";
+  if (!url) throw new Error("Photo URL is required.");
+  if (url.length > 3_000_000) throw new Error("Photo is too large.");
   const photo = await prisma.photo.create({
     data: {
       jobId: body.jobId,
@@ -22,7 +25,7 @@ export const POST = withAuth(async (session, request) => {
       entryPointId: body.entryPointId,
       uploadedById: session.id,
       kind: body.kind ?? "OTHER",
-      url: body.url,
+      url,
       caption: body.caption,
     },
   });

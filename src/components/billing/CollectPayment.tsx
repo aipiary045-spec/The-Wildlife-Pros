@@ -19,12 +19,13 @@ export function CollectPayment({
   const router = useRouter();
   const [amount, setAmount] = useState(balance.toFixed(2));
   const [method, setMethod] = useState<"SQUARE" | "CASH" | "CHECK">("SQUARE");
+  const [squareMode, setSquareMode] = useState<"terminal" | "keyed">("terminal");
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  async function recordManual() {
+  async function recordPayment(notes: string) {
     setBusy(true);
     setError("");
     const response = await fetch("/api/payments", {
@@ -35,10 +36,7 @@ export function CollectPayment({
         amount: Number(amount),
         method,
         reference: reference || undefined,
-        notes:
-          method === "SQUARE"
-            ? "Recorded from Square Terminal / POS"
-            : `Collected on site (${method.toLowerCase()})`,
+        notes,
       }),
     });
     const data = (await response.json()) as { error?: string };
@@ -48,6 +46,7 @@ export function CollectPayment({
       return;
     }
     setNotice("Payment recorded.");
+    setReference("");
     router.refresh();
   }
 
@@ -58,8 +57,8 @@ export function CollectPayment({
   return (
     <div className="space-y-4">
       <p className="text-sm text-stone-600">
-        Clients pay through Square — Terminal on the truck, POS in the office, or a card keyed here by
-        staff. They never log into CritterOps to pay.
+        Clients pay through Square — Terminal on the truck, POS in the office, or a card keyed here by staff.
+        They never log into CritterOps to pay.
       </p>
       <label className="block text-sm">
         Amount
@@ -84,38 +83,66 @@ export function CollectPayment({
         ))}
       </div>
       {method === "SQUARE" ? (
-        <div className="space-y-3">
-          <SquareCardForm
-            invoiceId={invoiceId}
-            amount={Number(amount)}
-            clientName={clientName}
-            config={squareConfig}
-            onPaid={() => {
-              setNotice("Square payment captured.");
-              router.refresh();
-            }}
-            onError={setError}
-          />
-          <p className="text-xs text-stone-500">
-            Already took it on a Square Terminal? Record the receipt below — no card form needed.
-          </p>
-          <label className="block text-sm">
-            Square receipt / payment ID
-            <input
-              className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2"
-              value={reference}
-              onChange={(event) => setReference(event.target.value)}
-              placeholder="e.g. Square receipt #1042"
-            />
-          </label>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={recordManual}
-            className="rounded-lg border border-line px-4 py-2 text-sm font-semibold disabled:opacity-60"
-          >
-            {busy ? "Saving…" : `Record ${formatMoney(amount)} from Terminal`}
-          </button>
+        <div className="space-y-4 rounded-xl border border-orange/30 bg-orange/5 p-4">
+          <div className="flex flex-wrap gap-2 text-sm">
+            <button
+              type="button"
+              onClick={() => setSquareMode("terminal")}
+              className={`rounded-full px-3 py-1.5 font-semibold ${
+                squareMode === "terminal" ? "bg-orange text-white" : "border border-line bg-white text-stone-700"
+              }`}
+            >
+              Terminal / POS
+            </button>
+            <button
+              type="button"
+              onClick={() => setSquareMode("keyed")}
+              className={`rounded-full px-3 py-1.5 font-semibold ${
+                squareMode === "keyed" ? "bg-orange text-white" : "border border-line bg-white text-stone-700"
+              }`}
+            >
+              Key card here
+            </button>
+          </div>
+          {squareMode === "terminal" ? (
+            <div className="space-y-3">
+              <p className="text-sm text-stone-700">
+                Run the charge on your Square Terminal or in-store POS, then paste the receipt number below.
+              </p>
+              <label className="block text-sm font-medium">
+                Square receipt / payment ID
+                <input
+                  className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2"
+                  value={reference}
+                  onChange={(event) => setReference(event.target.value)}
+                  placeholder="e.g. Square receipt #1042"
+                />
+              </label>
+              <button
+                type="button"
+                disabled={busy || !reference.trim()}
+                onClick={() => void recordPayment("Recorded from Square Terminal / POS")}
+                className="min-h-11 w-full rounded-lg bg-orange px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {busy ? "Saving…" : `Record ${formatMoney(amount)} from Terminal`}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-stone-700">Office staff can key the card when the customer is on the phone.</p>
+              <SquareCardForm
+                invoiceId={invoiceId}
+                amount={Number(amount)}
+                clientName={clientName}
+                config={squareConfig}
+                onPaid={() => {
+                  setNotice("Square payment captured.");
+                  router.refresh();
+                }}
+                onError={setError}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -131,7 +158,7 @@ export function CollectPayment({
           <button
             type="button"
             disabled={busy}
-            onClick={recordManual}
+            onClick={() => void recordPayment(`Collected on site (${method.toLowerCase()})`)}
             className="rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
             {busy ? "Saving…" : `Record ${formatMoney(amount)}`}

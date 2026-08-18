@@ -5,6 +5,12 @@ import { Logo } from "@/components/brand/Logo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatMoney } from "@/lib/utils";
 
+type PortalLineItem = {
+  name: string;
+  quantity: number | { toString(): string };
+  unitPrice: number | { toString(): string };
+};
+
 type PortalData = {
   client: {
     firstName: string;
@@ -23,7 +29,10 @@ type PortalData = {
       title: string;
       status: string;
       total: string;
+      subtotal: string;
+      taxAmount: string;
       message: string | null;
+      lineItems: PortalLineItem[];
     }>;
   };
 };
@@ -102,8 +111,25 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
                 </p>
                 <StatusBadge status={quote.status} />
               </div>
-              <p className="text-sm">{quote.message}</p>
-              <p className="mt-1 font-display text-xl">{formatMoney(quote.total)}</p>
+              {quote.message ? <p className="mt-1 text-sm text-stone-600">{quote.message}</p> : null}
+              {quote.lineItems.length > 0 ? (
+                <ul className="mt-3 space-y-1 rounded-xl bg-background px-3 py-2 text-sm">
+                  {quote.lineItems.map((item, index) => (
+                    <li key={`${item.name}-${index}`} className="flex justify-between gap-3">
+                      <span>
+                        {item.name} × {Number(item.quantity)}
+                      </span>
+                      <span className="shrink-0 tabular-nums">
+                        {formatMoney(Number(item.quantity) * Number(item.unitPrice))}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <p className="mt-2 text-sm text-stone-600">
+                {formatMoney(quote.subtotal)} + tax {formatMoney(quote.taxAmount)} ={" "}
+                <span className="font-semibold text-ink">{formatMoney(quote.total)}</span>
+              </p>
               {quote.status === "SENT" || quote.status === "VIEWED" ? (
                 <div className="mt-3 flex gap-2">
                   <button

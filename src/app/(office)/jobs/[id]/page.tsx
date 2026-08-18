@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
+import { JobEntryPointsCard } from "@/components/jobs/JobEntryPointsCard";
+import { JobPhotosCard } from "@/components/jobs/JobPhotosCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { JobFieldBar } from "@/components/jobs/JobFieldBar";
 import { JobQuoteBillingBanner } from "@/components/jobs/JobQuoteBillingBanner";
@@ -33,7 +35,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       deployments: { include: { equipment: true, checks: true } },
       captures: { include: { species: true } },
       entryPoints: true,
-      exclusions: true,
+      exclusions: { include: { entryPoint: true } },
       photos: { include: { entryPoint: true } },
       invoices: true,
       sourceJob: true,
@@ -217,30 +219,20 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             equipment: { serialNumber: item.equipment.serialNumber },
           }))}
         />
+        <JobEntryPointsCard
+          jobId={job.id}
+          propertyId={job.propertyId}
+          entryPoints={job.entryPoints}
+          exclusions={job.exclusions}
+        />
         {techView ? null : <JobEditor job={job} technicians={technicians} />}
-        {job.exclusions.length > 0 ? (
-          <Card title="Exclusion">
-            {job.exclusions.map((work) => (
-              <p key={work.id} className="py-1 text-sm">
-                {work.material} {work.quantity ? `· ${work.quantity}` : ""}
-              </p>
-            ))}
-          </Card>
-        ) : null}
       </section>
-      <Card title="Photo documentation">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {job.photos.map((photo) => (
-            <figure key={photo.id} className="overflow-hidden rounded-xl border border-line">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt={photo.caption ?? photo.kind} className="h-36 w-full object-cover" />
-              <figcaption className="px-3 py-2 text-xs">
-                {photo.kind} {photo.entryPoint ? `· ${photo.entryPoint.label}` : ""} · {photo.caption}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </Card>
+      <JobPhotosCard
+        jobId={job.id}
+        propertyId={job.propertyId}
+        photos={job.photos}
+        entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
+      />
       {techView ? (
         <JobFieldBar
           jobId={job.id}

@@ -1,6 +1,6 @@
-const APP_CACHE = "critterops-app-v2";
-const PAGE_CACHE = "critterops-pages-v2";
-const API_CACHE = "critterops-api-v2";
+const APP_CACHE = "critterops-app-v3";
+const PAGE_CACHE = "critterops-pages-v3";
+const API_CACHE = "critterops-api-v3";
 const PRECACHE = [
   "/offline.html",
   "/logo.svg",
@@ -8,7 +8,7 @@ const PRECACHE = [
   "/icons/icon-512.png",
   "/icons/apple-touch-icon.png",
 ];
-const FIELD_PREFIXES = ["/field", "/jobs", "/timesheets", "/more", "/time-off", "/inventory", "/activity"];
+const FIELD_PREFIXES = ["/field", "/jobs", "/quotes", "/invoices", "/timesheets", "/more", "/time-off", "/inventory", "/activity"];
 
 function isFieldPath(pathname) {
   return FIELD_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -16,6 +16,8 @@ function isFieldPath(pathname) {
 
 function isApiGet(pathname) {
   if (pathname === "/api/timesheets/me" || pathname === "/api/jobs/late-checkin" || pathname === "/api/jobs") return true;
+  if (/^\/api\/quotes\/[^/]+$/.test(pathname)) return true;
+  if (/^\/api\/invoices\/[^/]+$/.test(pathname)) return true;
   return /^\/api\/jobs\/[^/]+$/.test(pathname);
 }
 
