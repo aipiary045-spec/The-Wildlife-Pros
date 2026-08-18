@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { QuoteActions } from "@/components/quotes/QuoteActions";
 import { EditQuoteButton } from "@/components/quotes/QuoteForm";
 import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
+import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
@@ -44,7 +45,8 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
       <QuotesSubnav current="quotes" />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-widest text-orange">{quote.number}</p>
+          <BackLink href="/quotes" label="Quotes" />
+          <p className="mt-2 text-xs uppercase tracking-widest text-orange">{quote.number}</p>
           <h1 className="font-display text-3xl tracking-wide">{quote.title}</h1>
           <p className="text-stone-600">
             {clientName(quote.client)}

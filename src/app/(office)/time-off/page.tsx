@@ -1,4 +1,5 @@
 import { DayOffPanel } from "@/components/timesheets/DayOffPanel";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { getSession } from "@/lib/auth";
 import { dateKey, monthGrid, monthKey, parseMonthParam } from "@/lib/dates";
 import { canReviewDayOff } from "@/lib/day-off";
@@ -30,14 +31,15 @@ export default async function TimeOffPage({
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <div>
-        <h1 className="font-display text-3xl tracking-wide">Time off</h1>
-        <p className="text-stone-600">
-          {isTechnician(session.role)
+      <PageHeader
+        title="Time off"
+        description={
+          isTechnician(session.role)
             ? "See your days off on the month, then ask for another. Dispatch blocks the schedule after they approve it."
-            : "The month shows who is off. Approve a request to block that day on the schedule."}
-        </p>
-      </div>
+            : "The month shows who is off. Approve a request to block that day on the schedule."
+        }
+        related={isTechnician(session.role) ? undefined : [{ href: "/timesheets", label: "Timesheets" }, { href: "/schedule", label: "Schedule" }]}
+      />
       <DayOffPanel
         userId={session.id}
         canReview={office}

@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { format } from "date-fns";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { ApproveButton } from "@/components/timesheets/ApproveButton";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { PeriodToolbar } from "@/components/schedule/PeriodToolbar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getSession } from "@/lib/auth";
@@ -51,19 +51,15 @@ export default async function TimesheetsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">{techView ? "Clock & hours" : "Timesheets"}</h1>
-        <p className="text-stone-600">
-          {techView
+      <PageHeader
+        title={techView ? "Clock & hours" : "Timesheets"}
+        description={
+          techView
             ? "Clock in for the day. Hours break down by day or week."
-            : "Review punches by day or week. Days off are approved on Time off."}
-        </p>
-        {techView ? null : (
-          <Link href="/time-off" className="mt-2 inline-block text-sm font-semibold text-orange">
-            Review time-off requests
-          </Link>
-        )}
-      </div>
+            : "Review punches by day or week. Days off are approved on Time off."
+        }
+        related={techView ? undefined : [{ href: "/time-off", label: "Time off" }, { href: "/reports", label: "Reports" }]}
+      />
       <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
       <PeriodToolbar view={view} date={date} basePath="/timesheets" dayLabel="Day hours" weekLabel="Week hours" />
       {techView ? (

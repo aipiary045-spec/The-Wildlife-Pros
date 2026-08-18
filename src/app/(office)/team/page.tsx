@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AddTeamMemberButton } from "@/components/team/AddTeamMemberButton";
 import { EditTeamMemberButton } from "@/components/team/EditTeamMemberButton";
 import { TeamStatusButton } from "@/components/team/TeamStatusButton";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getSession } from "@/lib/auth";
 import { USER_ROLE_LABEL, USER_STATUS_LABEL } from "@/lib/constants";
@@ -26,15 +27,12 @@ export default async function TeamPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl tracking-wide md:text-3xl">Team</h1>
-          <p className="text-stone-600">
-            Add technicians and office staff. Disable someone to take them off the calendar without deleting their jobs.
-          </p>
-        </div>
-        <AddTeamMemberButton actorRole={session.role} />
-      </div>
+      <PageHeader
+        title="Team"
+        description="Add technicians and office staff. Disable someone to take them off the calendar without deleting their jobs."
+        related={[{ href: "/time-off", label: "Time off" }, { href: "/timesheets", label: "Timesheets" }]}
+        actions={<AddTeamMemberButton actorRole={session.role} />}
+      />
       <MemberList
         title="Active"
         users={active}

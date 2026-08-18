@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { PriceListBoard } from "@/components/quotes/PriceListBoard";
 import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { getSession } from "@/lib/auth";
 import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
@@ -19,12 +20,11 @@ export default async function QuotePricingPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Price list</h1>
-        <p className="text-stone-600">
-          Office catalog for quotes. Add a line, set the price, then pick it when you write an estimate.
-        </p>
-      </div>
+      <PageHeader
+        title="Price list"
+        description="Office catalog for quotes. Add a line, set the price, then pick it when you write an estimate."
+        related={[{ href: "/quotes", label: "Quotes" }]}
+      />
       <QuotesSubnav current="pricing" />
       <PriceListBoard
         items={services.map((item) => ({

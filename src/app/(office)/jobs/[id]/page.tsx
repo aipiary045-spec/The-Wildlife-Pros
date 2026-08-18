@@ -9,6 +9,7 @@ import { JobEditor } from "@/components/jobs/JobEditor";
 import { RecurringForm } from "@/components/jobs/RecurringForm";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
+import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getSession } from "@/lib/auth";
 import { DISPOSITION_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
@@ -59,7 +60,8 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-widest text-orange">{job.number}</p>
+          <BackLink href="/jobs" label={techView ? "My jobs" : "Work orders"} />
+          <p className="mt-2 text-xs uppercase tracking-widest text-orange">{job.number}</p>
           <h1 className="font-display text-2xl tracking-wide md:text-3xl">{job.title}</h1>
           <p className="text-stone-600">
             {clientName(job.client)} · {propertyAddress(job.property)}

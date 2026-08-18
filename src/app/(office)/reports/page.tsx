@@ -1,5 +1,6 @@
 import { format, startOfMonth, startOfWeek } from "date-fns";
 import { PipelineOverview } from "@/components/reports/PipelineOverview";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { PeriodToolbar } from "@/components/schedule/PeriodToolbar";
 import { getReportsOverview } from "@/lib/data";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
@@ -54,10 +55,14 @@ export default async function ReportsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Reports</h1>
-        <p className="text-stone-600">Open work, collections, and field activity.</p>
-      </div>
+      <PageHeader
+        title="Reports"
+        description="Open work, collections, and field activity."
+        related={[
+          { href: "/invoices", label: "Invoices" },
+          { href: "/jobs", label: "Work orders" },
+        ]}
+      />
       <PipelineOverview
         requests={overview.requests}
         quotes={overview.quotes}

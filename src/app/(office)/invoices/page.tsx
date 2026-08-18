@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { groupInvoicesByAge } from "@/lib/invoice-aging";
 import { clientName, formatMoney } from "@/lib/utils";
@@ -25,12 +26,14 @@ export default async function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Invoices</h1>
-        <p className="text-stone-600">
-          Staff collect through Square. Sorted by whether money is not yet due, due today, or past due.
-        </p>
-      </div>
+      <PageHeader
+        title="Invoices"
+        description="Staff collect through Square. Sorted by whether money is not yet due, due today, or past due."
+        related={[
+          { href: "/reports", label: "Reports" },
+          { href: "/jobs", label: "Work orders" },
+        ]}
+      />
       {sections.map((section) =>
         section.items.length === 0 ? null : (
           <section key={section.key} className="space-y-2">

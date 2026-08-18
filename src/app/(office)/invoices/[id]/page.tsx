@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { CollectPayment } from "@/components/billing/CollectPayment";
 import { InvoiceActions } from "@/components/billing/InvoiceActions";
+import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { squarePublicConfig } from "@/lib/square";
@@ -28,7 +29,8 @@ export default async function InvoiceDetailPage({ params }: PageProps<"/invoices
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-widest text-orange">{invoice.number}</p>
+          <BackLink href="/invoices" label="Invoices" />
+          <p className="mt-2 text-xs uppercase tracking-widest text-orange">{invoice.number}</p>
           <h1 className="font-display text-3xl tracking-wide">{clientName(invoice.client)}</h1>
           <p className="text-stone-600">
             {invoice.job?.number ?? "Manual invoice"}

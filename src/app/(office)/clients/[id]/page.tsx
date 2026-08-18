@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ClientEditor } from "@/components/crm/ClientEditor";
 import { NavigateLink } from "@/components/maps/NavigateLink";
+import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { clientName, formatMoney, formatPhone, propertyAddress } from "@/lib/utils";
 
@@ -24,8 +25,8 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-widest text-orange">Client</p>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">{clientName(client)}</h1>
+        <BackLink href="/clients" label="Clients" />
+        <h1 className="mt-2 font-display text-2xl tracking-wide md:text-3xl">{clientName(client)}</h1>
         <p className="text-stone-600">
           {formatPhone(client.phone)} · {client.email}
         </p>

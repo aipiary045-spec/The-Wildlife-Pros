@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { HeaderContext } from "@/components/layout/HeaderContext";
 import { InstallHint } from "@/components/layout/InstallHint";
 import { OfflineStatus } from "@/components/layout/OfflineStatus";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
@@ -24,13 +25,7 @@ export default async function OfficeLayout({ children }: { children: React.React
           className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line bg-panel/95 px-4 py-3 backdrop-blur md:px-6"
           style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
         >
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-orange md:text-xs">The Wildlife Pros</p>
-            <p className="truncate text-sm text-stone-600">
-              {session.firstName} {session.lastName}
-              <span className="hidden sm:inline"> · {session.role.toLowerCase()}</span>
-            </p>
-          </div>
+          <HeaderContext role={session.role} name={`${session.firstName} ${session.lastName}`} />
           <div className="flex shrink-0 items-center gap-2">
             <NotificationCenter showIntake={!isTechnician(session.role)} />
             {myTime ? (

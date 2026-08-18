@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { SheetsSyncButton } from "@/components/exports/SheetsSyncButton";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { prisma } from "@/lib/prisma";
 import { sheetsConfigured } from "@/lib/sheets";
 
@@ -11,14 +12,17 @@ export default async function ExportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl tracking-wide">Exports</h1>
-        <p className="text-stone-600">
-          Push operations data into one Google workbook. The first sync creates{" "}
-          <strong>CritterOps — The Wildlife Pros</strong>. Every later sync updates that same file —
-          it does not create a new spreadsheet.
-        </p>
-      </div>
+      <PageHeader
+        title="Google Sheets"
+        description={
+          <>
+            Push operations data into one Google workbook. The first sync creates{" "}
+            <strong>CritterOps — The Wildlife Pros</strong>. Every later sync updates that same file — it does not
+            create a new spreadsheet.
+          </>
+        }
+        related={[{ href: "/reports", label: "Reports" }, { href: "/invoices", label: "Invoices" }]}
+      />
       <section className="rounded-2xl border border-line bg-panel p-5">
         <h2 className="mb-2 font-semibold">Google Sheets</h2>
         <p className="mb-4 text-sm text-stone-600">

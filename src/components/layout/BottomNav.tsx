@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { primaryTabs } from "@/lib/nav";
+import { isMoreDestination, pathMatches, primaryTabs } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 export function BottomNav({ role }: { role: string }) {
@@ -18,9 +18,7 @@ export function BottomNav({ role }: { role: string }) {
         {tabs.map((item) => {
           const Icon = item.icon;
           const active =
-            item.href === "/more"
-              ? pathname === "/more"
-              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            item.href === "/more" ? isMoreDestination(pathname, role) : pathMatches(pathname, item.href);
           return (
             <li key={item.href}>
               <Link

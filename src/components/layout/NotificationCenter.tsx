@@ -66,11 +66,12 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
           aria-label={newCalls ? `${newCalls} calls still need a next step` : "Call log"}
           title="Call log"
           className={cn(
-            "relative flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white",
+            "relative flex h-10 items-center justify-center gap-2 rounded-full border border-line bg-white px-2.5 sm:px-3",
             onCallLog ? "text-orange" : "text-ink",
           )}
         >
           <Phone size={18} />
+          <span className="hidden text-sm font-semibold sm:inline">Call log</span>
           {newCalls > 0 ? (
             <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-orange px-1 text-center text-[10px] font-bold leading-4 text-white">
               {newCalls > 9 ? "9+" : newCalls}

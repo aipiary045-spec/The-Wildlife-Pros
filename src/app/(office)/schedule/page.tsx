@@ -60,6 +60,14 @@ export default async function SchedulePage({
           <p className="hidden text-stone-600 sm:block">
             Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order, traps, or invoice.
           </p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-orange">
+            <Link href="/jobs" className="hover:underline">
+              Work orders
+            </Link>
+            <Link href="/calls" className="hover:underline">
+              Call log
+            </Link>
+          </p>
         </div>
         <Link
           href={`/routes?date=${dateKey(date)}`}

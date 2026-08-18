@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { navForRole } from "@/lib/nav";
+import { pathMatches, sidebarGroups } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 export function Sidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const items = navForRole(role);
+  const groups = sidebarGroups(role);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
@@ -27,24 +27,32 @@ export function Sidebar({ role }: { role: string }) {
           <p className="text-xs text-white/60">CritterOps</p>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {items.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
-                active ? "bg-orange text-white" : "text-white/75 hover:bg-white/10 hover:text-white",
-              )}
-            >
-              <Icon size={16} />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+        {groups.map((group) => (
+          <div key={group.title}>
+            <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">{group.title}</p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = pathMatches(pathname, item.href);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={item.description}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
+                      active ? "bg-orange text-white" : "text-white/75 hover:bg-white/10 hover:text-white",
+                    )}
+                  >
+                    <Icon size={16} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
       <button
         type="button"

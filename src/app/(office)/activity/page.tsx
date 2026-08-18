@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { prisma } from "@/lib/prisma";
 import { DISPOSITION_LABEL } from "@/lib/constants";
 
@@ -17,10 +18,11 @@ export default async function ActivityPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-3xl tracking-wide">Species & activity log</h1>
-        <p className="text-stone-600">Captures, disposition, and which trap or entry they came from.</p>
-      </div>
+      <PageHeader
+        title="Species log"
+        description="Captures, disposition, and which trap or entry they came from."
+        related={[{ href: "/inventory", label: "Traps & gear" }]}
+      />
       <div className="space-y-2 md:hidden">
         {captures.map((capture) => (
           <article key={capture.id} className="rounded-2xl border border-line bg-panel p-4">

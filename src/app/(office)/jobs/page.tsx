@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { WorkOrderBoard } from "@/components/jobs/WorkOrderBoard";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { getSession } from "@/lib/auth";
 import { isTechnician } from "@/lib/paths";
 import { parseWorkOrderView, workOrderViews } from "@/lib/work-orders";
@@ -25,19 +25,15 @@ export default async function JobsPage({
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">{techView ? "My jobs" : "Work orders"}</h1>
-        <p className="text-stone-600">
-          {techView
+      <PageHeader
+        title={techView ? "My jobs" : "Work orders"}
+        description={
+          techView
             ? "Assigned stops, grouped by today, leftover late jobs, and what's coming."
-            : "The file for every job. Action needed is late leftovers, today, and anything without a day yet. The schedule is still where you place the time."}
-        </p>
-        {techView ? null : (
-          <Link href="/schedule" className="mt-2 inline-block text-sm font-semibold text-orange">
-            Open the schedule
-          </Link>
-        )}
-      </div>
+            : "The file for every job. Action needed is late leftovers, today, and anything without a day yet. The schedule is still where you place the time."
+        }
+        related={techView ? undefined : [{ href: "/schedule", label: "Schedule" }, { href: "/quotes", label: "Quotes" }]}
+      />
       <WorkOrderBoard
         jobs={jobs.map((job) => ({
           id: job.id,

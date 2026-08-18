@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { IntakeBoard } from "@/components/intake/IntakeBoard";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { getSession } from "@/lib/auth";
 import { canManageIntake, phoneDigits } from "@/lib/intake";
 import { isTechnician } from "@/lib/paths";
@@ -30,12 +31,14 @@ export default async function CallLogPage({
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Call log</h1>
-        <p className="text-stone-600">
-          Open calls wait for a quote or a first trip. Log a new one only when you need to.
-        </p>
-      </div>
+      <PageHeader
+        title="Call log"
+        description="Open calls wait for a quote or a first trip. Log a new one only when you need to."
+        related={[
+          { href: "/quotes", label: "Quotes" },
+          { href: "/clients", label: "Clients" },
+        ]}
+      />
       <IntakeBoard
         initialPhone={phoneDigits(params.phone)}
         clients={clients}

@@ -1,4 +1,5 @@
 import { InventoryBoard } from "@/components/inventory/InventoryBoard";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
@@ -27,12 +28,11 @@ export default async function InventoryPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Traps & gear</h1>
-        <p className="text-stone-600">
-          Sorted by where it lives — shop, truck, shed — plus what is currently in the field.
-        </p>
-      </div>
+      <PageHeader
+        title="Traps & gear"
+        description="Sorted by where it lives — shop, truck, shed — plus what is currently in the field."
+        related={[{ href: "/activity", label: "Species log" }]}
+      />
       <InventoryBoard
         serials={equipment.map((item) => item.serialNumber)}
         locations={locations}

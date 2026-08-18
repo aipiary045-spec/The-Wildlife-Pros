@@ -51,6 +51,11 @@ export default async function RoutesPage({
           or Apple Maps (GPS is only the backup pin). Drive times are straight-line miles at 22 mph unless a
           Mapbox token is set, which snaps the previewed order to road time.
         </p>
+        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-orange">
+          <Link href="/schedule" className="hover:underline">
+            Schedule
+          </Link>
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

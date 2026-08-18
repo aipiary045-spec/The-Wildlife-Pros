@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { NewQuoteButton } from "@/components/quotes/QuoteForm";
 import { QuotesSubnav } from "@/components/quotes/QuotesSubnav";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { clientName, formatMoney } from "@/lib/utils";
 
@@ -27,21 +28,22 @@ export default async function QuotesPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl tracking-wide md:text-3xl">Quotes</h1>
-          <p className="text-stone-600">Send estimates clients can approve in the hub, then convert to a job.</p>
-        </div>
-        <NewQuoteButton
-          clients={clients}
-          services={services.map((item) => ({
-            id: item.id,
-            name: item.name,
-            unitPrice: Number(item.unitPrice),
-            taxable: item.taxable,
-          }))}
-        />
-      </div>
+      <PageHeader
+        title="Quotes"
+        description="Send estimates clients can approve in the hub, then convert to a job."
+        related={[{ href: "/jobs", label: "Work orders" }]}
+        actions={
+          <NewQuoteButton
+            clients={clients}
+            services={services.map((item) => ({
+              id: item.id,
+              name: item.name,
+              unitPrice: Number(item.unitPrice),
+              taxable: item.taxable,
+            }))}
+          />
+        }
+      />
       <QuotesSubnav current="quotes" />
       <div className="space-y-2 md:hidden">
         {quotes.map((quote) => (
