@@ -6,7 +6,6 @@ import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { JobCaptureForm } from "@/components/jobs/JobCaptureForm";
 import { JobEditor } from "@/components/jobs/JobEditor";
-import { RecurringForm } from "@/components/jobs/RecurringForm";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { BackLink } from "@/components/layout/BackLink";
@@ -170,14 +169,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             />
           </div>
         </Card>
-        {techView ? null : (
-          <>
-            <JobEditor job={job} technicians={technicians} />
-            <Card title="Recurring / return visits">
-              <RecurringForm jobId={job.id} />
-            </Card>
-          </>
-        )}
+        {techView ? null : <JobEditor job={job} technicians={technicians} />}
         {job.exclusions.length > 0 ? (
           <Card title="Exclusion">
             {job.exclusions.map((work) => (

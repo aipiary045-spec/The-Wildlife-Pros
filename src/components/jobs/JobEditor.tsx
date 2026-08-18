@@ -3,6 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { RecurringForm } from "@/components/jobs/RecurringForm";
 import { AreaSuggestions } from "@/components/schedule/AreaSuggestions";
 import { dateKey } from "@/lib/dates";
 import { JOB_STATUS_LABEL, JOB_TYPE_LABEL } from "@/lib/constants";
@@ -98,86 +99,94 @@ export function JobEditor({
       >
         <div className="min-w-0">
           <h2 className="font-semibold">Edit job</h2>
-          {open ? null : <p className="text-sm text-stone-500">Change the title, tech, time, or instructions.</p>}
+          {open ? null : (
+            <p className="text-sm text-stone-500">Change the title, tech, time, or set a return visit.</p>
+          )}
         </div>
         <ChevronDown size={18} className={`shrink-0 text-stone-500 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
-        <form onSubmit={save} className="space-y-3 border-t border-line px-5 pb-5 pt-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm sm:col-span-2">
-              Title
-              <input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClass} />
-            </label>
-            <label className="block text-sm">
-              Type
-              <select value={type} onChange={(event) => setType(event.target.value)} className={inputClass}>
-                {Object.entries(JOB_TYPE_LABEL).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              Status
-              <select value={status} onChange={(event) => setStatus(event.target.value)} className={inputClass}>
-                {Object.entries(JOB_STATUS_LABEL).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              Technician
-              <select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className={inputClass}>
-                <option value="">Unassigned</option>
-                {technicians.map((tech) => (
-                  <option key={tech.id} value={tech.id}>
-                    {tech.firstName} {tech.lastName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              Minutes on site
-              <input type="number" min={15} step={15} value={durationMin} onChange={(event) => setDurationMin(Number(event.target.value))} className={inputClass} />
-            </label>
-            <div className="sm:col-span-2">
-              <AreaSuggestions
-                propertyId={job.propertyId}
-                excludeJobId={job.id}
-                onPick={(pick) => {
-                  setTechnicianId(pick.technicianId);
-                  setDate(pick.date);
-                  setTime(pick.time);
-                }}
-              />
+        <>
+          <form onSubmit={save} className="space-y-3 border-t border-line px-5 pb-5 pt-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm sm:col-span-2">
+                Title
+                <input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClass} />
+              </label>
+              <label className="block text-sm">
+                Type
+                <select value={type} onChange={(event) => setType(event.target.value)} className={inputClass}>
+                  {Object.entries(JOB_TYPE_LABEL).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                Status
+                <select value={status} onChange={(event) => setStatus(event.target.value)} className={inputClass}>
+                  {Object.entries(JOB_STATUS_LABEL).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                Technician
+                <select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className={inputClass}>
+                  <option value="">Unassigned</option>
+                  {technicians.map((tech) => (
+                    <option key={tech.id} value={tech.id}>
+                      {tech.firstName} {tech.lastName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                Minutes on site
+                <input type="number" min={15} step={15} value={durationMin} onChange={(event) => setDurationMin(Number(event.target.value))} className={inputClass} />
+              </label>
+              <div className="sm:col-span-2">
+                <AreaSuggestions
+                  propertyId={job.propertyId}
+                  excludeJobId={job.id}
+                  onPick={(pick) => {
+                    setTechnicianId(pick.technicianId);
+                    setDate(pick.date);
+                    setTime(pick.time);
+                  }}
+                />
+              </div>
+              <label className="block text-sm">
+                Date
+                <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className={inputClass} />
+              </label>
+              <label className="block text-sm">
+                Time
+                <input type="time" value={time} onChange={(event) => setTime(event.target.value)} className={inputClass} />
+              </label>
+              <label className="block text-sm sm:col-span-2">
+                Instructions
+                <textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} rows={3} className={inputClass} />
+              </label>
             </div>
-            <label className="block text-sm">
-              Date
-              <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className={inputClass} />
-            </label>
-            <label className="block text-sm">
-              Time
-              <input type="time" value={time} onChange={(event) => setTime(event.target.value)} className={inputClass} />
-            </label>
-            <label className="block text-sm sm:col-span-2">
-              Instructions
-              <textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} rows={3} className={inputClass} />
-            </label>
+            {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+            <div className="flex flex-wrap gap-2">
+              <button type="submit" disabled={saving} className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60">
+                {saving ? "Saving…" : "Save job"}
+              </button>
+              <button type="button" disabled={saving} onClick={() => void remove()} className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold text-rose-700">
+                Remove job
+              </button>
+            </div>
+          </form>
+          <div className="border-t border-line px-5 pb-5 pt-4">
+            <h3 className="mb-2 font-semibold">Return visits</h3>
+            <RecurringForm jobId={job.id} />
           </div>
-          {error ? <p className="text-sm text-rose-700">{error}</p> : null}
-          <div className="flex flex-wrap gap-2">
-            <button type="submit" disabled={saving} className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60">
-              {saving ? "Saving…" : "Save job"}
-            </button>
-            <button type="button" disabled={saving} onClick={() => void remove()} className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold text-rose-700">
-              Remove job
-            </button>
-          </div>
-        </form>
+        </>
       ) : null}
     </section>
   );
