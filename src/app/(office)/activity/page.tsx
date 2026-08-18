@@ -1,72 +1,25 @@
-import { format } from "date-fns";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { prisma } from "@/lib/prisma";
-import { DISPOSITION_LABEL } from "@/lib/constants";
+import { CaptureLog } from "@/components/species/CaptureLog";
+import { listCaptureEvents } from "@/lib/species-log";
 
 export const dynamic = "force-dynamic";
 
 export default async function ActivityPage() {
-  const captures = await prisma.captureEvent.findMany({
-    include: {
-      species: true,
-      technician: true,
-      job: { include: { client: true, property: true } },
-      deployment: { include: { equipment: true } },
-    },
-    orderBy: { capturedAt: "desc" },
-  });
+  const captures = await listCaptureEvents();
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Species log"
-        description="Captures, disposition, and which trap or entry they came from."
+        description="All captures across clients and jobs. Log new entries on a work order; they show up here automatically."
         related={[{ href: "/inventory", label: "Traps & gear" }]}
       />
-      <div className="space-y-2 md:hidden">
-        {captures.map((capture) => (
-          <article key={capture.id} className="rounded-2xl border border-line bg-panel p-4">
-            <p className="text-xs text-stone-500">{format(capture.capturedAt, "MMM d, h:mm a")}</p>
-            <p className="font-semibold">
-              {capture.quantity} {capture.species.commonName}
-            </p>
-            <p className="text-sm text-stone-600">{DISPOSITION_LABEL[capture.disposition]}</p>
-            <p className="text-xs text-stone-500">
-              {capture.job.property.address1}
-              {capture.locationNote ? ` · ${capture.locationNote}` : ""}
-              {capture.deployment?.equipment.serialNumber ? ` · ${capture.deployment.equipment.serialNumber}` : ""}
-            </p>
-          </article>
-        ))}
-      </div>
-      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-panel md:block">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-background text-xs uppercase tracking-wider text-stone-500">
-            <tr>
-              <th className="px-4 py-3">When</th>
-              <th className="px-4 py-3">Species</th>
-              <th className="px-4 py-3">Disposition</th>
-              <th className="px-4 py-3">Site</th>
-              <th className="px-4 py-3">Gear</th>
-            </tr>
-          </thead>
-          <tbody>
-            {captures.map((capture) => (
-              <tr key={capture.id} className="border-t border-line">
-                <td className="px-4 py-3">{format(capture.capturedAt, "MMM d, h:mm a")}</td>
-                <td className="px-4 py-3">
-                  {capture.quantity} {capture.species.commonName}
-                </td>
-                <td className="px-4 py-3">{DISPOSITION_LABEL[capture.disposition]}</td>
-                <td className="px-4 py-3">
-                  {capture.job.property.address1}
-                  <p className="text-xs text-stone-500">{capture.locationNote}</p>
-                </td>
-                <td className="px-4 py-3">{capture.deployment?.equipment.serialNumber ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="rounded-2xl border border-line bg-panel p-4 md:p-5">
+        <CaptureLog
+          captures={captures}
+          showClient
+          emptyMessage="No captures logged yet. Open a job and use Species activity to record the first one."
+        />
       </div>
     </div>
   );

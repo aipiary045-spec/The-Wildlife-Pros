@@ -37,7 +37,7 @@ export function JobSpeciesCard({
             <p className="text-sm text-stone-500">
               {captures.length
                 ? `${captures.length} capture${captures.length === 1 ? "" : "s"} logged`
-                : "Log captures and dispositions when you have activity."}
+                : "Log captures and dispositions when you have activity. They show on the client record and office Species log."}
             </p>
           )}
         </div>

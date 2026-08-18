@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ClientEditor } from "@/components/crm/ClientEditor";
+import { ClientSpeciesCard } from "@/components/crm/ClientSpeciesCard";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { listCaptureEvents, summarizeCapturesBySpecies } from "@/lib/species-log";
 import { clientName, formatMoney, formatPhone, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +24,9 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
   });
   if (!client) notFound();
 
+  const captures = await listCaptureEvents({ clientId: id });
+  const speciesSummary = summarizeCapturesBySpecies(captures);
+
   return (
     <div className="space-y-6">
       <div>
@@ -33,6 +38,18 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
         <p className="text-sm text-stone-500">Billing is collected by staff in Square — clients do not log in to pay.</p>
       </div>
       <ClientEditor client={client} />
+      <ClientSpeciesCard captures={captures} />
+      {speciesSummary.length > 0 ? (
+        <p className="text-sm text-stone-600">
+          Totals for {clientName(client)}:{" "}
+          {speciesSummary.map((item, index) => (
+            <span key={item.name}>
+              {index > 0 ? " · " : ""}
+              {item.count} {item.name}
+            </span>
+          ))}
+        </p>
+      ) : null}
       <section className="grid gap-4 md:grid-cols-2">
         {client.properties.map((property) => (
           <article key={property.id} className="rounded-2xl border border-line bg-panel p-5">
