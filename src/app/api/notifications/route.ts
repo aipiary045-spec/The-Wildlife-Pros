@@ -41,7 +41,7 @@ export const GET = async () => {
   }));
 
   if (techView) {
-    return NextResponse.json({ notifications: buildNotifications({ techView: true, lateJobs }) });
+    return NextResponse.json({ notifications: buildNotifications({ techView: true, lateJobs }), newCalls: 0 });
   }
 
   const todayEnd = endOfDay(now);
@@ -95,5 +95,6 @@ export const GET = async () => {
       needsADay,
       newCalls,
     }),
+    newCalls,
   });
 };

@@ -32,7 +32,7 @@ export default async function OfficeLayout({ children }: { children: React.React
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <NotificationCenter />
+            <NotificationCenter showIntake={!isTechnician(session.role)} />
             {myTime ? (
               <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} />
             ) : null}

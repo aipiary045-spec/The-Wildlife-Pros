@@ -1,21 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Phone } from "lucide-react";
 import type { NotificationItem } from "@/lib/notifications";
+import { cn } from "@/lib/utils";
 
-export function NotificationCenter() {
+export function NotificationCenter({ showIntake = false }: { showIntake?: boolean }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
+  const [newCalls, setNewCalls] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     try {
       const response = await fetch("/api/notifications", { credentials: "include" });
       if (!response.ok) return;
-      const data = (await response.json()) as { notifications?: NotificationItem[] };
+      const data = (await response.json()) as { notifications?: NotificationItem[]; newCalls?: number };
       setItems(data.notifications ?? []);
+      setNewCalls(data.newCalls ?? 0);
     } catch {
       // Offline: keep the last list.
     }
@@ -51,9 +56,28 @@ export function NotificationCenter() {
   }, [open]);
 
   const count = items.length;
+  const onIntake = pathname === "/requests" || pathname.startsWith("/requests/");
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative flex items-center gap-2">
+      {showIntake ? (
+        <Link
+          href="/requests"
+          aria-label={newCalls ? `${newCalls} waiting calls` : "Log a call"}
+          title="Log a call"
+          className={cn(
+            "relative flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white",
+            onIntake ? "text-orange" : "text-ink",
+          )}
+        >
+          <Phone size={18} />
+          {newCalls > 0 ? (
+            <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-orange px-1 text-center text-[10px] font-bold leading-4 text-white">
+              {newCalls > 9 ? "9+" : newCalls}
+            </span>
+          ) : null}
+        </Link>
+      ) : null}
       <button
         type="button"
         aria-label={count ? `${count} alerts` : "Alerts"}
