@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Phone, Navigation } from "lucide-react";
+import { telHref } from "@/lib/intake";
+import { googleMapsDirUrl } from "@/lib/maps";
 import { formatMoney } from "@/lib/utils";
 
 type TodayOverview = Awaited<ReturnType<typeof import("@/lib/today").getTodayOverview>>;
@@ -18,6 +20,7 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
         <StatCard href="/jobs?view=needs_invoice" label="Need invoice" value={counts.needsInvoice} />
         <StatCard href="/quotes" label="Approved, no job" value={counts.quotesApproved} />
         <StatCard href="/jobs" label="Late check-ins" value={counts.lateJobs} highlight={counts.lateJobs > 0} />
+        <StatCard href="/inventory" label="Traps out 7+ days" value={counts.staleTraps} highlight={counts.staleTraps > 0} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -26,37 +29,62 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
             <p className="text-sm text-stone-500">Nothing scheduled for today yet.</p>
           ) : (
             data.todayJobs.map((job) => (
-              <Link key={job.id} href={`/jobs/${job.id}`} className="block py-2 text-sm hover:text-orange">
-                <span className="font-medium">
-                  {job.scheduledStart ? format(job.scheduledStart, "h:mm a") : "Flex"} · {job.number}
-                </span>
-                <span className="block text-stone-600">
-                  {job.title} · {job.clientName}
-                </span>
-              </Link>
+              <TodayRow
+                key={job.id}
+                href={`/jobs/${job.id}`}
+                primary={`${job.scheduledStart ? format(job.scheduledStart, "h:mm a") : "Flex"} · ${job.number}`}
+                secondary={`${job.title} · ${job.clientName}`}
+                phone={job.clientPhone}
+                address={job.address}
+              />
             ))
           )}
         </Panel>
 
         <Panel title="Needs attention" href="/more">
-          {data.lateJobs.length === 0 && data.quotesWaiting.length === 0 && data.pastDueInvoices.length === 0 ? (
+          {data.lateJobs.length === 0 &&
+          data.quotesWaiting.length === 0 &&
+          data.pastDueInvoices.length === 0 &&
+          data.staleTraps.length === 0 ? (
             <p className="text-sm text-stone-500">You're caught up on the urgent stuff.</p>
           ) : (
             <>
               {data.lateJobs.map((job) => (
-                <Link key={job.id} href={`/jobs/${job.id}`} className="block py-2 text-sm text-rose-800 hover:underline">
-                  Late {job.minutesLate}m · {job.number} · {job.clientName}
-                </Link>
+                <TodayRow
+                  key={job.id}
+                  href={`/jobs/${job.id}`}
+                  primary={`Late ${job.minutesLate}m · ${job.number} · ${job.clientName}`}
+                  secondary={job.address}
+                  phone={job.clientPhone}
+                  address={job.address}
+                  tone="urgent"
+                />
+              ))}
+              {data.staleTraps.map((trap) => (
+                <TodayRow
+                  key={trap.id}
+                  href={`/jobs/${trap.jobId}`}
+                  primary={`Trap ${trap.serial} out since ${format(trap.deployedAt, "MMM d")}`}
+                  secondary={`${trap.clientName} · ${trap.locationNote}`}
+                />
               ))}
               {data.quotesWaiting.map((quote) => (
-                <Link key={quote.id} href={`/quotes/${quote.id}`} className="block py-2 text-sm hover:text-orange">
-                  Quote waiting · {quote.number} · {quote.clientName}
-                </Link>
+                <TodayRow
+                  key={quote.id}
+                  href={`/quotes/${quote.id}`}
+                  primary={`Quote waiting · ${quote.number} · ${quote.clientName}`}
+                  secondary={quote.title}
+                  phone={quote.clientPhone}
+                />
               ))}
               {data.pastDueInvoices.map((invoice) => (
-                <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="block py-2 text-sm hover:text-orange">
-                  Past due · {invoice.number} · {formatMoney(invoice.balance)}
-                </Link>
+                <TodayRow
+                  key={invoice.id}
+                  href={`/invoices/${invoice.id}`}
+                  primary={`Past due · ${invoice.number} · ${formatMoney(invoice.balance)}`}
+                  secondary={invoice.clientName}
+                  phone={invoice.clientPhone}
+                />
               ))}
             </>
           )}
@@ -72,6 +100,51 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
         <QuickLink href="/activity" label="Species log" />
         <QuickLink href="/exports" label="Exports" />
       </section>
+    </div>
+  );
+}
+
+function TodayRow({
+  href,
+  primary,
+  secondary,
+  phone,
+  address,
+  tone = "default",
+}: {
+  href: string;
+  primary: string;
+  secondary?: string;
+  phone?: string | null;
+  address?: string;
+  tone?: "default" | "urgent";
+}) {
+  const callHref = telHref(phone);
+  const navHref = address ? googleMapsDirUrl({ address }) : null;
+  return (
+    <div className={`flex items-start justify-between gap-2 py-2 text-sm ${tone === "urgent" ? "text-rose-800" : ""}`}>
+      <Link href={href} className="min-w-0 flex-1 hover:underline">
+        <span className="font-medium">{primary}</span>
+        {secondary ? <span className="block text-stone-600">{secondary}</span> : null}
+      </Link>
+      <div className="flex shrink-0 gap-1">
+        {callHref ? (
+          <a href={callHref} aria-label="Call" className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-background">
+            <Phone size={16} />
+          </a>
+        ) : null}
+        {navHref ? (
+          <a
+            href={navHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Navigate"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-background"
+          >
+            <Navigation size={16} />
+          </a>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -104,10 +104,13 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
           )}
           <QuoteActions
             quoteId={quote.id}
+            quoteNumber={quote.number}
             status={quote.status}
             technicians={technicians}
             portalToken={quote.client.portalToken}
             propertyId={quote.propertyId}
+            clientEmail={quote.client.email}
+            clientPhone={quote.client.phone}
             techView={techView}
             invoice={invoice ? { id: invoice.id, balance: Number(invoice.balance) } : null}
           />

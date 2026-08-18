@@ -8,6 +8,7 @@ import { JobPhotosCard } from "@/components/jobs/JobPhotosCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { JobFieldBar } from "@/components/jobs/JobFieldBar";
 import { JobQuoteBillingBanner } from "@/components/jobs/JobQuoteBillingBanner";
+import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
 import { JobEditor } from "@/components/jobs/JobEditor";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
@@ -114,6 +115,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             technicianId={job.technicianId}
             technicians={technicians}
           />
+          {["SCHEDULED", "EN_ROUTE", "ON_SITE"].includes(job.status) ? (
+            <NotifyCustomerButton jobId={job.id} clientPhone={job.client.phone} />
+          ) : null}
           {canBill ? (
             <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
           ) : null}

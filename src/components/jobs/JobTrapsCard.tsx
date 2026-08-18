@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EQUIPMENT_TYPE_LABEL, EQUIPMENT_TYPES } from "@/lib/constants";
 import { suggestSerial } from "@/lib/equipment";
 import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
+import { TrapQrScanner } from "@/components/jobs/TrapQrScanner";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 
@@ -55,6 +56,7 @@ export function JobTrapsCard({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [retrieving, setRetrieving] = useState<string | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     if (equipmentId === "new") return;
@@ -130,6 +132,17 @@ export function JobTrapsCard({
     router.refresh();
   }
 
+  function pickSerial(serial: string) {
+    const match = stock.find((item) => item.serialNumber.toUpperCase() === serial);
+    if (match) {
+      setEquipmentId(match.id);
+      return;
+    }
+    setEquipmentId("new");
+    setSerialNumber(serial);
+    setName("");
+  }
+
   return (
     <section className="rounded-2xl border border-line bg-panel p-5">
       <h2 className="mb-3 font-semibold">Traps on this job</h2>
@@ -164,6 +177,19 @@ export function JobTrapsCard({
 
       <form onSubmit={deploy} className="mt-4 space-y-3 border-t border-line pt-4">
         <p className="text-sm font-medium">Deploy on this job</p>
+        <button
+          type="button"
+          onClick={() => setScanOpen(true)}
+          className="min-h-11 w-full rounded-lg border border-dashed border-orange px-4 text-sm font-semibold text-orange"
+        >
+          Scan trap QR
+        </button>
+        <TrapQrScanner
+          open={scanOpen}
+          serials={serials}
+          onClose={() => setScanOpen(false)}
+          onScan={pickSerial}
+        />
         <label className="block text-sm">
           Gear
           <select

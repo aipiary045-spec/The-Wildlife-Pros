@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
+import { SendQuoteDialog } from "@/components/quotes/SendQuoteDialog";
 import { ReturnVisitFields, addReturnVisit } from "@/components/jobs/RecurringForm";
 import { FREQUENCY_RETURN_DAYS } from "@/lib/schedule-needs";
 import { AreaSuggestions } from "@/components/schedule/AreaSuggestions";
@@ -13,44 +14,31 @@ import type { ScheduleTech } from "@/components/schedule/job-card";
 
 export function QuoteActions({
   quoteId,
+  quoteNumber,
   status,
   technicians,
   portalToken,
   propertyId,
+  clientEmail,
+  clientPhone,
   techView = false,
   invoice,
 }: {
   quoteId: string;
+  quoteNumber: string;
   status: string;
   technicians: ScheduleTech[];
   portalToken?: string | null;
   propertyId?: string | null;
+  clientEmail?: string | null;
+  clientPhone?: string | null;
   techView?: boolean;
   invoice?: { id: string; balance: number } | null;
 }) {
   const router = useRouter();
-  const [saving, setSaving] = useState("");
-  const [error, setError] = useState("");
   const [convertOpen, setConvertOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   const canInvoice = quoteCanInvoice(status) && !invoice;
-
-  async function send() {
-    setSaving("send");
-    setError("");
-    const response = await fetch(`/api/quotes/${quoteId}`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "SENT" }),
-    });
-    const data = (await response.json()) as { error?: string };
-    setSaving("");
-    if (!response.ok) {
-      setError(data.error ?? "Could not send this quote.");
-      return;
-    }
-    router.refresh();
-  }
 
   if (status === "CONVERTED" && !invoice && !techView) return null;
 
@@ -59,11 +47,11 @@ export function QuoteActions({
       {techView ? null : status === "DRAFT" || status === "DECLINED" ? (
         <button
           type="button"
-          disabled={Boolean(saving)}
-          onClick={() => void send()}
+          disabled={false}
+          onClick={() => setSendOpen(true)}
           className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {saving === "send" ? "Sending…" : "Send to customer"}
+          Send to customer
         </button>
       ) : null}
       {techView ? null : quoteCanConvert(status) ? (
@@ -92,13 +80,24 @@ export function QuoteActions({
       {techView || !portalToken || (status !== "SENT" && status !== "VIEWED") ? null : (
         <p className="text-xs text-stone-500">Customer hub: /portal/{portalToken}</p>
       )}
-      {error ? <p className="w-full text-sm text-rose-700">{error}</p> : null}
       {convertOpen ? (
         <ConvertDialog
           quoteId={quoteId}
           propertyId={propertyId}
           technicians={technicians}
           onClose={() => setConvertOpen(false)}
+        />
+      ) : null}
+      {sendOpen ? (
+        <SendQuoteDialog
+          quoteId={quoteId}
+          quoteNumber={quoteNumber}
+          clientEmail={clientEmail}
+          clientPhone={clientPhone}
+          onClose={() => {
+            setSendOpen(false);
+            router.refresh();
+          }}
         />
       ) : null}
     </div>
