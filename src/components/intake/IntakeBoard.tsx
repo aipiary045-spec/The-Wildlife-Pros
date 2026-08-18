@@ -94,8 +94,8 @@ export function IntakeBoard({
       email: item.client.email ?? "",
       address1: item.property?.address1 ?? "",
       city: item.property?.city ?? "Charlotte",
-      title: item.title.startsWith("Incoming Quo") ? "" : item.title,
-      details: item.details?.startsWith("Rang on Quo") ? "" : (item.details ?? ""),
+      title: item.title,
+      details: item.details ?? "",
       source: item.source,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -170,7 +170,7 @@ export function IntakeBoard({
         <div>
           <h2 className="font-semibold">Log a call</h2>
           <p className="text-sm text-stone-600">
-            Quo sends the caller ID when it rings. Paste a number yourself if you are logging a call by hand.
+            Paste the number if you have it. We will match someone already in the book when we can.
           </p>
         </div>
         <label className="block text-sm font-medium">
@@ -393,7 +393,7 @@ function RequestCard({
           </p>
           {item.details ? <p className="mt-2 text-sm text-stone-600">{item.details}</p> : null}
           <p className="mt-1 text-xs text-stone-500">
-            {INTAKE_SOURCE_LABEL[item.source] ?? item.source}
+            {INTAKE_SOURCE_LABEL[item.source] ?? "Phone"}
             {preferred ? ` · wants ${preferred}` : ""}
           </p>
         </div>
