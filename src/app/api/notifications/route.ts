@@ -6,6 +6,7 @@ import { canReviewDayOff } from "@/lib/day-off";
 import { invoiceAge } from "@/lib/invoice-aging";
 import { isLateForCheckIn, minutesLate, type LateCheckInJob } from "@/lib/late-checkin";
 import { buildNotifications } from "@/lib/notifications";
+import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
 import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { clientName, propertyAddress } from "@/lib/utils";
@@ -65,7 +66,7 @@ export const GET = async () => {
     prisma.job.count({ where: { status: "COMPLETED", invoices: { none: {} } } }),
     prisma.quote.count({ where: { status: { in: ["SENT", "VIEWED"] } } }),
     prisma.job.count({ where: { status: "UNSCHEDULED" } }),
-    prisma.serviceRequest.count({ where: { status: "NEW" } }),
+    prisma.serviceRequest.count({ where: { status: { in: [...OPEN_REQUEST_STATUSES] } } }),
   ]);
 
   const pastDueInvoices = invoices.filter((invoice) =>

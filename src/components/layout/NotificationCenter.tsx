@@ -63,7 +63,7 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
       {showIntake ? (
         <Link
           href="/calls"
-          aria-label={newCalls ? `${newCalls} waiting calls` : "Call log"}
+          aria-label={newCalls ? `${newCalls} calls still need a next step` : "Call log"}
           title="Call log"
           className={cn(
             "relative flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white",

@@ -33,7 +33,7 @@ export default async function CallLogPage({
       <div>
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Call log</h1>
         <p className="text-stone-600">
-          Log the call, match the person in the book, then turn it into a quote or a first trip.
+          Open calls wait for a quote or a first trip. Log a new one only when you need to.
         </p>
       </div>
       <IntakeBoard

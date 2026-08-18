@@ -1,15 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  callLogDayHeading,
   canAutoFillClient,
   canConvertRequest,
   canManageIntake,
   emailsMatch,
   findMatchingClient,
   findMatchingProperty,
+  formatCallLoggedAt,
+  groupCallsByDay,
   parseConvertTarget,
   parseIntakeBody,
   parseRequestPatch,
+  partitionCallLog,
   phonesMatch,
   requestIsOpen,
   searchClients,
@@ -121,6 +125,59 @@ test("parseIntakeBody requires a name or existing client, a title, and a street 
   });
   assert.equal(existing.clientId, "c1");
   assert.equal(existing.address1, "");
+});
+
+test("call log keeps open work separate from already handled calls", () => {
+  const { open, handled } = partitionCallLog([
+    { id: "1", status: "NEW" },
+    { id: "2", status: "ASSESSED" },
+    { id: "3", status: "CONVERTED_QUOTE" },
+    { id: "4", status: "CLOSED" },
+    { id: "5", status: "CONVERTED_JOB" },
+  ]);
+  assert.deepEqual(
+    open.map((item) => item.id),
+    ["1", "2"],
+  );
+  assert.deepEqual(
+    handled.map((item) => item.id),
+    ["3", "4", "5"],
+  );
+});
+
+test("call log groups by Eastern calendar day, newest day first", () => {
+  const groups = groupCallsByDay(
+    [
+      { id: "late-night", createdAt: "2026-08-18T03:30:00.000Z" },
+      { id: "monday-morning", createdAt: "2026-08-17T14:00:00.000Z" },
+      { id: "monday-afternoon", createdAt: "2026-08-17T20:00:00.000Z" },
+    ],
+    "America/New_York",
+  );
+  assert.deepEqual(
+    groups.map((group) => [group.dateKey, group.items.map((item) => item.id)]),
+    [
+      ["2026-08-17", ["late-night", "monday-morning", "monday-afternoon"]],
+    ],
+  );
+  const split = groupCallsByDay(
+    [
+      { id: "tuesday", createdAt: "2026-08-18T04:05:00.000Z" },
+      { id: "monday", createdAt: "2026-08-18T03:55:00.000Z" },
+    ],
+    "America/New_York",
+  );
+  assert.deepEqual(
+    split.map((group) => group.dateKey),
+    ["2026-08-18", "2026-08-17"],
+  );
+});
+
+test("call log day headings say today, yesterday, or the weekday", () => {
+  assert.equal(callLogDayHeading("2026-08-18", "2026-08-18"), "Today");
+  assert.equal(callLogDayHeading("2026-08-17", "2026-08-18"), "Yesterday");
+  assert.equal(callLogDayHeading("2026-08-16", "2026-08-18"), "Sunday, Aug 16");
+  assert.equal(formatCallLoggedAt("2026-08-18T14:05:00.000Z", "America/New_York"), "10:05 AM");
 });
 
 test("parse helpers accept quote, job, or a simple close", () => {

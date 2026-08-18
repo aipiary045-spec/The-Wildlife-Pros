@@ -1,4 +1,5 @@
 import { isTechnician } from "@/lib/paths";
+import { APP_TIMEZONE, dateKeyInZone } from "@/lib/timezone";
 
 export const INTAKE_SOURCES = ["phone", "web", "walk-in", "referral"] as const;
 export type IntakeSource = (typeof INTAKE_SOURCES)[number];
@@ -11,6 +12,61 @@ export function canManageIntake(role: string) {
 
 export function requestIsOpen(status: string) {
   return status === "NEW" || status === "ASSESSED";
+}
+
+export function partitionCallLog<T extends { status: string }>(items: T[]) {
+  const open: T[] = [];
+  const handled: T[] = [];
+  for (const item of items) {
+    if (requestIsOpen(item.status)) open.push(item);
+    else handled.push(item);
+  }
+  return { open, handled };
+}
+
+export type CallLogDayGroup<T> = { dateKey: string; items: T[] };
+
+export function groupCallsByDay<T extends { createdAt: string | Date }>(
+  items: T[],
+  timeZone = APP_TIMEZONE,
+): CallLogDayGroup<T>[] {
+  const groups: CallLogDayGroup<T>[] = [];
+  const index = new Map<string, T[]>();
+  for (const item of items) {
+    const key = dateKeyInZone(new Date(item.createdAt), timeZone);
+    let bucket = index.get(key);
+    if (!bucket) {
+      bucket = [];
+      index.set(key, bucket);
+      groups.push({ dateKey: key, items: bucket });
+    }
+    bucket.push(item);
+  }
+  return groups;
+}
+
+export function callLogDayHeading(dateKey: string, todayKey: string) {
+  if (dateKey === todayKey) return "Today";
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const [todayYear, todayMonth, todayDay] = todayKey.split("-").map(Number);
+  const diffDays = Math.round(
+    (Date.UTC(todayYear, todayMonth - 1, todayDay) - Date.UTC(year, month - 1, day)) / 86_400_000,
+  );
+  if (diffDays === 1) return "Yesterday";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
+export function formatCallLoggedAt(value: string | Date, timeZone = APP_TIMEZONE) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 export function canConvertRequest(status: string) {

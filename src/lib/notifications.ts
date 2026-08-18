@@ -153,8 +153,10 @@ export function buildNotifications(input: {
       }),
       countItem("intake", input.newCalls ?? 0, {
         title:
-          (input.newCalls ?? 0) === 1 ? "1 new call is waiting" : `${input.newCalls} new calls are waiting`,
-        body: "Turn them into a quote or a first trip.",
+          (input.newCalls ?? 0) === 1
+            ? "1 call still needs a next step"
+            : `${input.newCalls} calls still need a next step`,
+        body: "New or looked at — not a quote or trip yet.",
         href: "/calls",
       }),
     ].filter((item): item is NotificationItem => item != null),

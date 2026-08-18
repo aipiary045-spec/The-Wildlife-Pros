@@ -1,17 +1,22 @@
 "use client";
 
-import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { INTAKE_SOURCE_LABEL, REQUEST_STATUS_LABEL } from "@/lib/constants";
 import {
+  callLogDayHeading,
   canAutoFillClient,
   findMatchingClient,
+  formatCallLoggedAt,
+  groupCallsByDay,
+  partitionCallLog,
   searchClients,
   type IntakeMatchClient,
   telHref,
 } from "@/lib/intake";
+import { dateKeyInZone } from "@/lib/timezone";
 import { clientName, formatPhone } from "@/lib/utils";
 
 export type IntakeRequest = {
@@ -60,6 +65,7 @@ export function IntakeBoard({
   initialPhone?: string;
 }) {
   const router = useRouter();
+  const [composing, setComposing] = useState(Boolean(initialPhone));
   const [draft, setDraft] = useState({ ...empty, phone: initialPhone });
   const [clientId, setClientId] = useState<string | undefined>();
   const [ignoredIds, setIgnoredIds] = useState<string[]>([]);
@@ -77,6 +83,10 @@ export function IntakeBoard({
     [clients, draft.phone, draft.firstName, draft.lastName, draft.email, clientId, ignoredIds],
   );
   const selected = clientId ? (findMatchingClient(clients, { clientId }) ?? hits[0]) : null;
+  const { open, handled } = useMemo(() => partitionCallLog(requests), [requests]);
+  const openByDay = useMemo(() => groupCallsByDay(open), [open]);
+  const handledByDay = useMemo(() => groupCallsByDay(handled), [handled]);
+  const todayKey = dateKeyInZone(new Date());
 
   function applyClient(client: IntakeMatchClient) {
     const property = client.properties[0];
@@ -110,6 +120,19 @@ export function IntakeBoard({
     setClientId(undefined);
   }
 
+  function resetComposer() {
+    setDraft({ ...empty });
+    setClientId(undefined);
+    setIgnoredIds([]);
+    setError("");
+  }
+
+  function startNewCall() {
+    resetComposer();
+    setComposing(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function finish(item: IntakeRequest) {
     const unknown = item.client.firstName === "Unknown";
     setClientId(item.client.id);
@@ -126,6 +149,7 @@ export function IntakeBoard({
       details: item.details ?? "",
       source: item.source,
     });
+    setComposing(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -149,9 +173,8 @@ export function IntakeBoard({
       setError(data.error ?? "Could not save that call.");
       return;
     }
-    setDraft({ ...empty });
-    setClientId(undefined);
-    setIgnoredIds([]);
+    resetComposer();
+    setComposing(false);
     router.refresh();
   }
 
@@ -190,221 +213,280 @@ export function IntakeBoard({
     router.refresh();
   }
 
-  const open = requests.filter((item) => item.status === "NEW" || item.status === "ASSESSED");
-  const done = requests.filter((item) => item.status !== "NEW" && item.status !== "ASSESSED");
-
   return (
     <div className="space-y-6">
-      <form onSubmit={(event) => void save(event)} className="space-y-3 rounded-2xl border border-line bg-panel p-5">
-        <div>
-          <h2 className="font-semibold">Log a call</h2>
-          <p className="text-sm text-stone-600">
-            Start typing a number or a name. If they are already in the book, pick the right person — even when two people share a name.
-          </p>
-        </div>
-        <label className="block text-sm font-medium">
-          Number on the line
-          <input
-            inputMode="tel"
-            autoComplete="tel"
-            value={draft.phone}
-            onChange={(event) => {
-              setClientId(undefined);
-              setDraft((current) => ({ ...current, phone: event.target.value }));
-            }}
-            className={inputClass}
-            placeholder="Paste or type the caller ID"
-          />
-        </label>
-        {!clientId && hits.length > 0 ? (
-          <div className="space-y-2 rounded-xl border border-orange/40 bg-orange/10 p-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-orange">
-              {hits.length === 1 ? "Already in the book" : `${hits.length} people match`}
-            </p>
-            {hits.map((hit) => (
-              <button
-                key={hit.id}
-                type="button"
-                onClick={() => applyClient(hit)}
-                className="block w-full rounded-lg bg-white px-3 py-2 text-left"
-              >
-                <p className="font-semibold">{clientName(hit)}</p>
-                <p className="text-sm text-stone-600">
-                  {formatPhone(hit.phone)}
-                  {hit.properties[0] ? ` · ${hit.properties[0].address1}, ${hit.properties[0].city}` : ""}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-orange">Use this client</p>
-              </button>
-            ))}
-          </div>
-        ) : null}
-        {clientId && selected ? (
-          <p className="rounded-xl bg-background px-3 py-2 text-sm">
-            Using {clientName(selected)}
-            {selected.properties[0] ? ` · ${selected.properties[0].address1}` : ""}.{" "}
-            <button type="button" onClick={clearMatch} className="font-semibold text-orange">
-              Not them
-            </button>
-          </p>
-        ) : null}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">
-            First name
-            <input
-              required={!clientId}
-              value={draft.firstName}
-              onChange={(event) => {
-                setClientId(undefined);
-                setDraft((current) => ({ ...current, firstName: event.target.value }));
+      {composing ? (
+        <form onSubmit={(event) => void save(event)} className="space-y-3 rounded-2xl border border-line bg-panel p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold">Log a call</h2>
+              <p className="text-sm text-stone-600">
+                Start typing a number or a name. If they are already in the book, pick the right person — even when two
+                people share a name.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                resetComposer();
+                setComposing(false);
               }}
-              className={inputClass}
-            />
-          </label>
-          <label className="text-sm">
-            Last name
-            <input
-              required={!clientId}
-              value={draft.lastName}
-              onChange={(event) => {
-                setClientId(undefined);
-                setDraft((current) => ({ ...current, lastName: event.target.value }));
-              }}
-              className={inputClass}
-            />
-          </label>
-          <label className="text-sm sm:col-span-2">
-            Email (optional)
-            <input
-              type="email"
-              value={draft.email}
-              onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))}
-              className={inputClass}
-            />
-          </label>
-          <label className="text-sm sm:col-span-2">
-            Street
-            <input
-              required={!clientId}
-              value={draft.address1}
-              onChange={(event) => setDraft((current) => ({ ...current, address1: event.target.value }))}
-              className={inputClass}
-              placeholder="812 Willow Crest Ln"
-            />
-          </label>
-          <label className="text-sm">
-            City
-            <input
-              value={draft.city}
-              onChange={(event) => setDraft((current) => ({ ...current, city: event.target.value }))}
-              className={inputClass}
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm">
-              State
-              <input
-                value={draft.state}
-                onChange={(event) => setDraft((current) => ({ ...current, state: event.target.value }))}
-                className={inputClass}
-              />
-            </label>
-            <label className="text-sm">
-              ZIP
-              <input
-                value={draft.postalCode}
-                onChange={(event) => setDraft((current) => ({ ...current, postalCode: event.target.value }))}
-                className={inputClass}
-              />
-            </label>
-          </div>
-          <label className="text-sm sm:col-span-2">
-            What did they call about
-            <input
-              required
-              value={draft.title}
-              onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
-              className={inputClass}
-              placeholder="Raccoon in the attic"
-            />
-          </label>
-          <label className="text-sm sm:col-span-2">
-            Notes from the call
-            <textarea
-              value={draft.details}
-              onChange={(event) => setDraft((current) => ({ ...current, details: event.target.value }))}
-              rows={3}
-              className={inputClass}
-              placeholder="Heard them last night. Can we come Thursday."
-            />
-          </label>
-          <label className="text-sm">
-            They want a day (optional)
-            <input
-              type="date"
-              value={draft.preferredOn}
-              onChange={(event) => setDraft((current) => ({ ...current, preferredOn: event.target.value }))}
-              className={inputClass}
-            />
-          </label>
-          <label className="text-sm">
-            How they reached you
-            <select
-              value={draft.source}
-              onChange={(event) => setDraft((current) => ({ ...current, source: event.target.value }))}
-              className={inputClass}
+              className="shrink-0 text-sm font-semibold text-stone-600"
             >
-              {Object.entries(INTAKE_SOURCE_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              Cancel
+            </button>
+          </div>
+          <label className="block text-sm font-medium">
+            Number on the line
+            <input
+              inputMode="tel"
+              autoComplete="tel"
+              value={draft.phone}
+              onChange={(event) => {
+                setClientId(undefined);
+                setDraft((current) => ({ ...current, phone: event.target.value }));
+              }}
+              className={inputClass}
+              placeholder="Paste or type the caller ID"
+            />
           </label>
-        </div>
-        {error ? <p className="text-sm text-rose-700">{error}</p> : null}
-        <button type="submit" disabled={saving} className="min-h-12 w-full rounded-lg bg-orange text-sm font-semibold text-white disabled:opacity-60 sm:w-auto sm:px-6">
-          {saving ? "Saving…" : "Save call"}
-        </button>
-      </form>
-
-      <section className="space-y-3">
-        <h2 className="font-semibold">Open calls</h2>
-        {open.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-line bg-panel p-5 text-sm text-stone-600">
-            No open calls. Paste the next caller ID when the phone rings.
+          {!clientId && hits.length > 0 ? (
+            <div className="space-y-2 rounded-xl border border-orange/40 bg-orange/10 p-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-orange">
+                {hits.length === 1 ? "Already in the book" : `${hits.length} people match`}
+              </p>
+              {hits.map((hit) => (
+                <button
+                  key={hit.id}
+                  type="button"
+                  onClick={() => applyClient(hit)}
+                  className="block w-full rounded-lg bg-white px-3 py-2 text-left"
+                >
+                  <p className="font-semibold">{clientName(hit)}</p>
+                  <p className="text-sm text-stone-600">
+                    {formatPhone(hit.phone)}
+                    {hit.properties[0] ? ` · ${hit.properties[0].address1}, ${hit.properties[0].city}` : ""}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-orange">Use this client</p>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {clientId && selected ? (
+            <p className="rounded-xl bg-background px-3 py-2 text-sm">
+              Using {clientName(selected)}
+              {selected.properties[0] ? ` · ${selected.properties[0].address1}` : ""}.{" "}
+              <button type="button" onClick={clearMatch} className="font-semibold text-orange">
+                Not them
+              </button>
+            </p>
+          ) : null}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-sm">
+              First name
+              <input
+                required={!clientId}
+                value={draft.firstName}
+                onChange={(event) => {
+                  setClientId(undefined);
+                  setDraft((current) => ({ ...current, firstName: event.target.value }));
+                }}
+                className={inputClass}
+              />
+            </label>
+            <label className="text-sm">
+              Last name
+              <input
+                required={!clientId}
+                value={draft.lastName}
+                onChange={(event) => {
+                  setClientId(undefined);
+                  setDraft((current) => ({ ...current, lastName: event.target.value }));
+                }}
+                className={inputClass}
+              />
+            </label>
+            <label className="text-sm sm:col-span-2">
+              Email (optional)
+              <input
+                type="email"
+                value={draft.email}
+                onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))}
+                className={inputClass}
+              />
+            </label>
+            <label className="text-sm sm:col-span-2">
+              Street
+              <input
+                required={!clientId}
+                value={draft.address1}
+                onChange={(event) => setDraft((current) => ({ ...current, address1: event.target.value }))}
+                className={inputClass}
+                placeholder="812 Willow Crest Ln"
+              />
+            </label>
+            <label className="text-sm">
+              City
+              <input
+                value={draft.city}
+                onChange={(event) => setDraft((current) => ({ ...current, city: event.target.value }))}
+                className={inputClass}
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-sm">
+                State
+                <input
+                  value={draft.state}
+                  onChange={(event) => setDraft((current) => ({ ...current, state: event.target.value }))}
+                  className={inputClass}
+                />
+              </label>
+              <label className="text-sm">
+                ZIP
+                <input
+                  value={draft.postalCode}
+                  onChange={(event) => setDraft((current) => ({ ...current, postalCode: event.target.value }))}
+                  className={inputClass}
+                />
+              </label>
+            </div>
+            <label className="text-sm sm:col-span-2">
+              What did they call about
+              <input
+                required
+                value={draft.title}
+                onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
+                className={inputClass}
+                placeholder="Raccoon in the attic"
+              />
+            </label>
+            <label className="text-sm sm:col-span-2">
+              Notes from the call
+              <textarea
+                value={draft.details}
+                onChange={(event) => setDraft((current) => ({ ...current, details: event.target.value }))}
+                rows={3}
+                className={inputClass}
+                placeholder="Heard them last night. Can we come Thursday."
+              />
+            </label>
+            <label className="text-sm">
+              They want a day (optional)
+              <input
+                type="date"
+                value={draft.preferredOn}
+                onChange={(event) => setDraft((current) => ({ ...current, preferredOn: event.target.value }))}
+                className={inputClass}
+              />
+            </label>
+            <label className="text-sm">
+              How they reached you
+              <select
+                value={draft.source}
+                onChange={(event) => setDraft((current) => ({ ...current, source: event.target.value }))}
+                className={inputClass}
+              >
+                {Object.entries(INTAKE_SOURCE_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+          <button
+            type="submit"
+            disabled={saving}
+            className="min-h-12 w-full rounded-lg bg-orange text-sm font-semibold text-white disabled:opacity-60 sm:w-auto sm:px-6"
+          >
+            {saving ? "Saving…" : "Save call"}
+          </button>
+        </form>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-stone-600">
+            {open.length
+              ? `${open.length === 1 ? "1 call still needs" : `${open.length} calls still need`} a quote or trip`
+              : "Nothing waiting — handled calls stay in the log below"}
           </p>
-        ) : null}
-        {open.map((item) => (
-          <RequestCard
-            key={item.id}
-            item={item}
-            busy={busyId === item.id}
-            onFinish={() => finish(item)}
-            onQuote={() => void convert(item.id, "quote")}
-            onTrip={() => void convert(item.id, "job")}
-            onClose={() => void patch(item.id, "CLOSED")}
-          />
-        ))}
-      </section>
+          <button
+            type="button"
+            onClick={startNewCall}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-orange px-4 text-sm font-semibold text-white"
+          >
+            <Plus size={16} />
+            Log a call
+          </button>
+        </div>
+      )}
 
-      {done.length > 0 ? (
-        <section className="space-y-2">
-          <h2 className="font-semibold">Already handled</h2>
-          {done.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-line bg-panel p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold">{item.title}</p>
-                  <p className="text-sm text-stone-600">{clientName(item.client)}</p>
-                </div>
-                <StatusBadge status={item.status} label={REQUEST_STATUS_LABEL[item.status]} />
-              </div>
+      {error && !composing ? <p className="text-sm text-rose-700">{error}</p> : null}
+
+      {open.length > 0 ? (
+        <section className="space-y-4">
+          <h2 className="font-semibold">Needs a next step</h2>
+          {openByDay.map((group) => (
+            <div key={group.dateKey} className="space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-stone-500">
+                {callLogDayHeading(group.dateKey, todayKey)}
+              </h3>
+              {group.items.map((item) => (
+                <RequestCard
+                  key={item.id}
+                  item={item}
+                  busy={busyId === item.id}
+                  onFinish={() => finish(item)}
+                  onQuote={() => void convert(item.id, "quote")}
+                  onTrip={() => void convert(item.id, "job")}
+                  onClose={() => void patch(item.id, "CLOSED")}
+                />
+              ))}
             </div>
           ))}
         </section>
       ) : null}
+
+      {handled.length > 0 ? (
+        <section className="space-y-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-semibold">Already handled</h2>
+            <p className="text-sm text-stone-500">{handled.length}</p>
+          </div>
+          {handledByDay.map((group) => (
+            <div key={group.dateKey} className="overflow-hidden rounded-2xl border border-line bg-panel">
+              <div className="border-b border-line bg-background px-4 py-2">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-stone-500">
+                  {callLogDayHeading(group.dateKey, todayKey)}
+                </h3>
+              </div>
+              <ul>
+                {group.items.map((item) => (
+                  <HandledCallRow key={item.id} item={item} />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
+      {requests.length === 0 && !composing ? (
+        <p className="rounded-2xl border border-dashed border-line bg-panel p-5 text-sm text-stone-600">
+          No calls logged yet. Tap Log a call when the phone rings.
+        </p>
+      ) : null}
     </div>
   );
+}
+
+function callMeta(item: IntakeRequest) {
+  const bits = [
+    item.client.phone ? formatPhone(item.client.phone) : null,
+    item.property ? `${item.property.address1}, ${item.property.city}` : null,
+    INTAKE_SOURCE_LABEL[item.source] ?? "Phone",
+  ].filter(Boolean);
+  return bits.join(" · ");
 }
 
 function RequestCard({
@@ -423,22 +505,23 @@ function RequestCard({
   onClose: () => void;
 }) {
   const callHref = telHref(item.client.phone);
-  const preferred = item.preferredAt ? format(new Date(item.preferredAt), "EEE, MMM d") : null;
+  const preferred = item.preferredAt
+    ? new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" }).format(
+        new Date(item.preferredAt),
+      )
+    : null;
   return (
     <article className="rounded-2xl border border-line bg-panel p-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+            {formatCallLoggedAt(item.createdAt)}
+          </p>
           <p className="font-semibold">{item.title}</p>
           <p className="text-sm text-stone-600">{clientName(item.client)}</p>
-          <p className="text-sm text-stone-500">
-            {formatPhone(item.client.phone)}
-            {item.property ? ` · ${item.property.address1}` : ""}
-          </p>
+          <p className="text-sm text-stone-500">{callMeta(item)}</p>
           {item.details ? <p className="mt-2 text-sm text-stone-600">{item.details}</p> : null}
-          <p className="mt-1 text-xs text-stone-500">
-            {INTAKE_SOURCE_LABEL[item.source] ?? "Phone"}
-            {preferred ? ` · wants ${preferred}` : ""}
-          </p>
+          {preferred ? <p className="mt-1 text-xs text-stone-500">Wants {preferred}</p> : null}
         </div>
         <StatusBadge status={item.status} label={REQUEST_STATUS_LABEL[item.status]} />
       </div>
@@ -472,5 +555,31 @@ function RequestCard({
         </button>
       </div>
     </article>
+  );
+}
+
+function HandledCallRow({ item }: { item: IntakeRequest }) {
+  const callHref = telHref(item.client.phone);
+  return (
+    <li className="flex gap-3 border-b border-line px-4 py-3 last:border-b-0">
+      <p className="w-[4.75rem] shrink-0 pt-0.5 text-xs font-semibold tabular-nums text-stone-500">
+        {formatCallLoggedAt(item.createdAt)}
+      </p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-semibold">{item.title}</p>
+            <p className="text-sm text-stone-600">{clientName(item.client)}</p>
+            <p className="text-sm text-stone-500">{callMeta(item)}</p>
+          </div>
+          <StatusBadge status={item.status} label={REQUEST_STATUS_LABEL[item.status]} />
+        </div>
+        {callHref ? (
+          <a href={callHref} className="mt-1 inline-block text-sm font-semibold text-orange">
+            Call back
+          </a>
+        ) : null}
+      </div>
+    </li>
   );
 }
