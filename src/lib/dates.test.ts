@@ -74,10 +74,10 @@ test("office work orders live under More, not next to the schedule", () => {
   const more = moreItems("DISPATCHER").map((item) => item.href);
   assert.deepEqual(tabs, ["/schedule", "/clients", "/reports", "/more"]);
   assert.equal(more[0], "/jobs");
-  assert.equal(more[1], "/requests");
+  assert.equal(more[1], "/calls");
   assert.ok(!tabs.includes("/jobs"));
-  assert.ok(!moreItems("TECHNICIAN").some((item) => item.href === "/requests"));
-  assert.equal(isOfficeOnlyPath("/requests"), true);
+  assert.ok(!moreItems("TECHNICIAN").some((item) => item.href === "/calls"));
+  assert.equal(isOfficeOnlyPath("/calls"), true);
   assert.ok(!tabs.includes("/dashboard"));
   assert.ok(!more.includes("/reports"));
   assert.equal(primaryTabs("DISPATCHER")[0]?.label, "Schedule");

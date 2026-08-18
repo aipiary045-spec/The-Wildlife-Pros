@@ -65,7 +65,7 @@ export const POST = withAuth(async (session, request) => {
         lastName: input.lastName,
         phone: input.phone,
         email: input.email,
-        notes: "From intake",
+        notes: "From the call log",
         properties: input.address1
           ? {
               create: {

@@ -21,10 +21,10 @@ export default async function ClientsPage() {
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Link
-            href="/requests"
+            href="/calls"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold"
           >
-            Log a call
+            Call log
           </Link>
           <NewClientButton />
         </div>

@@ -155,7 +155,7 @@ export function buildNotifications(input: {
         title:
           (input.newCalls ?? 0) === 1 ? "1 new call is waiting" : `${input.newCalls} new calls are waiting`,
         body: "Turn them into a quote or a first trip.",
-        href: "/requests",
+        href: "/calls",
       }),
     ].filter((item): item is NotificationItem => item != null),
   );

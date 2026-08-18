@@ -56,18 +56,18 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
   }, [open]);
 
   const count = items.length;
-  const onIntake = pathname === "/requests" || pathname.startsWith("/requests/");
+  const onCallLog = pathname === "/calls" || pathname.startsWith("/calls/");
 
   return (
     <div ref={rootRef} className="relative flex items-center gap-2">
       {showIntake ? (
         <Link
-          href="/requests"
-          aria-label={newCalls ? `${newCalls} waiting calls` : "Log a call"}
-          title="Log a call"
+          href="/calls"
+          aria-label={newCalls ? `${newCalls} waiting calls` : "Call log"}
+          title="Call log"
           className={cn(
             "relative flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white",
-            onIntake ? "text-orange" : "text-ink",
+            onCallLog ? "text-orange" : "text-ink",
           )}
         >
           <Phone size={18} />

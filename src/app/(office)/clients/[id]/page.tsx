@@ -85,9 +85,9 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
       {client.requests.length > 0 ? (
         <section className="rounded-2xl border border-line bg-panel p-5">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="font-semibold">Calls / intake</h2>
-            <Link href="/requests" className="text-sm font-semibold text-orange">
-              Open intake
+            <h2 className="font-semibold">Call log</h2>
+            <Link href="/calls" className="text-sm font-semibold text-orange">
+              Open call log
             </Link>
           </div>
           {client.requests.map((item) => (

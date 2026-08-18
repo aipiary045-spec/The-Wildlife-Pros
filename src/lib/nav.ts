@@ -26,7 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/jobs", label: "Work orders", icon: ClipboardList },
-  { href: "/requests", label: "Intake", icon: Phone },
+  { href: "/calls", label: "Call log", icon: Phone },
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/reports", label: "Reports", icon: BarChart3 },
