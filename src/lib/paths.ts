@@ -3,7 +3,7 @@ export function isTechnician(role: string) {
 }
 
 export function homePath(role: string) {
-  return isTechnician(role) ? "/field" : "/schedule";
+  return isTechnician(role) ? "/field" : "/dashboard";
 }
 
 export const OFFICE_ONLY_PREFIXES = [
@@ -31,7 +31,7 @@ export function isOfficeOnlyPath(pathname: string) {
   return OFFICE_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-export function safeNextPath(value: string | null | undefined, fallback = "/schedule") {
+export function safeNextPath(value: string | null | undefined, fallback = "/dashboard") {
   if (!value) return fallback;
   if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/.")) return fallback;
   if (value.includes("\\") || value.toLowerCase().includes("well-known")) return fallback;
