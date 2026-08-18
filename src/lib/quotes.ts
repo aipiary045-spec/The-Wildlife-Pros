@@ -17,5 +17,17 @@ export function quoteCanConvert(status: string) {
 }
 
 export function quoteCanInvoice(status: string) {
-  return ["SENT", "VIEWED", "APPROVED"].includes(status);
+  return ["SENT", "VIEWED", "APPROVED", "CONVERTED"].includes(status);
+}
+
+export type QuoteBillingAction = "create" | "pay" | "paid" | "waiting" | null;
+
+export function quoteBillingAction(
+  quote: { status: string },
+  invoice: { balance: number } | null | undefined,
+): QuoteBillingAction {
+  if (invoice) return Number(invoice.balance) > 0 ? "pay" : "paid";
+  if (quoteCanInvoice(quote.status)) return "create";
+  if (quote.status === "DRAFT") return "waiting";
+  return null;
 }

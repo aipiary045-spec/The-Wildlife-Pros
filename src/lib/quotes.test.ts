@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { jobTypeFromQuoteLines, quoteCanConvert, quoteCanInvoice } from "./quotes";
+import { jobTypeFromQuoteLines, quoteBillingAction, quoteCanConvert, quoteCanInvoice } from "./quotes";
 import { nextOccurrences } from "./recurring";
 
 test("jobTypeFromQuoteLines uses the catalog job type", () => {
@@ -21,12 +21,22 @@ test("quoteCanConvert blocks declined, expired, and already converted", () => {
   assert.equal(quoteCanConvert("DECLINED"), false);
 });
 
-test("quoteCanInvoice only allows sent, viewed, or approved quotes", () => {
+test("quoteCanInvoice only allows sent, viewed, approved, or converted quotes", () => {
   assert.equal(quoteCanInvoice("APPROVED"), true);
   assert.equal(quoteCanInvoice("SENT"), true);
   assert.equal(quoteCanInvoice("VIEWED"), true);
+  assert.equal(quoteCanInvoice("CONVERTED"), true);
   assert.equal(quoteCanInvoice("DRAFT"), false);
-  assert.equal(quoteCanInvoice("CONVERTED"), false);
+  assert.equal(quoteCanInvoice("DECLINED"), false);
+});
+
+test("quoteBillingAction picks create, pay, paid, or waiting", () => {
+  assert.equal(quoteBillingAction({ status: "APPROVED" }, null), "create");
+  assert.equal(quoteBillingAction({ status: "CONVERTED" }, null), "create");
+  assert.equal(quoteBillingAction({ status: "APPROVED" }, { balance: 100 }), "pay");
+  assert.equal(quoteBillingAction({ status: "APPROVED" }, { balance: 0 }), "paid");
+  assert.equal(quoteBillingAction({ status: "DRAFT" }, null), "waiting");
+  assert.equal(quoteBillingAction({ status: "DECLINED" }, null), null);
 });
 
 test("nextOccurrences skips the seed date and steps by frequency", () => {

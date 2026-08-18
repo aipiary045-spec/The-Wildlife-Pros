@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
+import { JobQuoteBillingBanner } from "@/components/jobs/JobQuoteBillingBanner";
 import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
 import { JobEditor } from "@/components/jobs/JobEditor";
 import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
@@ -11,10 +12,10 @@ import { NavigateLink } from "@/components/maps/NavigateLink";
 import { BackLink } from "@/components/layout/BackLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getSession } from "@/lib/auth";
-import { canBillJob, canBillQuote } from "@/lib/billing-access";
+import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { isTechnician } from "@/lib/paths";
-import { quoteCanInvoice } from "@/lib/quotes";
+import { quoteBillingAction } from "@/lib/quotes";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         select: {
           id: true,
           number: true,
+          title: true,
           status: true,
+          total: true,
           invoices: { orderBy: { createdAt: "desc" }, take: 1 },
         },
       },
@@ -51,9 +54,13 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   const techView = Boolean(session && isTechnician(session.role));
   const canBill = session ? canBillJob(session, job) : false;
   const quoteInvoice = job.quote?.invoices[0] ?? null;
-  const canBillQuoteOnJob = Boolean(
-    session && techView && job.quote && canBillQuote(session) && (quoteCanInvoice(job.quote.status) || quoteInvoice),
-  );
+  const quoteBilling = job.quote
+    ? quoteBillingAction(
+        job.quote,
+        quoteInvoice ? { balance: Number(quoteInvoice.balance) } : null,
+      )
+    : null;
+  const showQuoteBanner = Boolean(techView && job.quote && quoteBilling);
   if (techView && job.technicianId && job.technicianId !== session?.id) notFound();
 
   const [stock, allGear, species, technicians] = await Promise.all([
@@ -101,20 +108,30 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           {canBill ? (
             <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
           ) : null}
-          {canBillQuoteOnJob && job.quote ? (
-            quoteInvoice ? (
-              <Link
-                href={`/invoices/${quoteInvoice.id}`}
-                className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center"
-              >
-                {Number(quoteInvoice.balance) > 0 ? "Take payment" : "View invoice"}
-              </Link>
-            ) : (
-              <CreateInvoiceButton quoteId={job.quote.id} label="Turn quote into invoice" />
-            )
+          {techView || !job.quote || showQuoteBanner ? null : quoteInvoice ? (
+            <Link
+              href={`/invoices/${quoteInvoice.id}`}
+              className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center"
+            >
+              {Number(quoteInvoice.balance) > 0 ? "Collect payment" : "View invoice"}
+            </Link>
+          ) : quoteBilling === "create" ? (
+            <CreateInvoiceButton quoteId={job.quote.id} label="Create invoice" />
           ) : null}
         </div>
       </div>
+      {showQuoteBanner && job.quote ? (
+        <JobQuoteBillingBanner
+          quote={{
+            id: job.quote.id,
+            number: job.quote.number,
+            title: job.quote.title,
+            total: Number(job.quote.total),
+          }}
+          invoice={quoteInvoice ? { id: quoteInvoice.id, balance: Number(quoteInvoice.balance) } : null}
+          action={quoteBilling}
+        />
+      ) : null}
       <section className="grid gap-4 md:grid-cols-3">
         <Card title="Visit">
           <p>{job.scheduledStart ? format(job.scheduledStart, "PPP p") : "Unscheduled"}</p>
@@ -138,16 +155,15 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             </div>
           ) : null}
         </Card>
-        {canBill || canBillQuoteOnJob ? (
+        {canBill || (job.quote && !techView) ? (
           <Card title="Value">
             <p className="font-display text-2xl">{formatMoney(job.total)}</p>
             <p className="text-sm text-stone-600">Tax {formatMoney(job.taxAmount)}</p>
-            {job.quote ? (
+            {techView || !job.quote ? null : (
               <Link href={`/quotes/${job.quote.id}`} className="mt-2 block text-sm font-medium text-orange">
                 Quote {job.quote.number}
-                {techView ? " · Bill from quote" : ""}
               </Link>
-            ) : null}
+            )}
             {[...(quoteInvoice ? [quoteInvoice] : []), ...job.invoices.filter((item) => item.id !== quoteInvoice?.id)].map((invoice) => (
               <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
                 {techView ? "Take payment" : "Collect"} · {invoice.number ?? "Invoice"} · {formatMoney(invoice.balance)} due
