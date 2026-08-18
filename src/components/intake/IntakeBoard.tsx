@@ -2,10 +2,16 @@
 
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { INTAKE_SOURCE_LABEL, REQUEST_STATUS_LABEL } from "@/lib/constants";
-import { findMatchingClient, type IntakeMatchClient, telHref } from "@/lib/intake";
+import {
+  canAutoFillClient,
+  findMatchingClient,
+  searchClients,
+  type IntakeMatchClient,
+  telHref,
+} from "@/lib/intake";
 import { clientName, formatPhone } from "@/lib/utils";
 
 export type IntakeRequest = {
@@ -56,36 +62,58 @@ export function IntakeBoard({
   const router = useRouter();
   const [draft, setDraft] = useState({ ...empty, phone: initialPhone });
   const [clientId, setClientId] = useState<string | undefined>();
+  const [ignoredIds, setIgnoredIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const match = useMemo(
-    () => findMatchingClient(clients, { phone: draft.phone, email: draft.email, clientId }),
-    [clients, draft.phone, draft.email, clientId],
+  const hits = useMemo(
+    () =>
+      searchClients(
+        clients,
+        { phone: draft.phone, firstName: draft.firstName, lastName: draft.lastName, email: draft.email, clientId },
+        { ignoreIds: ignoredIds },
+      ),
+    [clients, draft.phone, draft.firstName, draft.lastName, draft.email, clientId, ignoredIds],
   );
+  const selected = clientId ? (findMatchingClient(clients, { clientId }) ?? hits[0]) : null;
 
-  function useMatch() {
-    if (!match) return;
-    setClientId(match.id);
+  function applyClient(client: IntakeMatchClient) {
+    const property = client.properties[0];
+    setClientId(client.id);
+    setIgnoredIds([]);
     setDraft((current) => ({
       ...current,
-      firstName: match.firstName,
-      lastName: match.lastName,
-      email: match.email ?? current.email,
-      phone: match.phone ?? current.phone,
-      address1: match.properties[0]?.address1 ?? current.address1,
-      city: match.properties[0]?.city ?? current.city,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      email: client.email ?? current.email,
+      phone: client.phone ?? current.phone,
+      address1: property?.address1 ?? current.address1,
+      city: property?.city ?? current.city,
+      state: property?.state ?? current.state,
+      postalCode: property?.postalCode ?? current.postalCode,
     }));
   }
 
+  useEffect(() => {
+    if (clientId) return;
+    const suggestions = searchClients(
+      clients,
+      { phone: draft.phone, firstName: draft.firstName, lastName: draft.lastName, email: draft.email },
+      { ignoreIds: ignoredIds },
+    );
+    if (canAutoFillClient(suggestions, draft)) applyClient(suggestions[0]);
+  }, [clients, draft.phone, draft.firstName, draft.lastName, draft.email, clientId, ignoredIds]);
+
   function clearMatch() {
+    if (clientId) setIgnoredIds((current) => [...current, clientId]);
     setClientId(undefined);
   }
 
   function finish(item: IntakeRequest) {
     const unknown = item.client.firstName === "Unknown";
     setClientId(item.client.id);
+    setIgnoredIds([]);
     setDraft({
       ...empty,
       phone: item.client.phone ?? "",
@@ -123,6 +151,7 @@ export function IntakeBoard({
     }
     setDraft({ ...empty });
     setClientId(undefined);
+    setIgnoredIds([]);
     router.refresh();
   }
 
@@ -170,7 +199,7 @@ export function IntakeBoard({
         <div>
           <h2 className="font-semibold">Log a call</h2>
           <p className="text-sm text-stone-600">
-            Paste the number if you have it. We will match someone already in the book when we can.
+            Start typing a number or a name. If they are already in the book, pick the right person — even when two people share a name.
           </p>
         </div>
         <label className="block text-sm font-medium">
@@ -187,24 +216,32 @@ export function IntakeBoard({
             placeholder="Paste or type the caller ID"
           />
         </label>
-        {match && !clientId ? (
-          <button
-            type="button"
-            onClick={useMatch}
-            className="block w-full rounded-xl border border-orange/40 bg-orange/10 p-3 text-left"
-          >
-            <p className="text-xs font-bold uppercase tracking-widest text-orange">Already in the book</p>
-            <p className="font-semibold">{clientName(match)}</p>
-            <p className="text-sm text-stone-600">
-              {formatPhone(match.phone)}
-              {match.properties[0] ? ` · ${match.properties[0].address1}` : ""}
+        {!clientId && hits.length > 0 ? (
+          <div className="space-y-2 rounded-xl border border-orange/40 bg-orange/10 p-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-orange">
+              {hits.length === 1 ? "Already in the book" : `${hits.length} people match`}
             </p>
-            <p className="mt-1 text-sm font-semibold text-orange">Use this client</p>
-          </button>
+            {hits.map((hit) => (
+              <button
+                key={hit.id}
+                type="button"
+                onClick={() => applyClient(hit)}
+                className="block w-full rounded-lg bg-white px-3 py-2 text-left"
+              >
+                <p className="font-semibold">{clientName(hit)}</p>
+                <p className="text-sm text-stone-600">
+                  {formatPhone(hit.phone)}
+                  {hit.properties[0] ? ` · ${hit.properties[0].address1}, ${hit.properties[0].city}` : ""}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-orange">Use this client</p>
+              </button>
+            ))}
+          </div>
         ) : null}
-        {clientId && match ? (
+        {clientId && selected ? (
           <p className="rounded-xl bg-background px-3 py-2 text-sm">
-            Using {clientName(match)}.{" "}
+            Using {clientName(selected)}
+            {selected.properties[0] ? ` · ${selected.properties[0].address1}` : ""}.{" "}
             <button type="button" onClick={clearMatch} className="font-semibold text-orange">
               Not them
             </button>
@@ -216,7 +253,10 @@ export function IntakeBoard({
             <input
               required={!clientId}
               value={draft.firstName}
-              onChange={(event) => setDraft((current) => ({ ...current, firstName: event.target.value }))}
+              onChange={(event) => {
+                setClientId(undefined);
+                setDraft((current) => ({ ...current, firstName: event.target.value }));
+              }}
               className={inputClass}
             />
           </label>
@@ -225,7 +265,10 @@ export function IntakeBoard({
             <input
               required={!clientId}
               value={draft.lastName}
-              onChange={(event) => setDraft((current) => ({ ...current, lastName: event.target.value }))}
+              onChange={(event) => {
+                setClientId(undefined);
+                setDraft((current) => ({ ...current, lastName: event.target.value }));
+              }}
               className={inputClass}
             />
           </label>

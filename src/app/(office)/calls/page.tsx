@@ -23,7 +23,7 @@ export default async function CallLogPage({
       orderBy: { createdAt: "desc" },
     }),
     prisma.client.findMany({
-      include: { properties: { select: { id: true, address1: true, city: true } } },
+      include: { properties: { select: { id: true, address1: true, city: true, state: true, postalCode: true } } },
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     }),
   ]);

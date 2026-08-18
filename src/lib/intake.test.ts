@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  canAutoFillClient,
   canConvertRequest,
   canManageIntake,
   emailsMatch,
@@ -11,6 +12,7 @@ import {
   parseRequestPatch,
   phonesMatch,
   requestIsOpen,
+  searchClients,
   streetsMatch,
   telHref,
 } from "./intake";
@@ -52,6 +54,38 @@ test("findMatchingClient prefers an explicit id, then phone, then email", () => 
   assert.equal(findMatchingClient([maya], { email: "MAYA@example.com" })?.id, "c1");
   assert.equal(findMatchingClient([maya], { phone: "7045550000" }), null);
   assert.equal(emailsMatch("a@x.com", "A@x.com"), true);
+});
+
+test("searchClients lists every person who matches a number or name", () => {
+  const mayaOak = {
+    ...maya,
+    id: "oak",
+    properties: [{ id: "p-oak", address1: "10 Oak St", city: "Charlotte" }],
+  };
+  const mayaPine = {
+    ...maya,
+    id: "pine",
+    phone: "(704) 555-0199",
+    email: "maya.pine@example.com",
+    properties: [{ id: "p-pine", address1: "55 Pine Hollow Ct", city: "Pineville" }],
+  };
+  const jordan = {
+    id: "jordan",
+    firstName: "Jordan",
+    lastName: "Blake",
+    email: null,
+    phone: "704-555-0100",
+    altPhone: null,
+    properties: [{ id: "p-j", address1: "1 Shop Rd", city: "Charlotte" }],
+  };
+  const hits = searchClients([mayaOak, mayaPine, jordan], { firstName: "Maya" });
+  assert.equal(hits.length, 2);
+  assert.deepEqual(hits.map((item) => item.id).sort(), ["oak", "pine"]);
+  assert.equal(searchClients([mayaOak, mayaPine, jordan], { firstName: "Maya", lastName: "Nguyen" }).length, 2);
+  assert.equal(searchClients([mayaOak, mayaPine, jordan], { phone: "555014" })[0]?.id, "oak");
+  assert.equal(canAutoFillClient(hits, { firstName: "Maya" }), false);
+  assert.equal(canAutoFillClient([mayaOak], { phone: "7045550142" }), true);
+  assert.equal(canAutoFillClient([mayaOak], { firstName: "Maya", lastName: "Nguyen" }), true);
 });
 
 test("findMatchingProperty reuses the same street or falls back to the first", () => {

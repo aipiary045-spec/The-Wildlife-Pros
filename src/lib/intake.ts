@@ -64,8 +64,75 @@ export type IntakeMatchClient = {
   email?: string | null;
   phone?: string | null;
   altPhone?: string | null;
-  properties: Array<{ id: string; address1: string; city: string }>;
+  properties: Array<{ id: string; address1: string; city: string; state?: string; postalCode?: string }>;
 };
+
+function normalizeName(value?: string | null) {
+  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+export function phoneLooksLike(stored?: string | null, typed?: string | null) {
+  const needle = phoneDigits(typed);
+  const hay = phoneDigits(stored);
+  if (needle.length < 3 || hay.length < 3) return false;
+  return hay.endsWith(needle) || hay.includes(needle);
+}
+
+export function nameLooksLike(client: IntakeMatchClient, firstName?: string, lastName?: string) {
+  const firstQuery = normalizeName(firstName);
+  const lastQuery = normalizeName(lastName);
+  if (firstQuery.length < 2 && lastQuery.length < 2) return false;
+  const first = normalizeName(client.firstName);
+  const last = normalizeName(client.lastName);
+  const company = normalizeName(client.companyName);
+  const full = `${first} ${last}`.trim();
+  if (firstQuery && lastQuery) {
+    return (
+      (first.startsWith(firstQuery) && last.startsWith(lastQuery)) ||
+      full.startsWith(`${firstQuery} ${lastQuery}`)
+    );
+  }
+  if (firstQuery) {
+    if (firstQuery.includes(" ")) return full.startsWith(firstQuery) || company.includes(firstQuery);
+    return first.startsWith(firstQuery) || last.startsWith(firstQuery) || company.includes(firstQuery) || full.startsWith(firstQuery);
+  }
+  return last.startsWith(lastQuery) || last.includes(lastQuery);
+}
+
+export function searchClients(
+  clients: IntakeMatchClient[],
+  input: { phone?: string; firstName?: string; lastName?: string; email?: string; clientId?: string },
+  options?: { limit?: number; ignoreIds?: Iterable<string> },
+) {
+  if (input.clientId) {
+    const selected = clients.find((client) => client.id === input.clientId);
+    return selected ? [selected] : [];
+  }
+  const ignored = new Set(options?.ignoreIds ?? []);
+  const hits: Array<{ client: IntakeMatchClient; score: number }> = [];
+  for (const client of clients) {
+    if (ignored.has(client.id)) continue;
+    const phoneHit = phoneLooksLike(client.phone, input.phone) || phoneLooksLike(client.altPhone, input.phone);
+    const nameHit = nameLooksLike(client, input.firstName, input.lastName);
+    const emailHit = Boolean(input.email && emailsMatch(client.email, input.email));
+    if (!phoneHit && !nameHit && !emailHit) continue;
+    const exactPhone = phonesMatch(client.phone, input.phone) || phonesMatch(client.altPhone, input.phone);
+    hits.push({
+      client,
+      score: (exactPhone ? 0 : phoneHit ? 1 : 3) + (nameHit ? 0 : 1) + (emailHit ? 0 : 1),
+    });
+  }
+  hits.sort((left, right) => left.score - right.score || left.client.lastName.localeCompare(right.client.lastName));
+  return hits.slice(0, options?.limit ?? 8).map((hit) => hit.client);
+}
+
+export function canAutoFillClient(hits: IntakeMatchClient[], input: { phone?: string; firstName?: string; lastName?: string }) {
+  if (hits.length !== 1) return false;
+  if (phoneDigits(input.phone).length >= 7 && (phoneLooksLike(hits[0].phone, input.phone) || phoneLooksLike(hits[0].altPhone, input.phone))) {
+    return true;
+  }
+  return normalizeName(input.firstName).length >= 2 && normalizeName(input.lastName).length >= 2;
+}
 
 export function findMatchingClient(
   clients: IntakeMatchClient[],
