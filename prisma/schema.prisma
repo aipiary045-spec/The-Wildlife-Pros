@@ -483,6 +483,8 @@ model Job {
   notes          Note[]
   timeEntries    TimeEntry[]
   routeStops     RouteStop[]
+  googleCalendarEventId String?
+  googleCalendarUserId  String?
   formSubmissions FormSubmission[]
   followUpNeeds  ScheduleNeed[] @relation("JobScheduleNeeds")
   scheduledNeeds ScheduleNeed[] @relation("ScheduledFromNeed")

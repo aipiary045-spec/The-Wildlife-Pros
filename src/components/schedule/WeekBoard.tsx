@@ -4,6 +4,7 @@ import { addDays, format, startOfWeek } from "date-fns";
 import { useState } from "react";
 import { dateKey } from "@/lib/dates";
 import { AppointmentChip, DragGhost } from "./AppointmentChip";
+import { WeekCellStack } from "./WeekCellStack";
 import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
 import { useScheduleBoard } from "./useScheduleBoard";
@@ -37,7 +38,7 @@ export function WeekBoard({
   const draggingJob = drag ? [...jobs, ...unscheduled].find((job) => job.id === drag.jobId) : null;
   const [phoneLayout, setPhoneLayout] = useState<"calendar" | "list">("calendar");
 
-  function chipProps(job: ScheduleJobCard, day: Date, layout: "card" | "list" = "card") {
+  function chipProps(job: ScheduleJobCard, day: Date, layout: "card" | "list" | "stack" = "card") {
     return {
       job,
       technicians,
@@ -189,17 +190,17 @@ export function WeekBoard({
                     .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
                   const off = availability.find((block) => block.technicianId === tech.id && block.date === dateKey(day));
                   return (
-                    <td key={`${tech.id}-${day.toISOString()}`} className="h-36 px-2 py-2">
+                    <td key={`${tech.id}-${day.toISOString()}`} className="px-2 py-2 align-top">
                       <div
                         data-drop-tech={tech.id}
                         data-drop-day={dateKey(day)}
-                        className={`relative flex min-h-28 gap-2 overflow-x-auto rounded-xl p-1 ${
+                        className={`relative min-h-16 rounded-xl p-1 ${
                           drag?.overTechId === tech.id ? "bg-orange/15" : "bg-background/70"
                         }`}
                       >
-                        {cellJobs.map((job) => (
-                          <AppointmentChip key={job.id} {...chipProps(job, day)} />
-                        ))}
+                        {cellJobs.length > 0 ? (
+                          <WeekCellStack jobs={cellJobs} day={day} chipProps={chipProps} />
+                        ) : null}
                         {off ? (
                           <p className="flex w-20 shrink-0 items-center justify-center rounded-lg bg-rose-50 px-1 text-center text-[11px] font-semibold text-rose-800">
                             Off{off.reason ? ` · ${off.reason}` : ""}

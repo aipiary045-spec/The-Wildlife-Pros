@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { jsonError } from "@/lib/api";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { approvedDayOffError } from "@/lib/day-off-guard";
+import { queueJobGoogleCalendarSync, removeJobGoogleCalendar } from "@/lib/google-calendar";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -52,6 +53,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     },
     include: { client: true, property: true, technician: true },
   });
+  queueJobGoogleCalendarSync(job.id);
   return NextResponse.json({ job });
 }
 
@@ -69,8 +71,10 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
       where: { id },
       data: { status: "CANCELLED", technicianId: null, scheduledStart: null, scheduledEnd: null },
     });
+    queueJobGoogleCalendarSync(id);
     return NextResponse.json({ job: cancelled, cancelled: true });
   }
+  await removeJobGoogleCalendar(id);
   await prisma.job.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

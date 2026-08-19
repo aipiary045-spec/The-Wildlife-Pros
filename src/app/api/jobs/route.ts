@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { jsonError, lineTotals, withAuth } from "@/lib/api";
 import { approvedDayOffError } from "@/lib/day-off-guard";
+import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
 import { nextNumber } from "@/lib/utils";
 
 export const GET = withAuth(async (_session, request) => {
@@ -75,5 +76,6 @@ export const POST = withAuth(async (session, request) => {
     },
     include: { client: true, property: true, lineItems: true },
   });
+  queueJobGoogleCalendarSync(job.id);
   return NextResponse.json({ job }, { status: 201 });
 });

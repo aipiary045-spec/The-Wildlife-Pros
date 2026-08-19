@@ -4,6 +4,7 @@ import { jsonError } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { approvedDayOffError } from "@/lib/day-off-guard";
 import { duplicateJobTrip } from "@/lib/jobs";
+import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -81,5 +82,6 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     include: { client: true, property: true, scheduledJob: true },
   });
 
+  queueJobGoogleCalendarSync(job.id);
   return NextResponse.json({ need: updated, job });
 }

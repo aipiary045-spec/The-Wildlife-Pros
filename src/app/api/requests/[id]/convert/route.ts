@@ -3,6 +3,7 @@ import { jsonError } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { dateKey } from "@/lib/dates";
 import { canConvertRequest, canManageIntake, parseConvertTarget } from "@/lib/intake";
+import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
 import { prisma } from "@/lib/prisma";
 import { nextNumber } from "@/lib/utils";
 
@@ -72,6 +73,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (existing.client.status === "LEAD") {
     await prisma.client.update({ where: { id: existing.clientId }, data: { status: "ACTIVE" } });
   }
+  queueJobGoogleCalendarSync(job.id);
   return NextResponse.json(
     {
       jobId: job.id,

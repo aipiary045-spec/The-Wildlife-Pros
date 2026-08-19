@@ -5,6 +5,7 @@ import { getSchedule } from "@/lib/data";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { approvedDayOffError } from "@/lib/day-off-guard";
 import { duplicateJobTrip } from "@/lib/jobs";
+import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
 
 export const GET = withAuth(async (_session, request) => {
   const url = new URL(request.url);
@@ -32,6 +33,7 @@ export const POST = withAuth(async (session, request) => {
     durationMin: body.durationMin ? Number(body.durationMin) : undefined,
   });
   if (!job) return jsonError("Job not found", 404);
+  queueJobGoogleCalendarSync(job.id);
   return NextResponse.json({ job }, { status: 201 });
 });
 
@@ -49,5 +51,6 @@ export const PATCH = withAuth(async (_session, request) => {
     },
     include: { client: true, property: true, technician: true },
   });
+  queueJobGoogleCalendarSync(job.id);
   return NextResponse.json({ job });
 });

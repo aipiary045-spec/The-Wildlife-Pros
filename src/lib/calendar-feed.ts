@@ -40,6 +40,10 @@ function icsDate(date: Date) {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
 }
 
+export function icsSequence(updatedAt: Date) {
+  return Math.max(0, Math.floor(updatedAt.getTime() / 1000));
+}
+
 export function calendarFeedUrl(token: string, origin?: string) {
   const base = origin ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   return `${base.replace(/\/$/, "")}/api/calendar/feed?token=${encodeURIComponent(token)}`;
@@ -58,7 +62,7 @@ export async function buildTechnicianIcsFeed(token: CalendarFeedToken) {
     where: {
       technicianId: user.id,
       scheduledStart: { gte: now, lte: horizon },
-      status: { notIn: ["CANCELLED", "COMPLETED"] },
+      status: { notIn: ["COMPLETED", "INVOICED"] },
     },
     include: { client: true, property: true },
     orderBy: { scheduledStart: "asc" },
@@ -70,6 +74,8 @@ export async function buildTechnicianIcsFeed(token: CalendarFeedToken) {
     "PRODID:-//CritterOps//Schedule//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
+    "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
+    "X-PUBLISHED-TTL:PT1H",
     "X-WR-CALNAME:CritterOps schedule",
   ];
 
@@ -81,17 +87,23 @@ export async function buildTechnicianIcsFeed(token: CalendarFeedToken) {
     const summary = `${job.number} · ${job.title}`;
     const location = propertyAddress(job.property);
     const description = `${clientName(job.client)}${job.instructions ? ` — ${job.instructions}` : ""}`;
-    lines.push(
+    const eventLines = [
       "BEGIN:VEVENT",
       `UID:${job.id}@critterops`,
       `DTSTAMP:${icsDate(now)}`,
+      `LAST-MODIFIED:${icsDate(job.updatedAt)}`,
+      `SEQUENCE:${icsSequence(job.updatedAt)}`,
       `DTSTART:${icsDate(job.scheduledStart)}`,
       `DTEND:${icsDate(end)}`,
       `SUMMARY:${icsEscape(summary)}`,
       `LOCATION:${icsEscape(location)}`,
       `DESCRIPTION:${icsEscape(description)}`,
-      "END:VEVENT",
-    );
+    ];
+    if (job.status === "CANCELLED") {
+      eventLines.push("STATUS:CANCELLED");
+    }
+    eventLines.push("END:VEVENT");
+    lines.push(...eventLines);
   }
 
   lines.push("END:VCALENDAR");

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { calendarFeedUrl, createCalendarFeedToken, readCalendarFeedToken } from "./calendar-feed";
+import { calendarFeedUrl, createCalendarFeedToken, icsSequence, readCalendarFeedToken } from "./calendar-feed";
 import { groupPhotoPairs } from "./photo-pairs";
 import { packageAvailability, QUOTE_PACKAGES, resolvePackageLines } from "./quote-packages";
 
@@ -38,6 +38,12 @@ test("calendarFeedUrl builds a subscribe link", () => {
     calendarFeedUrl("abc123", "https://example.com"),
     "https://example.com/api/calendar/feed?token=abc123",
   );
+});
+
+test("icsSequence increases with updatedAt", () => {
+  const earlier = new Date("2026-01-01T12:00:00.000Z");
+  const later = new Date("2026-01-02T12:00:00.000Z");
+  assert.ok(icsSequence(later) > icsSequence(earlier));
 });
 
 test("groupPhotoPairs groups before and after by entry point", () => {
