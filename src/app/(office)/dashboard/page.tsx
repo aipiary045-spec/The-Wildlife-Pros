@@ -19,15 +19,14 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Today"
-        description="A quick read on what needs attention before you dive into the schedule or call log."
+        description="Your stops for the day — everything else stays tucked away until you need it."
         related={[
           { href: "/schedule", label: "Schedule" },
           { href: "/calls", label: "Call log" },
-          { href: "/clients", label: "Clients" },
         ]}
       />
-      <RecentPanel />
       <TodayBoard data={data} />
+      <RecentPanel />
     </div>
   );
 }
