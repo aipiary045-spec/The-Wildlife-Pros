@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { NeedsPool } from "@/components/schedule/NeedsPool";
-import { CalendarFeedLink } from "@/components/schedule/CalendarFeedLink";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
 import { getSession } from "@/lib/auth";
@@ -58,8 +57,8 @@ export default async function SchedulePage({
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule</h1>
-        <p className="text-muted sm:hidden">Drag jobs onto a tech and a time. Scroll sideways for the rest of the day.</p>
+        <h1 className="hidden font-display text-2xl tracking-wide md:block md:text-3xl">Schedule</h1>
+        <p className="text-muted md:mt-0 sm:hidden">Drag jobs onto a tech and a time. Scroll sideways for the rest of the day.</p>
         <p className="hidden text-muted sm:block">
           Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order, traps, or invoice.
         </p>
@@ -77,8 +76,8 @@ export default async function SchedulePage({
         date={date}
         basePath="/schedule"
         routesHref={`/routes?date=${dateKey(date)}`}
+        calendarUserId={session?.id}
       />
-      {session ? <CalendarFeedLink userId={session.id} /> : null}
       {view === "day" ? (
         <DayStats jobs={jobs} />
       ) : null}

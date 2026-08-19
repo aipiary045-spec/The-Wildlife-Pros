@@ -37,17 +37,17 @@ export function CalendarFeedLink({ userId }: { userId: string }) {
   }
 
   return (
-    <div>
+    <div className="text-center">
       <button
         type="button"
         onClick={() => void toggle()}
-        className="text-sm font-semibold text-muted hover:text-orange"
+        className="text-xs font-medium text-muted-soft hover:text-orange"
         aria-expanded={open}
       >
         {open ? "Hide calendar link" : "Subscribe in calendar"}
       </button>
       {open ? (
-        <div className="mt-3 rounded-2xl border border-line bg-panel p-4">
+        <div className="mt-2 rounded-xl border border-line bg-panel p-3 text-left">
           <p className="text-sm font-semibold">Google Calendar or Outlook</p>
           <p className="mt-1 text-xs text-muted-soft">
             Paste this private link as a calendar subscription. It shows your next 90 days of assigned jobs.

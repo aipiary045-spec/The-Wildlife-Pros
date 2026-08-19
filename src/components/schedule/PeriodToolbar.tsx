@@ -10,6 +10,8 @@ export function PeriodToolbar({
   viewParam = "view",
   dayLabel = "Day",
   weekLabel = "Week",
+  routesHref,
+  footer,
 }: {
   view: ScheduleView;
   date: Date;
@@ -17,6 +19,8 @@ export function PeriodToolbar({
   viewParam?: string;
   dayLabel?: string;
   weekLabel?: string;
+  routesHref?: string;
+  footer?: React.ReactNode;
 }) {
   const dateParam = dateKey(date);
   const prev = dateKey(adjacentDate(view, date, -1));
@@ -32,6 +36,15 @@ export function PeriodToolbar({
   return (
     <div className="space-y-3">
       <div className="flex rounded-full border border-line bg-panel p-1">
+        {routesHref ? (
+          <Link
+            href={routesHref}
+            className="flex-1 rounded-full py-2.5 text-center text-sm font-semibold text-stone-600"
+          >
+            <span className="sm:hidden">Routes</span>
+            <span className="hidden sm:inline">Optimize routes</span>
+          </Link>
+        ) : null}
         <ViewLink href={href("day")} active={view === "day"}>
           {dayLabel}
         </ViewLink>
@@ -65,6 +78,7 @@ export function PeriodToolbar({
           <ChevronRight size={18} />
         </Link>
       </div>
+      {footer ? <div className="pt-1">{footer}</div> : null}
     </div>
   );
 }
