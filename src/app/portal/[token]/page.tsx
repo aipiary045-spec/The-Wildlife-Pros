@@ -73,77 +73,78 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sunset-panel px-6 py-10 text-ink">
-        <div className="mx-auto flex max-w-3xl items-center gap-4">
-          <Logo size={72} />
+      <header className="sunset-panel relative overflow-hidden px-6 py-12 text-ink">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.2),transparent_45%)]" />
+        <div className="relative mx-auto flex max-w-3xl items-center gap-5">
+          <div className="rounded-2xl bg-black/10 p-2 ring-1 ring-black/10">
+            <Logo size={72} />
+          </div>
           <div>
-            <p className="font-display tracking-[0.2em]">THE WILDLIFE PROS</p>
-            <h1 className="text-3xl font-semibold">Hello, {data.firstName}</h1>
-            <p>Upcoming visits and quote approvals. Payments are taken by our crew through Square.</p>
+            <p className="page-eyebrow text-ink/80">The Wildlife Pros</p>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight">Hello, {data.firstName}</h1>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink/75">
+              Upcoming visits and quote approvals. Payments are taken by our crew through Square.
+            </p>
           </div>
         </div>
       </header>
       <main className="mx-auto max-w-3xl space-y-6 px-6 py-8">
-        {message ? <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{message}</p> : null}
-        <section className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Upcoming visits</h2>
-          {data.jobs.length === 0 ? <p className="text-sm text-stone-500">No upcoming appointments.</p> : null}
+        {message ? (
+          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            {message}
+          </p>
+        ) : null}
+        <section className="card p-5 md:p-6">
+          <h2 className="font-display text-lg font-bold tracking-tight">Upcoming visits</h2>
+          {data.jobs.length === 0 ? <p className="mt-2 text-sm text-muted-soft">No upcoming appointments.</p> : null}
           {data.jobs.map((job) => (
-            <div key={job.id} className="border-t border-line py-3 first:border-0">
+            <div key={job.id} className="border-t border-line py-4 first:mt-3 first:border-0 first:pt-0">
               <div className="flex justify-between gap-3">
-                <p className="font-medium">{job.title}</p>
+                <p className="font-semibold">{job.title}</p>
                 <StatusBadge status={job.status} />
               </div>
-              <p className="text-sm text-stone-600">
+              <p className="mt-1 text-sm text-muted">
                 {job.property.address1}
                 {job.technician ? ` · ${job.technician.firstName}` : ""}
               </p>
             </div>
           ))}
         </section>
-        <section className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Quotes</h2>
+        <section className="card p-5 md:p-6">
+          <h2 className="font-display text-lg font-bold tracking-tight">Quotes</h2>
           {data.quotes.map((quote) => (
-            <article key={quote.id} className="border-t border-line py-3 first:border-0">
-              <div className="flex justify-between">
-                <p className="font-medium">
+            <article key={quote.id} className="border-t border-line py-4 first:mt-3 first:border-0 first:pt-0">
+              <div className="flex justify-between gap-3">
+                <p className="font-semibold">
                   {quote.number} · {quote.title}
                 </p>
                 <StatusBadge status={quote.status} />
               </div>
-              {quote.message ? <p className="mt-1 text-sm text-stone-600">{quote.message}</p> : null}
+              {quote.message ? <p className="mt-1 text-sm text-muted">{quote.message}</p> : null}
               {quote.lineItems.length > 0 ? (
-                <ul className="mt-3 space-y-1 rounded-xl bg-background px-3 py-2 text-sm">
+                <ul className="mt-3 space-y-1 rounded-xl border border-line bg-panel-muted px-3 py-2 text-sm">
                   {quote.lineItems.map((item, index) => (
                     <li key={`${item.name}-${index}`} className="flex justify-between gap-3">
                       <span>
                         {item.name} × {Number(item.quantity)}
                       </span>
-                      <span className="shrink-0 tabular-nums">
+                      <span className="shrink-0 tabular-nums font-medium">
                         {formatMoney(Number(item.quantity) * Number(item.unitPrice))}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : null}
-              <p className="mt-2 text-sm text-stone-600">
+              <p className="mt-2 text-sm text-muted">
                 {formatMoney(quote.subtotal)} + tax {formatMoney(quote.taxAmount)} ={" "}
-                <span className="font-semibold text-ink">{formatMoney(quote.total)}</span>
+                <span className="font-bold text-ink">{formatMoney(quote.total)}</span>
               </p>
               {quote.status === "SENT" || quote.status === "VIEWED" ? (
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => act("approve_quote", quote.id)}
-                    className="rounded-lg bg-orange px-3 py-1.5 text-sm font-semibold text-white"
-                  >
+                <div className="mt-4 flex gap-2">
+                  <button type="button" onClick={() => act("approve_quote", quote.id)} className="btn-primary px-4 py-2 text-sm">
                     Approve
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => act("decline_quote", quote.id)}
-                    className="rounded-lg border border-line px-3 py-1.5 text-sm"
-                  >
+                  <button type="button" onClick={() => act("decline_quote", quote.id)} className="btn-secondary px-4 py-2 text-sm">
                     Decline
                   </button>
                 </div>

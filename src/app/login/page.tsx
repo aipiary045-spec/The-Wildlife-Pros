@@ -17,56 +17,62 @@ export default async function LoginPage({
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
-      <section className="sunset-panel relative hidden items-center justify-center lg:flex">
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="relative max-w-md px-8 text-center text-ink">
-          <Logo size={180} className="mx-auto drop-shadow-xl" />
-          <h1 className="mt-6 font-display text-4xl tracking-wide">THE WILDLIFE PROS</h1>
-          <p className="mt-3 text-lg text-ink/80">
-            CritterOps runs the office, the truck, and the trapline — quotes, dispatch, and
-            the client hub in one place.
+      <section className="sunset-panel relative hidden overflow-hidden lg:flex lg:items-center lg:justify-center">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_45%)]" />
+        <div className="absolute inset-0 bg-black/15" />
+        <div className="relative max-w-md px-10 text-center text-ink">
+          <div className="mx-auto w-fit rounded-3xl bg-black/10 p-4 ring-1 ring-black/10 backdrop-blur-sm">
+            <Logo size={160} className="drop-shadow-2xl" />
+          </div>
+          <h1 className="mt-8 font-display text-5xl font-extrabold tracking-tight">The Wildlife Pros</h1>
+          <p className="mt-4 text-lg leading-relaxed text-ink/75">
+            CritterOps runs the office, the truck, and the trapline — quotes, dispatch, and the client hub in one sharp
+            workspace.
           </p>
         </div>
       </section>
-      <section className="flex items-center justify-center px-6 py-12" style={{ paddingTop: "max(3rem, env(safe-area-inset-top))" }}>
-        <div className="w-full max-w-md rounded-2xl border border-line bg-panel p-8 shadow-sm">
-          <div className="mb-6 flex items-center gap-3 lg:hidden">
-            <Logo size={56} />
+      <section
+        className="flex items-center justify-center px-6 py-12"
+        style={{ paddingTop: "max(3rem, env(safe-area-inset-top))" }}
+      >
+        <div className="card w-full max-w-md p-8 md:p-10">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <Logo size={52} />
             <div>
-              <p className="font-display tracking-widest text-orange">THE WILDLIFE PROS</p>
-              <p className="text-sm text-stone-500">CritterOps</p>
+              <p className="font-display text-sm font-bold tracking-[0.18em] text-orange">WILDLIFE PROS</p>
+              <p className="text-sm font-medium text-muted-soft">CritterOps</p>
             </div>
           </div>
-          <h2 className="text-2xl font-semibold">Sign in</h2>
-          <p className="mb-6 text-sm text-stone-600">Field service operations for wildlife & pest work.</p>
+          <h2 className="font-display text-2xl font-bold tracking-tight">Sign in</h2>
+          <p className="mb-6 mt-1 text-sm text-muted">Field service operations for wildlife and pest work.</p>
           <form action="/api/auth/login" method="post" className="space-y-4">
             <input type="hidden" name="next" value={next} />
-            <label className="block text-sm">
+            <label className="block text-sm font-semibold text-foreground">
               Email
               <input
                 name="email"
                 type="email"
                 autoComplete="username"
                 defaultValue="admin@thewildlifepros.com"
-                className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2"
+                className="input-field mt-1.5"
               />
             </label>
-            <label className="block text-sm">
+            <label className="block text-sm font-semibold text-foreground">
               Password
               <input
                 name="password"
                 type="password"
                 autoComplete="current-password"
                 defaultValue="demo"
-                className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2"
+                className="input-field mt-1.5"
               />
             </label>
-            {error ? <p className="text-sm text-rose-700">{error}</p> : null}
-            <button type="submit" className="w-full rounded-lg bg-orange py-2.5 font-semibold text-white">
+            {error ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">{error}</p> : null}
+            <button type="submit" className="btn-primary min-h-11 w-full">
               Sign in
             </button>
-            <p className="text-xs text-stone-500">
-              Demo logins: admin@, dispatch@, or tech@thewildlifepros.com · password <strong>demo</strong>
+            <p className="text-xs leading-relaxed text-muted-soft">
+              Demo logins: admin@, dispatch@, or tech@thewildlifepros.com · password <strong className="text-foreground">demo</strong>
             </p>
           </form>
         </div>

@@ -32,18 +32,14 @@ export function RecentPanel({ title = "Recently viewed" }: { title?: string }) {
   if (recent.length === 0 && pinned.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-line bg-panel p-4">
-      <h2 className="font-semibold">{title}</h2>
+    <section className="card p-5">
+      <h2 className="font-display text-lg font-bold tracking-tight">{title}</h2>
       {pinned.length > 0 ? (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Pinned</p>
+        <div className="mt-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-soft">Pinned</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {pinned.map((item) => (
-              <Link
-                key={item.id}
-                href={`/clients/${item.id}`}
-                className="rounded-full border border-orange/40 bg-orange/10 px-3 py-1.5 text-sm font-medium text-orange hover:bg-orange/15"
-              >
+              <Link key={item.id} href={`/clients/${item.id}`} className="chip chip-accent">
                 {item.label}
               </Link>
             ))}
@@ -53,15 +49,11 @@ export function RecentPanel({ title = "Recently viewed" }: { title?: string }) {
       {recent.length > 0 ? (
         <div className={pinned.length > 0 ? "mt-4" : "mt-3"}>
           {pinned.length > 0 ? (
-            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Recent</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-soft">Recent</p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
             {recent.slice(0, 6).map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-full border border-line bg-background px-3 py-1.5 text-sm font-medium hover:border-orange hover:text-orange"
-              >
+              <Link key={item.href} href={item.href} className="chip">
                 {item.label}
               </Link>
             ))}

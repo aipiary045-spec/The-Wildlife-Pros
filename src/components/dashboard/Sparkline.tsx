@@ -21,9 +21,21 @@ export function Sparkline({
       .join(" ");
   }
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className={className ?? "mt-3 h-12 w-full"} aria-hidden>
-      <polyline fill="none" stroke="#E85D04" strokeWidth="2" points={points(series)} />
-      {compare ? <polyline fill="none" stroke="#F9C74F" strokeWidth="2" points={points(compare)} /> : null}
+    <svg viewBox={`0 0 ${width} ${height}`} className={className ?? "mt-4 h-12 w-full"} aria-hidden>
+      <defs>
+        <linearGradient id="spark-primary" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ff6f1a" />
+          <stop offset="100%" stopColor="#e85d04" />
+        </linearGradient>
+        <linearGradient id="spark-compare" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#f9c74f" />
+          <stop offset="100%" stopColor="#f48c06" />
+        </linearGradient>
+      </defs>
+      <polyline fill="none" stroke="url(#spark-primary)" strokeWidth="2.25" strokeLinecap="round" points={points(series)} />
+      {compare ? (
+        <polyline fill="none" stroke="url(#spark-compare)" strokeWidth="2" strokeLinecap="round" opacity="0.85" points={points(compare)} />
+      ) : null}
     </svg>
   );
 }

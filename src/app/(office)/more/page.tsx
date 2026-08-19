@@ -15,8 +15,8 @@ export default async function MorePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl tracking-wide md:text-3xl">More</h1>
-        <p className="text-stone-600">
+        <h1 className="page-title">More</h1>
+        <p className="mt-1 max-w-2xl text-[0.9375rem] leading-relaxed text-muted">
           {tech
             ? "Time off, traps, species log, and sign out."
             : "Call log, quotes, invoices, and the rest of the office tools — grouped by what they are for."}
@@ -24,7 +24,7 @@ export default async function MorePage() {
       </div>
       {groups.map((group) => (
         <section key={group.title} className="space-y-2">
-          <h2 className="px-1 text-xs font-bold uppercase tracking-[0.16em] text-stone-500">{group.title}</h2>
+          <h2 className="page-eyebrow px-1 text-muted-soft">{group.title}</h2>
           <div className="grid gap-2">
             {group.items.map((item) => {
               const Icon = item.icon;
@@ -32,14 +32,14 @@ export default async function MorePage() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex min-h-14 items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3"
+                  className="card card-interactive flex min-h-14 items-center gap-3 px-4 py-3"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange/10 text-orange">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange/15 to-orange/5 text-orange ring-1 ring-orange/15">
                     <Icon size={18} />
                   </span>
                   <span className="min-w-0">
-                    <span className="block font-medium">{item.label}</span>
-                    {item.description ? <span className="block text-sm text-stone-500">{item.description}</span> : null}
+                    <span className="block font-semibold">{item.label}</span>
+                    {item.description ? <span className="block text-sm text-muted">{item.description}</span> : null}
                   </span>
                 </Link>
               );

@@ -81,13 +81,13 @@ export default async function ReportsPage({
         <Stat label="Jobs completed this week" value={String(completedWeek)} />
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
-        <article className="rounded-2xl border border-line bg-panel p-5 lg:col-span-2">
-          <h2 className="mb-3 font-semibold">Service area density</h2>
-          <p className="mb-4 text-sm text-stone-600">Where open and completed jobs cluster by city and ZIP.</p>
+        <article className="card p-5 lg:col-span-2">
+          <h2 className="font-display text-lg font-bold tracking-tight">Service area density</h2>
+          <p className="mb-4 mt-1 text-sm text-muted">Where open and completed jobs cluster by city and ZIP.</p>
           <AreaDensityReport />
         </article>
-        <article className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="mb-3 font-semibold">Field activity</h2>
+        <article className="card p-5">
+          <h2 className="font-display text-lg font-bold tracking-tight">Field activity</h2>
           <p className="text-sm text-stone-600">Active traps</p>
           <p className="font-display text-2xl">{overview.activeTraps}</p>
           <p className="mt-3 text-sm text-stone-600">Technicians on the clock</p>
@@ -157,10 +157,10 @@ export default async function ReportsPage({
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <article className="rounded-2xl border border-line bg-panel p-4">
-      <p className="text-xs uppercase tracking-wider text-stone-500">{label}</p>
-      <p className="mt-1 font-display text-2xl">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-stone-500">{hint}</p> : null}
+    <article className="card p-4">
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-soft">{label}</p>
+      <p className="stat-value mt-2">{value}</p>
+      {hint ? <p className="mt-1 text-xs text-muted">{hint}</p> : null}
     </article>
   );
 }
