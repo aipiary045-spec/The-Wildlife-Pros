@@ -62,47 +62,49 @@ export function GlobalSearch() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden items-center gap-2 rounded-lg border border-line bg-background px-3 py-2 text-sm text-stone-600 md:flex"
+        className="search-shell hidden items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted md:flex"
       >
         <Search size={16} />
         <span>Search</span>
-        <kbd className="rounded bg-panel px-1.5 py-0.5 text-[10px] text-stone-500">⌘K</kbd>
+        <kbd className="rounded-md border border-line bg-panel px-1.5 py-0.5 text-[10px] font-semibold text-muted-soft">
+          ⌘K
+        </kbd>
       </button>
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Search"
-        className="flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-background text-stone-600 md:hidden"
+        className="search-shell flex h-10 w-10 items-center justify-center rounded-xl text-muted md:hidden"
       >
         <Search size={18} />
       </button>
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-3 pt-[max(1rem,env(safe-area-inset-top))]">
-          <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-line bg-panel shadow-xl">
-            <div className="flex items-center gap-2 border-b border-line px-4 py-3">
-              <Search size={18} className="text-stone-500" />
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-3 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-[2px]">
+          <div className="modal-shell w-full max-w-xl overflow-hidden rounded-2xl">
+            <div className="flex items-center gap-2 border-b border-line px-4 py-3.5">
+              <Search size={18} className="text-muted-soft" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Client, phone, job #, trap serial, quote…"
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-soft"
               />
-              <button type="button" onClick={() => setOpen(false)} className="text-sm font-semibold text-stone-500">
+              <button type="button" onClick={() => setOpen(false)} className="chip px-2.5 py-1 text-xs">
                 Esc
               </button>
             </div>
             <div className="max-h-[60vh] overflow-y-auto p-2">
-              {loading ? <p className="px-3 py-4 text-sm text-stone-500">Searching…</p> : null}
+              {loading ? <p className="px-3 py-4 text-sm text-muted-soft">Searching…</p> : null}
               {!loading && query.trim().length < 2 && query.replace(/\D/g, "").length < 3 ? (
-                <p className="px-3 py-4 text-sm text-stone-500">Type at least 2 characters or 3 phone digits.</p>
+                <p className="px-3 py-4 text-sm text-muted-soft">Type at least 2 characters or 3 phone digits.</p>
               ) : null}
               {!loading && groups.length === 0 && query.trim().length >= 2 ? (
-                <p className="px-3 py-4 text-sm text-stone-500">No matches.</p>
+                <p className="px-3 py-4 text-sm text-muted-soft">No matches.</p>
               ) : null}
               {groups.map((group) => (
                 <section key={group.kind} className="mb-2">
-                  <p className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-stone-500">
+                  <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-soft">
                     {SEARCH_KIND_LABEL[group.kind]}
                   </p>
                   {group.items.map((item) => (
@@ -110,16 +112,16 @@ export function GlobalSearch() {
                       key={`${item.kind}:${item.id}`}
                       type="button"
                       onClick={() => go(item.href)}
-                      className="block w-full rounded-xl px-3 py-2 text-left hover:bg-background"
+                      className="block w-full rounded-xl px-3 py-2.5 text-left transition hover:bg-panel-muted"
                     >
-                      <p className="font-medium">{item.title}</p>
-                      <p className="text-sm text-stone-600">{item.subtitle}</p>
+                      <p className="font-semibold">{item.title}</p>
+                      <p className="text-sm text-muted">{item.subtitle}</p>
                     </button>
                   ))}
                 </section>
               ))}
             </div>
-            <div className="border-t border-line px-4 py-2 text-xs text-stone-500">
+            <div className="border-t border-line bg-panel-muted/60 px-4 py-2.5 text-xs text-muted-soft">
               Jump to clients, work orders, quotes, and invoices.{" "}
               <Link href="/clients" onClick={() => setOpen(false)} className="font-semibold text-orange">
                 Browse clients

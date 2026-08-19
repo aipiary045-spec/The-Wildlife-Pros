@@ -52,29 +52,32 @@ export function InstallHint() {
   }
 
   return (
-    <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 rounded-2xl border border-line bg-ink px-4 py-3 text-white shadow-lg md:hidden">
-      <p className="text-sm font-semibold">Use CritterOps like an app</p>
-      {installEvent ? (
-        <p className="mt-1 text-xs text-white/70">Install on this phone for faster field access.</p>
-      ) : (
-        <p className="mt-1 text-xs text-white/70">
-          On iPhone: Share → Add to Home Screen. On Android: menu → Install app.
-        </p>
-      )}
-      <div className="mt-2 flex flex-wrap gap-3">
+    <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 overflow-hidden rounded-2xl border border-white/10 bg-forest text-white shadow-lg md:hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,111,26,0.2),transparent_55%)]" />
+      <div className="relative px-4 py-3">
+        <p className="text-sm font-bold">Use CritterOps like an app</p>
         {installEvent ? (
-          <button
-            type="button"
-            className="text-xs font-semibold text-gold disabled:opacity-60"
-            disabled={installing}
-            onClick={installApp}
-          >
-            {installing ? "Installing…" : "Install app"}
+          <p className="mt-1 text-xs text-white/70">Install on this phone for faster field access.</p>
+        ) : (
+          <p className="mt-1 text-xs text-white/70">
+            On iPhone: Share → Add to Home Screen. On Android: menu → Install app.
+          </p>
+        )}
+        <div className="mt-2 flex flex-wrap gap-3">
+          {installEvent ? (
+            <button
+              type="button"
+              className="text-xs font-bold text-gold disabled:opacity-60"
+              disabled={installing}
+              onClick={installApp}
+            >
+              {installing ? "Installing…" : "Install app"}
+            </button>
+          ) : null}
+          <button type="button" className="text-xs font-semibold text-white/75" onClick={dismiss}>
+            Got it
           </button>
-        ) : null}
-        <button type="button" className="text-xs font-semibold text-white/80" onClick={dismiss}>
-          Got it
-        </button>
+        </div>
       </div>
     </div>
   );

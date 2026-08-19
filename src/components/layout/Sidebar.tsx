@@ -19,19 +19,21 @@ export function Sidebar({ role }: { role: string }) {
   }
 
   return (
-    <aside className="flex h-full w-64 flex-col bg-ink text-white">
-      <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
-        <Logo size={44} />
+    <aside className="app-sidebar flex h-full w-[17.5rem] flex-col text-white">
+      <div className="flex items-center gap-3 border-b border-white/8 px-5 py-5">
+        <div className="rounded-2xl bg-white/6 p-1.5 ring-1 ring-white/10">
+          <Logo size={40} />
+        </div>
         <div>
-          <p className="font-display text-sm tracking-[0.18em] text-orange">THE WILDLIFE PROS</p>
-          <p className="text-xs text-white/60">CritterOps</p>
+          <p className="font-display text-[0.7rem] font-bold tracking-[0.22em] text-orange-bright">WILDLIFE PROS</p>
+          <p className="text-sm font-semibold text-white/90">CritterOps</p>
         </div>
       </div>
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         {groups.map((group) => (
           <div key={group.title}>
-            <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">{group.title}</p>
-            <div className="space-y-0.5">
+            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">{group.title}</p>
+            <div className="space-y-1">
               {group.items.map((item) => {
                 const active = pathMatches(pathname, item.href);
                 const Icon = item.icon;
@@ -41,11 +43,13 @@ export function Sidebar({ role }: { role: string }) {
                     href={item.href}
                     title={item.description}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
-                      active ? "bg-orange text-white" : "text-white/75 hover:bg-white/10 hover:text-white",
+                      "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                      active
+                        ? "bg-gradient-to-r from-orange to-orange-bright text-white shadow-glow"
+                        : "text-white/72 hover:bg-white/8 hover:text-white",
                     )}
                   >
-                    <Icon size={16} />
+                    <Icon size={17} className={active ? "opacity-100" : "opacity-80 group-hover:opacity-100"} />
                     {item.label}
                   </Link>
                 );
@@ -57,7 +61,7 @@ export function Sidebar({ role }: { role: string }) {
       <button
         type="button"
         onClick={logout}
-        className="m-3 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-white/70 hover:bg-white/10"
+        className="m-3 flex items-center gap-2 rounded-xl border border-white/8 px-3 py-2.5 text-left text-sm font-medium text-white/65 transition hover:border-white/14 hover:bg-white/6 hover:text-white"
       >
         <LogOut size={16} />
         Sign out

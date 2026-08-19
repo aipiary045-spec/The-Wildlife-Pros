@@ -156,14 +156,14 @@ function TodayRow({
   const callHref = telHref(phone);
   const navHref = address ? googleMapsDirUrl({ address }) : null;
   return (
-    <div className={`flex items-start justify-between gap-2 py-2 text-sm ${tone === "urgent" ? "text-rose-800" : ""}`}>
-      <Link href={href} className="min-w-0 flex-1 hover:underline">
-        <span className="font-medium">{primary}</span>
-        {secondary ? <span className="block text-stone-600">{secondary}</span> : null}
+    <div className={`flex items-start justify-between gap-2 border-b border-line/60 py-3 text-sm last:border-0 ${tone === "urgent" ? "text-rose-800" : ""}`}>
+      <Link href={href} className="min-w-0 flex-1 transition hover:text-orange">
+        <span className="font-semibold">{primary}</span>
+        {secondary ? <span className="mt-0.5 block text-muted">{secondary}</span> : null}
       </Link>
-      <div className="flex shrink-0 gap-1">
+      <div className="flex shrink-0 gap-1.5">
         {callHref ? (
-          <a href={callHref} aria-label="Call" className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-background">
+          <a href={callHref} aria-label="Call" className="btn-secondary h-9 w-9 !p-0">
             <Phone size={16} />
           </a>
         ) : null}
@@ -173,7 +173,7 @@ function TodayRow({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Navigate"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-background"
+            className="btn-secondary h-9 w-9 !p-0"
           >
             <Navigation size={16} />
           </a>
@@ -197,20 +197,20 @@ function StatCard({
   return (
     <Link
       href={href}
-      className={`rounded-2xl border p-4 ${highlight ? "border-rose-200 bg-rose-50" : "border-line bg-panel"}`}
+      className={`card card-interactive p-4 ${highlight ? "border-rose-200 bg-gradient-to-br from-rose-50 to-panel ring-1 ring-rose-100" : ""}`}
     >
-      <p className="text-2xl font-semibold">{value}</p>
-      <p className="text-sm text-stone-600">{label}</p>
+      <p className="stat-value">{value}</p>
+      <p className="mt-1 text-sm font-medium text-muted">{label}</p>
     </Link>
   );
 }
 
 function Panel({ title, href, children }: { title: string; href: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-line bg-panel p-5">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="font-semibold">{title}</h2>
-        <Link href={href} className="text-sm font-semibold text-orange hover:underline">
+    <section className="card p-5 md:p-6">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h2 className="font-display text-lg font-bold tracking-tight">{title}</h2>
+        <Link href={href} className="text-sm font-bold text-orange hover:underline">
           Open
         </Link>
       </div>
@@ -221,7 +221,7 @@ function Panel({ title, href, children }: { title: string; href: string; childre
 
 function QuickLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold hover:border-orange hover:text-orange">
+    <Link href={href} className="chip hover:border-orange/35">
       {label}
     </Link>
   );

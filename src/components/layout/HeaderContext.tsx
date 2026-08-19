@@ -11,19 +11,19 @@ export function HeaderContext({ role, name }: { role: string; name: string }) {
 
   return (
     <div className="min-w-0">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-orange md:text-xs">The Wildlife Pros</p>
-      <p className="truncate text-sm font-semibold text-ink">
+      <p className="page-eyebrow">The Wildlife Pros</p>
+      <p className="truncate font-display text-lg font-bold tracking-tight text-ink md:text-xl">
         {moreChild ? (
           <>
             <Link href="/more" className="text-orange hover:underline md:hidden">
               All tools
             </Link>
-            <span className="font-normal text-stone-400 md:hidden"> / </span>
+            <span className="font-normal text-muted-soft md:hidden"> / </span>
           </>
         ) : null}
         {label}
       </p>
-      <p className="truncate text-xs text-stone-500">{name}</p>
+      <p className="truncate text-xs font-medium text-muted-soft">{name}</p>
     </div>
   );
 }

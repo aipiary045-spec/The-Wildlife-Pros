@@ -26,25 +26,22 @@ export function PipelineCard({
   compare?: number[];
 }) {
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-line bg-panel">
-      <div className="h-1.5" style={{ background: accent }} />
-      <div className="flex flex-1 flex-col p-4">
-        <h2 className="font-semibold">{title}</h2>
-        <ul className="mt-3 space-y-1.5 text-sm">
+    <article className="card card-interactive group flex flex-col overflow-hidden">
+      <div className="h-1" style={{ background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
+      <div className="flex flex-1 flex-col p-5">
+        <h2 className="font-display text-lg font-bold tracking-tight">{title}</h2>
+        <ul className="mt-4 space-y-2 text-sm">
           {rows.map((row) => (
-            <li key={row.label} className="flex justify-between gap-2">
-              <span className="text-stone-600">{row.label}</span>
-              <span className="font-medium">
+            <li key={row.label} className="flex justify-between gap-2 border-b border-line/70 pb-2 last:border-0 last:pb-0">
+              <span className="text-muted">{row.label}</span>
+              <span className="font-semibold tabular-nums">
                 {row.count}
                 {row.money != null ? ` · ${formatMoney(row.money)}` : ""}
               </span>
             </li>
           ))}
         </ul>
-        <Link
-          href={href}
-          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-line px-3 text-sm font-semibold"
-        >
+        <Link href={href} className="btn-secondary mt-5 min-h-10 group-hover:border-orange/30">
           {action}
         </Link>
         <Sparkline series={spark} compare={compare} />
