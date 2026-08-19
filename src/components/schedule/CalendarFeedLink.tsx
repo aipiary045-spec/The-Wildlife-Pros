@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Calendar } from "lucide-react";
 
 export function CalendarFeedLink({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
@@ -37,19 +38,20 @@ export function CalendarFeedLink({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="text-center">
+    <section className="border-t border-line pt-5">
       <button
         type="button"
         onClick={() => void toggle()}
-        className="text-xs font-medium text-muted-soft hover:text-orange"
+        className="btn-secondary min-h-11 w-full gap-2"
         aria-expanded={open}
       >
+        <Calendar size={18} />
         {open ? "Hide calendar link" : "Subscribe in calendar"}
       </button>
       {open ? (
-        <div className="mt-2 rounded-xl border border-line bg-panel p-3 text-left">
+        <div className="mt-3 rounded-xl border border-line bg-panel p-4">
           <p className="text-sm font-semibold">Google Calendar or Outlook</p>
-          <p className="mt-1 text-xs text-muted-soft">
+          <p className="mt-1 text-sm text-muted">
             Paste this private link as a calendar subscription. It shows your next 90 days of assigned jobs.
           </p>
           {loading ? <p className="mt-3 text-sm text-muted-soft">Loading…</p> : null}
@@ -59,11 +61,11 @@ export function CalendarFeedLink({ userId }: { userId: string }) {
               <input
                 readOnly
                 value={feedUrl}
-                className="min-w-0 flex-1 rounded-lg border border-line bg-white px-3 py-2 text-xs"
+                className="input-field text-xs"
               />
               <button
                 type="button"
-                className="rounded-full bg-orange px-4 py-2 text-sm font-semibold text-white"
+                className="btn-primary shrink-0 px-4 py-2 text-sm"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(feedUrl);
@@ -80,6 +82,6 @@ export function CalendarFeedLink({ userId }: { userId: string }) {
           ) : null}
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

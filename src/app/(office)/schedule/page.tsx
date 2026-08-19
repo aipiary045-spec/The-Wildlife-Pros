@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NeedsPool } from "@/components/schedule/NeedsPool";
+import { CalendarFeedLink } from "@/components/schedule/CalendarFeedLink";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
 import { getSession } from "@/lib/auth";
@@ -76,7 +77,6 @@ export default async function SchedulePage({
         date={date}
         basePath="/schedule"
         routesHref={`/routes?date=${dateKey(date)}`}
-        calendarUserId={session?.id}
       />
       {view === "day" ? (
         <DayStats jobs={jobs} />
@@ -102,6 +102,7 @@ export default async function SchedulePage({
         }))}
         technicians={technicians}
       />
+      {session ? <CalendarFeedLink userId={session.id} /> : null}
     </div>
   );
 }
