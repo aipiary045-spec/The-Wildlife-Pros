@@ -70,12 +70,14 @@ export default async function SchedulePage({
           <Link href="/calls" className="hover:underline">
             Call log
           </Link>
-          <Link href={`/routes?date=${dateKey(date)}`} className="hover:underline">
-            Optimize routes
-          </Link>
         </p>
       </div>
-      <ScheduleToolbar view={view} date={date} basePath="/schedule" />
+      <ScheduleToolbar
+        view={view}
+        date={date}
+        basePath="/schedule"
+        routesHref={`/routes?date=${dateKey(date)}`}
+      />
       {session ? <CalendarFeedLink userId={session.id} /> : null}
       {view === "day" ? (
         <DayStats jobs={jobs} />
