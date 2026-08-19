@@ -81,7 +81,7 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
           </div>
           <div>
             <p className="page-eyebrow text-ink/80">The Wildlife Pros</p>
-            <h1 className="text-2xl font-semibold">Hello, {data.firstName}</h1>
+            <h1 className="font-display text-3xl tracking-wide">Hello, {data.firstName}</h1>
             <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink/75">
               Upcoming visits and quote approvals. Payments are taken by our crew through Square.
             </p>

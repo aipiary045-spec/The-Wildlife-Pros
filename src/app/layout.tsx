@@ -1,12 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Source_Sans_3 } from "next/font/google";
+import { Oswald, Outfit } from "next/font/google";
 import { PwaRegister } from "@/components/layout/PwaRegister";
 import "./globals.css";
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+});
+
+const oswald = Oswald({
+  variable: "--font-oswald",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +42,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${sourceSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${outfit.variable} ${oswald.variable} h-full antialiased`}>
       <body className="min-h-dvh bg-background font-sans text-foreground">
         {children}
         <PwaRegister />

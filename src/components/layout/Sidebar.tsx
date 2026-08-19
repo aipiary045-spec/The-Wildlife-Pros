@@ -25,8 +25,8 @@ export function Sidebar({ role }: { role: string }) {
           <Logo size={40} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white/90">The Wildlife Pros</p>
-          <p className="text-sm text-white/55">CritterOps</p>
+          <p className="font-display text-sm tracking-wide text-orange">The Wildlife Pros</p>
+          <p className="text-sm text-white/70">CritterOps</p>
         </div>
       </div>
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
