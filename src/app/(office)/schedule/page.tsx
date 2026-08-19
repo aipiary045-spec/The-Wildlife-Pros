@@ -57,28 +57,23 @@ export default async function SchedulePage({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule</h1>
-          <p className="text-stone-600 sm:hidden">Drag jobs onto a tech and a time. Scroll sideways for the rest of the day.</p>
-          <p className="hidden text-stone-600 sm:block">
-            Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order, traps, or invoice.
-          </p>
-          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-orange">
-            <Link href="/jobs" className="hover:underline">
-              Work orders
-            </Link>
-            <Link href="/calls" className="hover:underline">
-              Call log
-            </Link>
-          </p>
-        </div>
-        <Link
-          href={`/routes?date=${dateKey(date)}`}
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold sm:w-auto"
-        >
-          Optimize routes
-        </Link>
+      <div>
+        <h1 className="font-display text-2xl tracking-wide md:text-3xl">Schedule</h1>
+        <p className="text-muted sm:hidden">Drag jobs onto a tech and a time. Scroll sideways for the rest of the day.</p>
+        <p className="hidden text-muted sm:block">
+          Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order, traps, or invoice.
+        </p>
+        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-orange">
+          <Link href="/jobs" className="hover:underline">
+            Work orders
+          </Link>
+          <Link href="/calls" className="hover:underline">
+            Call log
+          </Link>
+          <Link href={`/routes?date=${dateKey(date)}`} className="hover:underline">
+            Optimize routes
+          </Link>
+        </p>
       </div>
       <ScheduleToolbar view={view} date={date} basePath="/schedule" />
       {session ? <CalendarFeedLink userId={session.id} /> : null}
