@@ -19,6 +19,7 @@ import { getSession } from "@/lib/auth";
 import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { isTechnician } from "@/lib/paths";
+import { buildEnRouteMessage, messagingCapabilities, smsFallbackUrl } from "@/lib/messaging";
 import { quoteBillingAction } from "@/lib/quotes";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
@@ -65,6 +66,14 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       )
     : null;
   const showQuoteBanner = Boolean(techView && job.quote && quoteBilling);
+  const enRouteMessage = buildEnRouteMessage({
+    clientFirstName: job.client.firstName,
+    techName: job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : session?.firstName,
+    jobTitle: job.title,
+    companyName: job.client.companyName ?? undefined,
+  });
+  const enRouteSmsHref = smsFallbackUrl(job.client.phone, enRouteMessage);
+  const autoSendSms = messagingCapabilities().sms;
   if (techView && job.technicianId && job.technicianId !== session?.id) notFound();
 
   const [stock, allGear, species, technicians] = await Promise.all([
@@ -116,7 +125,12 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             technicians={technicians}
           />
           {["SCHEDULED", "EN_ROUTE", "ON_SITE"].includes(job.status) ? (
-            <NotifyCustomerButton jobId={job.id} clientPhone={job.client.phone} />
+            <NotifyCustomerButton
+              jobId={job.id}
+              clientPhone={job.client.phone}
+              smsHref={enRouteSmsHref}
+              autoSendSms={autoSendSms}
+            />
           ) : null}
           {canBill ? (
             <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
