@@ -25,14 +25,14 @@ export function Sidebar({ role }: { role: string }) {
           <Logo size={40} />
         </div>
         <div>
-          <p className="font-display text-[0.7rem] font-bold tracking-[0.22em] text-orange-bright">WILDLIFE PROS</p>
-          <p className="text-sm font-semibold text-white/90">CritterOps</p>
+          <p className="text-sm font-semibold text-white/90">The Wildlife Pros</p>
+          <p className="text-sm text-white/55">CritterOps</p>
         </div>
       </div>
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         {groups.map((group) => (
           <div key={group.title}>
-            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">{group.title}</p>
+            <p className="px-3 pb-2 text-xs font-semibold text-white/40">{group.title}</p>
             <div className="space-y-1">
               {group.items.map((item) => {
                 const active = pathMatches(pathname, item.href);

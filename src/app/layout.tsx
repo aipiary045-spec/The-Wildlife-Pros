@@ -1,18 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Syne } from "next/font/google";
+import { Source_Sans_3 } from "next/font/google";
 import { PwaRegister } from "@/components/layout/PwaRegister";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
+const sourceSans = Source_Sans_3({
+  variable: "--font-source",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-});
-
-const syne = Syne({
-  variable: "--font-syne",
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -44,7 +38,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${syne.variable} h-full antialiased`}>
+    <html lang="en" className={`${sourceSans.variable} h-full antialiased`}>
       <body className="min-h-dvh bg-background font-sans text-foreground">
         {children}
         <PwaRegister />

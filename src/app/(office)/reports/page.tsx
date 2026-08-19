@@ -82,16 +82,16 @@ export default async function ReportsPage({
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
         <article className="card p-5 lg:col-span-2">
-          <h2 className="font-display text-lg font-bold tracking-tight">Service area density</h2>
+          <h2 className="text-base font-semibold">Service area density</h2>
           <p className="mb-4 mt-1 text-sm text-muted">Where open and completed jobs cluster by city and ZIP.</p>
           <AreaDensityReport />
         </article>
         <article className="card p-5">
-          <h2 className="font-display text-lg font-bold tracking-tight">Field activity</h2>
+          <h2 className="text-base font-semibold">Field activity</h2>
           <p className="text-sm text-stone-600">Active traps</p>
-          <p className="font-display text-2xl">{overview.activeTraps}</p>
-          <p className="mt-3 text-sm text-stone-600">Technicians on the clock</p>
-          <p className="font-display text-2xl">{overview.clockedIn}</p>
+          <p className="stat-value">{overview.activeTraps}</p>
+          <p className="mt-3 text-sm text-muted">Technicians on the clock</p>
+          <p className="stat-value">{overview.clockedIn}</p>
           {overview.recentCaptures[0] ? (
             <p className="mt-3 text-sm text-stone-600">
               Latest capture: {overview.recentCaptures[0].species.commonName} at{" "}
@@ -158,7 +158,7 @@ export default async function ReportsPage({
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <article className="card p-4">
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-soft">{label}</p>
+      <p className="text-xs font-medium text-muted-soft">{label}</p>
       <p className="stat-value mt-2">{value}</p>
       {hint ? <p className="mt-1 text-xs text-muted">{hint}</p> : null}
     </article>

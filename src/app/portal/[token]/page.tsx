@@ -81,7 +81,7 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
           </div>
           <div>
             <p className="page-eyebrow text-ink/80">The Wildlife Pros</p>
-            <h1 className="font-display text-3xl font-extrabold tracking-tight">Hello, {data.firstName}</h1>
+            <h1 className="text-2xl font-semibold">Hello, {data.firstName}</h1>
             <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink/75">
               Upcoming visits and quote approvals. Payments are taken by our crew through Square.
             </p>
@@ -95,7 +95,7 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
           </p>
         ) : null}
         <section className="card p-5 md:p-6">
-          <h2 className="font-display text-lg font-bold tracking-tight">Upcoming visits</h2>
+          <h2 className="text-base font-semibold">Upcoming visits</h2>
           {data.jobs.length === 0 ? <p className="mt-2 text-sm text-muted-soft">No upcoming appointments.</p> : null}
           {data.jobs.map((job) => (
             <div key={job.id} className="border-t border-line py-4 first:mt-3 first:border-0 first:pt-0">
@@ -111,7 +111,7 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
           ))}
         </section>
         <section className="card p-5 md:p-6">
-          <h2 className="font-display text-lg font-bold tracking-tight">Quotes</h2>
+          <h2 className="text-base font-semibold">Quotes</h2>
           {data.quotes.map((quote) => (
             <article key={quote.id} className="border-t border-line py-4 first:mt-3 first:border-0 first:pt-0">
               <div className="flex justify-between gap-3">

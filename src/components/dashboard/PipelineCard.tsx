@@ -29,7 +29,7 @@ export function PipelineCard({
     <article className="card card-interactive group flex flex-col overflow-hidden">
       <div className="h-1" style={{ background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
       <div className="flex flex-1 flex-col p-5">
-        <h2 className="font-display text-lg font-bold tracking-tight">{title}</h2>
+        <h2 className="text-base font-semibold">{title}</h2>
         <ul className="mt-4 space-y-2 text-sm">
           {rows.map((row) => (
             <li key={row.label} className="flex justify-between gap-2 border-b border-line/70 pb-2 last:border-0 last:pb-0">

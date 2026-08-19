@@ -33,10 +33,10 @@ export function RecentPanel({ title = "Recently viewed" }: { title?: string }) {
 
   return (
     <section className="card p-5">
-      <h2 className="font-display text-lg font-bold tracking-tight">{title}</h2>
+      <h2 className="text-base font-semibold">{title}</h2>
       {pinned.length > 0 ? (
         <div className="mt-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-soft">Pinned</p>
+          <p className="text-xs font-medium text-muted-soft">Pinned</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {pinned.map((item) => (
               <Link key={item.id} href={`/clients/${item.id}`} className="chip chip-accent">
@@ -49,7 +49,7 @@ export function RecentPanel({ title = "Recently viewed" }: { title?: string }) {
       {recent.length > 0 ? (
         <div className={pinned.length > 0 ? "mt-4" : "mt-3"}>
           {pinned.length > 0 ? (
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-soft">Recent</p>
+            <p className="text-xs font-medium text-muted-soft">Recent</p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
             {recent.slice(0, 6).map((item) => (
