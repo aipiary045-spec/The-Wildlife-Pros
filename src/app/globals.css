@@ -47,8 +47,8 @@
   --color-line-strong: var(--line-strong);
   --color-muted: var(--muted);
   --color-muted-soft: var(--muted-soft);
-  --font-sans: var(--font-source);
-  --font-display: var(--font-source);
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-oswald);
   --shadow-card: var(--shadow-sm);
   --shadow-card-hover: var(--shadow-md);
   --shadow-modal: var(--shadow-lg);
@@ -68,19 +68,13 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-source), "Segoe UI", sans-serif;
+  font-family: var(--font-outfit), "Segoe UI", sans-serif;
   font-size: 1rem;
   line-height: 1.5;
   overscroll-behavior-y: contain;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-}
-
-/* One readable family everywhere — no separate display face */
-.font-display {
-  font-family: var(--font-source), "Segoe UI", sans-serif;
-  letter-spacing: normal;
 }
 
 body::before {
@@ -266,25 +260,25 @@ a {
 }
 
 .page-title {
+  font-family: var(--font-oswald), sans-serif;
   font-size: clamp(1.5rem, 2vw, 1.875rem);
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
 }
 
 .page-eyebrow {
   font-size: 0.8125rem;
   font-weight: 500;
-  letter-spacing: normal;
-  text-transform: none;
   color: var(--muted-soft);
 }
 
 .stat-value {
+  font-family: var(--font-oswald), sans-serif;
   font-size: 1.625rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.2;
-  letter-spacing: normal;
+  letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
 }
 
