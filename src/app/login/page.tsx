@@ -24,7 +24,7 @@ export default async function LoginPage({
           <div className="mx-auto w-fit rounded-3xl bg-black/10 p-4 ring-1 ring-black/10 backdrop-blur-sm">
             <Logo size={160} className="drop-shadow-2xl" />
           </div>
-          <h1 className="mt-8 font-display text-5xl font-extrabold tracking-tight">The Wildlife Pros</h1>
+          <h1 className="mt-8 text-4xl font-semibold leading-tight">The Wildlife Pros</h1>
           <p className="mt-4 text-lg leading-relaxed text-ink/75">
             CritterOps runs the office, the truck, and the trapline — quotes, dispatch, and the client hub in one sharp
             workspace.
@@ -39,11 +39,11 @@ export default async function LoginPage({
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <Logo size={52} />
             <div>
-              <p className="font-display text-sm font-bold tracking-[0.18em] text-orange">WILDLIFE PROS</p>
-              <p className="text-sm font-medium text-muted-soft">CritterOps</p>
+              <p className="text-sm font-semibold text-orange">The Wildlife Pros</p>
+              <p className="text-sm text-muted-soft">CritterOps</p>
             </div>
           </div>
-          <h2 className="font-display text-2xl font-bold tracking-tight">Sign in</h2>
+          <h2 className="text-xl font-semibold">Sign in</h2>
           <p className="mb-6 mt-1 text-sm text-muted">Field service operations for wildlife and pest work.</p>
           <form action="/api/auth/login" method="post" className="space-y-4">
             <input type="hidden" name="next" value={next} />

@@ -12,7 +12,7 @@ export function HeaderContext({ role, name }: { role: string; name: string }) {
   return (
     <div className="min-w-0">
       <p className="page-eyebrow">The Wildlife Pros</p>
-      <p className="truncate font-display text-lg font-bold tracking-tight text-ink md:text-xl">
+      <p className="truncate text-base font-semibold text-ink md:text-lg">
         {moreChild ? (
           <>
             <Link href="/more" className="text-orange hover:underline md:hidden">

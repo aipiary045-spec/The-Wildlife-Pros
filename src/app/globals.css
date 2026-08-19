@@ -47,8 +47,8 @@
   --color-line-strong: var(--line-strong);
   --color-muted: var(--muted);
   --color-muted-soft: var(--muted-soft);
-  --font-sans: var(--font-jakarta);
-  --font-display: var(--font-syne);
+  --font-sans: var(--font-source);
+  --font-display: var(--font-source);
   --shadow-card: var(--shadow-sm);
   --shadow-card-hover: var(--shadow-md);
   --shadow-modal: var(--shadow-lg);
@@ -68,11 +68,19 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-jakarta), "Segoe UI", sans-serif;
+  font-family: var(--font-source), "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
   overscroll-behavior-y: contain;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+/* One readable family everywhere — no separate display face */
+.font-display {
+  font-family: var(--font-source), "Segoe UI", sans-serif;
+  letter-spacing: normal;
 }
 
 body::before {
@@ -258,27 +266,26 @@ a {
 }
 
 .page-title {
-  font-family: var(--font-syne), sans-serif;
-  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: clamp(1.5rem, 2vw, 1.875rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 .page-eyebrow {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--orange);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted-soft);
 }
 
 .stat-value {
-  font-family: var(--font-syne), sans-serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  font-size: 1.625rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
+  font-variant-numeric: tabular-nums;
 }
 
 .status-pill {
@@ -287,10 +294,10 @@ a {
   border-radius: 999px;
   border: 1px solid transparent;
   padding: 0.2rem 0.65rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .bottom-nav {
@@ -308,9 +315,9 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.125rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: normal;
   color: var(--muted-soft);
   transition: color 0.15s ease;
 }

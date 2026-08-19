@@ -209,7 +209,7 @@ function Panel({ title, href, children }: { title: string; href: string; childre
   return (
     <section className="card p-5 md:p-6">
       <div className="mb-4 flex items-center justify-between gap-2">
-        <h2 className="font-display text-lg font-bold tracking-tight">{title}</h2>
+        <h2 className="text-base font-semibold">{title}</h2>
         <Link href={href} className="text-sm font-bold text-orange hover:underline">
           Open
         </Link>

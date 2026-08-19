@@ -104,7 +104,7 @@ export function GlobalSearch() {
               ) : null}
               {groups.map((group) => (
                 <section key={group.kind} className="mb-2">
-                  <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-soft">
+                  <p className="px-3 py-1 text-xs font-semibold text-muted-soft">
                     {SEARCH_KIND_LABEL[group.kind]}
                   </p>
                   {group.items.map((item) => (

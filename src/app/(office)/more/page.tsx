@@ -24,7 +24,7 @@ export default async function MorePage() {
       </div>
       {groups.map((group) => (
         <section key={group.title} className="space-y-2">
-          <h2 className="page-eyebrow px-1 text-muted-soft">{group.title}</h2>
+          <h2 className="page-eyebrow px-1">{group.title}</h2>
           <div className="grid gap-2">
             {group.items.map((item) => {
               const Icon = item.icon;
