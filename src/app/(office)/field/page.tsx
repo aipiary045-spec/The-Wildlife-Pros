@@ -6,6 +6,7 @@ import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { isTechnician } from "@/lib/paths";
+import { jobNotifyProps } from "@/lib/messaging";
 import { prisma } from "@/lib/prisma";
 import { getMyTimesheet } from "@/lib/timesheets";
 
@@ -63,6 +64,14 @@ export default async function FieldPage({
     ),
   );
   const optimizedStops = jobs.filter((job) => routeByJobId[job.id]).length;
+  const notifyByJobId = Object.fromEntries(
+    jobs
+      .map((job) => {
+        const notify = jobNotifyProps(job, session.firstName);
+        return notify ? ([job.id, notify] as const) : null;
+      })
+      .filter(Boolean) as Array<[string, NonNullable<ReturnType<typeof jobNotifyProps>>]>,
+  );
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
@@ -86,6 +95,7 @@ export default async function FieldPage({
         showTech={session.role !== "TECHNICIAN"}
         routeByJobId={routeByJobId}
         technicians={technicians}
+        notifyByJobId={notifyByJobId}
       />
     </div>
   );

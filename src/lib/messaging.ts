@@ -64,6 +64,35 @@ export function buildEnRouteMessage(input: {
   return `${tech} is on the way for ${input.jobTitle}. Reply to this number if you need to reschedule.`;
 }
 
+export const JOB_NOTIFY_STATUSES = ["SCHEDULED", "EN_ROUTE", "ON_SITE"] as const;
+
+export function jobNotifyProps(
+  job: {
+    id: string;
+    title: string;
+    status: string;
+    client: { firstName: string; phone: string | null; companyName?: string | null };
+    technician?: { firstName: string; lastName: string } | null;
+  },
+  techFallbackName?: string,
+) {
+  if (!JOB_NOTIFY_STATUSES.includes(job.status as (typeof JOB_NOTIFY_STATUSES)[number])) {
+    return null;
+  }
+  const message = buildEnRouteMessage({
+    clientFirstName: job.client.firstName,
+    techName: job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : techFallbackName,
+    jobTitle: job.title,
+    companyName: job.client.companyName ?? undefined,
+  });
+  return {
+    jobId: job.id,
+    clientPhone: job.client.phone,
+    smsHref: smsFallbackUrl(job.client.phone, message),
+    autoSendSms: messagingCapabilities().sms,
+  };
+}
+
 export function smsFallbackUrl(phone: string | null | undefined, body: string) {
   const digits = phoneDigits(phone ?? "");
   if (digits.length < 10) return null;

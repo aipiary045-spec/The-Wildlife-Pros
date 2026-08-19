@@ -2,22 +2,32 @@
 
 import { useState } from "react";
 import { MessageCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function NotifyCustomerButton({
   jobId,
   clientPhone,
   smsHref,
   autoSendSms = false,
+  compact = false,
+  className,
 }: {
   jobId: string;
   clientPhone?: string | null;
   smsHref?: string | null;
   autoSendSms?: boolean;
+  compact?: boolean;
+  className?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const buttonClass =
-    "inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 text-sm font-semibold transition hover:border-orange/35 hover:text-orange disabled:opacity-50";
+  const buttonClass = cn(
+    compact
+      ? "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border border-line px-2 text-xs font-semibold transition hover:border-orange/35 hover:text-orange disabled:opacity-50 sm:text-sm"
+      : "inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 text-sm font-semibold transition hover:border-orange/35 hover:text-orange disabled:opacity-50",
+    className,
+  );
+  const label = compact ? "Text" : "Text customer";
 
   async function sendFromApp() {
     setBusy(true);
@@ -32,7 +42,7 @@ export function NotifyCustomerButton({
     };
     setBusy(false);
     if (data.sent) {
-      setNotice("Text sent.");
+      setNotice(compact ? "Sent" : "Text sent.");
       return true;
     }
     setNotice(data.error ?? "Could not send automatically.");
@@ -51,28 +61,29 @@ export function NotifyCustomerButton({
   }
 
   if (!clientPhone) {
+    if (compact) return null;
     return <p className="text-xs text-stone-500">Add a phone number on the client to text them.</p>;
   }
 
   if (!autoSendSms && smsHref) {
     return (
-      <div className="space-y-2">
+      <div className={compact ? "contents" : "space-y-2"}>
         <a href={smsHref} className={buttonClass}>
-          <MessageCircle size={16} />
-          Text customer
+          <MessageCircle size={compact ? 14 : 16} />
+          {label}
         </a>
-        {notice ? <p className="text-sm text-stone-600">{notice}</p> : null}
+        {notice && !compact ? <p className="text-sm text-stone-600">{notice}</p> : null}
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className={compact ? "contents" : "space-y-2"}>
       <button type="button" disabled={busy} onClick={() => void handleClick()} className={buttonClass}>
-        <MessageCircle size={16} />
-        {busy ? "Sending…" : "Text customer"}
+        <MessageCircle size={compact ? 14 : 16} />
+        {busy ? "Sending…" : label}
       </button>
-      {notice ? <p className="text-sm text-stone-600">{notice}</p> : null}
+      {notice && !compact ? <p className="text-sm text-stone-600">{notice}</p> : null}
     </div>
   );
 }

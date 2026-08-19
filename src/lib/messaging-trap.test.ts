@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   buildEnRouteMessage,
   buildQuoteDeliveryMessage,
+  jobNotifyProps,
   portalHubUrl,
   smsFallbackUrl,
 } from "./messaging";
@@ -42,6 +43,35 @@ test("smsFallbackUrl normalizes US numbers", () => {
   assert.equal(
     smsFallbackUrl("(704) 555-0142", "On the way"),
     "sms:+17045550142?body=On%20the%20way",
+  );
+});
+
+test("jobNotifyProps builds sms link for active visits only", () => {
+  const active = jobNotifyProps(
+    {
+      id: "job-1",
+      title: "Trap check",
+      status: "SCHEDULED",
+      client: { firstName: "Riley", phone: "(704) 555-0142" },
+      technician: { firstName: "Jordan", lastName: "Lee" },
+    },
+    "Alex",
+  );
+  assert.ok(active);
+  assert.equal(active?.jobId, "job-1");
+  assert.match(active?.smsHref ?? "", /^sms:\+17045550142/);
+
+  assert.equal(
+    jobNotifyProps(
+      {
+        id: "job-2",
+        title: "Done",
+        status: "COMPLETED",
+        client: { firstName: "Riley", phone: "(704) 555-0142" },
+      },
+      "Alex",
+    ),
+    null,
   );
 });
 

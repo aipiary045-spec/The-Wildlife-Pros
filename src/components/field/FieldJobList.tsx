@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { NavigateLink } from "@/components/maps/NavigateLink";
+import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { dateKey } from "@/lib/dates";
@@ -15,6 +16,11 @@ type FieldJob = {
   scheduledStart: Date | null;
   technicianId?: string | null;
   technician?: { firstName: string; lastName: string } | null;
+  client: {
+    firstName: string;
+    phone: string | null;
+    companyName?: string | null;
+  };
   property: {
     address1: string;
     city: string;
@@ -24,6 +30,13 @@ type FieldJob = {
     lng?: number | null;
   };
   deployments: unknown[];
+};
+
+export type FieldJobNotify = {
+  jobId: string;
+  clientPhone: string | null;
+  smsHref: string | null;
+  autoSendSms: boolean;
 };
 
 export type RouteHint = {
@@ -39,12 +52,14 @@ export function FieldJobList({
   showTech,
   routeByJobId = {},
   technicians = [],
+  notifyByJobId = {},
 }: {
   jobs: FieldJob[];
   days: Date[];
   showTech: boolean;
   routeByJobId?: Record<string, RouteHint>;
   technicians?: ScheduleTech[];
+  notifyByJobId?: Record<string, FieldJobNotify>;
 }) {
   return (
     <div className="space-y-4">
@@ -125,7 +140,12 @@ export function FieldJobList({
                         {job.deployments.length} trap{job.deployments.length === 1 ? "" : "s"}
                       </p>
                     </Link>
-                    <NavigateLink destination={place} className="mt-3" />
+                    <div className="mt-3 flex gap-2">
+                      <NavigateLink destination={place} label="Navigate" className="flex-1 [&>a]:w-full [&>a]:justify-center" />
+                      {notifyByJobId[job.id] ? (
+                        <NotifyCustomerButton {...notifyByJobId[job.id]} compact className="flex-1" />
+                      ) : null}
+                    </div>
                     <div className="mt-3">
                       <JobVisitControls
                         jobId={job.id}
