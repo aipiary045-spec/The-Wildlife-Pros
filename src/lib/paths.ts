@@ -1,9 +1,13 @@
+import type { ViewMode } from "@/lib/view-mode";
+import { homePathFor, isFieldView } from "@/lib/view-mode";
+import { isTechnicianRole } from "@/lib/roles";
+
 export function isTechnician(role: string) {
-  return role === "TECHNICIAN";
+  return isTechnicianRole(role);
 }
 
-export function homePath(role: string) {
-  return isTechnician(role) ? "/field" : "/dashboard";
+export function homePath(role: string, viewMode: ViewMode = "office") {
+  return homePathFor(role, viewMode);
 }
 
 export const OFFICE_ONLY_PREFIXES = [
@@ -29,6 +33,10 @@ export function isOfficeOnlyPath(pathname: string) {
     return false;
   }
   return OFFICE_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+export function shouldBlockOfficePath(role: string, pathname: string, viewMode: ViewMode = "office") {
+  return isFieldView(role, viewMode) && isOfficeOnlyPath(pathname);
 }
 
 export function safeNextPath(value: string | null | undefined, fallback = "/dashboard") {

@@ -3,7 +3,7 @@ import { NeedsPool } from "@/components/schedule/NeedsPool";
 import { CalendarFeedLink } from "@/components/schedule/CalendarFeedLink";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
-import { getActiveCheckIns } from "@/lib/active-checkins";
+import { getActiveCheckIns } from "@/lib/active-checkins.server";
 import { getSession } from "@/lib/auth";
 import { getSchedule } from "@/lib/data";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";

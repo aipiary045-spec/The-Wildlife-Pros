@@ -32,8 +32,8 @@ const maya = {
 };
 
 test("office can log intake; technicians cannot", () => {
-  assert.equal(canManageIntake("OWNER"), true);
-  assert.equal(canManageIntake("DISPATCHER"), true);
+  assert.equal(canManageIntake("ADMIN"), true);
+  assert.equal(canManageIntake("TECHNICIAN"), false);
   assert.equal(canManageIntake("TECHNICIAN"), false);
 });
 

@@ -76,22 +76,6 @@ export function primaryTabs(role: string): NavItem[] {
       { href: "/more", label: "More", icon: Menu },
     ];
   }
-  if (role === "DISPATCHER" || role === "OWNER" || role === "ADMIN") {
-    return [
-      { href: "/dashboard", label: "Today", icon: Home },
-      { href: "/schedule", label: "Schedule", icon: CalendarDays },
-      { href: "/clients", label: "Clients", icon: Users },
-      { href: "/more", label: "More", icon: Menu },
-    ];
-  }
-  if (role === "ACCOUNTING") {
-    return [
-      { href: "/dashboard", label: "Today", icon: Home },
-      { href: "/invoices", label: "Invoices", icon: Receipt },
-      { href: "/clients", label: "Clients", icon: Users },
-      { href: "/more", label: "More", icon: Menu },
-    ];
-  }
   return [
     { href: "/dashboard", label: "Today", icon: Home },
     { href: "/schedule", label: "Schedule", icon: CalendarDays },

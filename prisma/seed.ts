@@ -68,7 +68,7 @@ async function main() {
   });
 
   const passwordHash = await hash("demo", 10);
-  const [owner, dispatch, jordan, alex] = await Promise.all([
+  const [admin, jordan, alex] = await Promise.all([
     prisma.user.create({
       data: {
         organizationId: org.id,
@@ -76,24 +76,11 @@ async function main() {
         passwordHash,
         firstName: "Riley",
         lastName: "Hart",
-        role: "OWNER",
+        role: "ADMIN",
         color: "#E85D04",
         homeLat: 35.198,
         homeLng: -80.844,
         homeAddress: "Shop · 418 Ridge Line Dr",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        organizationId: org.id,
-        email: "dispatch@thewildlifepros.com",
-        passwordHash,
-        firstName: "Sam",
-        lastName: "Ortega",
-        role: "DISPATCHER",
-        color: "#F48C06",
-        homeLat: 35.21,
-        homeLng: -80.83,
       },
     }),
     prisma.user.create({
@@ -335,7 +322,7 @@ async function main() {
       number: "Q-0001",
       clientId: maya.id,
       propertyId: maya.properties[0].id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       status: "SENT",
       title: "Raccoon attic trapping + exclusion",
       message: "Full trapping program, one-way on the soffit, and seal remaining gaps after the last capture.",
@@ -362,7 +349,7 @@ async function main() {
       propertyId: maya.properties[0].id,
       quoteId: quote.id,
       technicianId: jordan.id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       type: "TRAPPING",
       status: "SCHEDULED",
       title: "Raccoon trap check — attic",
@@ -383,7 +370,7 @@ async function main() {
       clientId: hoa.id,
       propertyId: hoa.properties[0].id,
       technicianId: alex.id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       type: "EXCLUSION",
       status: "SCHEDULED",
       title: "Clubhouse soffit exclusion",
@@ -403,7 +390,7 @@ async function main() {
       clientId: barn.id,
       propertyId: barn.properties[0].id,
       technicianId: jordan.id,
-      createdById: owner.id,
+      createdById: admin.id,
       type: "INSPECTION",
       status: "SCHEDULED",
       title: "Barn wildlife inspection",
@@ -423,7 +410,7 @@ async function main() {
       clientId: church.id,
       propertyId: church.properties[0].id,
       technicianId: alex.id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       type: "FOLLOW_UP",
       status: "COMPLETED",
       title: "Sanctuary bird netting follow-up",
@@ -443,7 +430,7 @@ async function main() {
       clientId: langford.id,
       propertyId: langford.properties[0].id,
       technicianId: alex.id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       type: "RECURRING",
       status: "SCHEDULED",
       title: "Rodent station service",
@@ -462,7 +449,7 @@ async function main() {
       clientId: maya.id,
       propertyId: maya.properties[0].id,
       technicianId: jordan.id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       type: "FOLLOW_UP",
       status: "SCHEDULED",
       title: "Raccoon follow-up — attic",
@@ -481,7 +468,7 @@ async function main() {
       clientId: hoa.id,
       propertyId: hoa.properties[0].id,
       technicianId: alex.id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       type: "INSPECTION",
       status: "SCHEDULED",
       title: "Clubhouse wildlife check",
@@ -500,7 +487,7 @@ async function main() {
       clientId: barn.id,
       propertyId: barn.properties[0].id,
       technicianId: jordan.id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       type: "INSPECTION",
       status: "SCHEDULED",
       title: "Barn follow-up inspection",
@@ -544,7 +531,7 @@ async function main() {
       date: startOfDay(addDays(today, 2)),
       reason: "PTO",
       status: "APPROVED",
-      reviewedById: owner.id,
+      reviewedById: admin.id,
       reviewedAt: new Date(),
     },
   });
@@ -705,7 +692,7 @@ async function main() {
       clientId: church.id,
       propertyId: church.properties[0].id,
       jobId: job4.id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       status: "SENT",
       dueOn: addDays(today, 10),
       sentAt: addDays(today, -1),
@@ -722,7 +709,7 @@ async function main() {
       number: "INV-0002",
       clientId: maya.id,
       propertyId: maya.properties[0].id,
-      createdById: dispatch.id,
+      createdById: admin.id,
       status: "PARTIAL",
       dueOn: addDays(today, 5),
       subtotal: 149,
@@ -777,7 +764,7 @@ async function main() {
       date: addDays(today, -1),
       status: "APPROVED",
       breakMin: 30,
-      approvedById: owner.id,
+      approvedById: admin.id,
       approvedAt: addDays(today, -1),
       punches: {
         create: [
@@ -802,7 +789,7 @@ async function main() {
   });
 
   console.log("Seeded The Wildlife Pros demo data.");
-  console.log("Logins: admin@ / dispatch@ / tech@thewildlifepros.com  password: demo");
+  console.log("Logins: admin@ / tech@thewildlifepros.com  password: demo");
   console.log("Client hub: /portal/demo-client-hub");
 }
 

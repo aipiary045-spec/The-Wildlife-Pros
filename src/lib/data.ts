@@ -180,7 +180,7 @@ export async function getSchedule(from: Date, to: Date) {
       orderBy: { createdAt: "desc" },
     }),
     prisma.user.findMany({
-      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "ADMIN"] } },
       orderBy: { firstName: "asc" },
     }),
     prisma.client.findMany({

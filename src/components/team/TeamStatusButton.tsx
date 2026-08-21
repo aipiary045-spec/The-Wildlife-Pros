@@ -8,12 +8,12 @@ export function TeamStatusButton({
   actorId,
   actorRole,
   user,
-  activeOwnerCount,
+  activeAdminCount,
 }: {
   actorId: string;
   actorRole: string;
   user: { id: string; role: string; status: string; firstName: string };
-  activeOwnerCount: number;
+  activeAdminCount: number;
 }) {
   const router = useRouter();
   const nextStatus = user.status === "DISABLED" ? "ACTIVE" : "DISABLED";
@@ -22,7 +22,7 @@ export function TeamStatusButton({
     { id: actorId, role: actorRole },
     { id: user.id, role: user.role, status: user.status },
     action,
-    activeOwnerCount,
+    activeAdminCount,
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");

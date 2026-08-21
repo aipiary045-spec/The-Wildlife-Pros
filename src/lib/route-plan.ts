@@ -45,7 +45,7 @@ export async function loadRoutableTechnicians(technicianIds?: string[]) {
   return prisma.user.findMany({
     where: {
       status: "ACTIVE",
-      role: { in: ["TECHNICIAN", "OWNER", "DISPATCHER"] },
+      role: { in: ["TECHNICIAN", "ADMIN"] },
       id: technicianIds?.length ? { in: technicianIds } : undefined,
     },
     orderBy: { firstName: "asc" },

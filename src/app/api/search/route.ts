@@ -13,7 +13,7 @@ import {
   searchQueryReady,
 } from "@/lib/search";
 
-const OFFICE = new Set(["OWNER", "ADMIN", "DISPATCHER", "ACCOUNTING"]);
+import { isOfficeRole } from "@/lib/roles";
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -74,13 +74,13 @@ export async function GET(request: Request) {
           { client: { firstName: { contains: query, mode: "insensitive" } } },
           { client: { lastName: { contains: query, mode: "insensitive" } } },
         ],
-        ...(OFFICE.has(session.role) ? {} : { status: { in: ["SENT", "VIEWED", "APPROVED"] } }),
+        ...(isOfficeRole(session.role) ? {} : { status: { in: ["SENT", "VIEWED", "APPROVED"] } }),
       },
       include: { client: true },
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),
-    OFFICE.has(session.role)
+    isOfficeRole(session.role)
       ? prisma.invoice.findMany({
           where: {
             OR: [

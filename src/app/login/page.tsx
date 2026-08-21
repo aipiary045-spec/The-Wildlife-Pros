@@ -72,7 +72,7 @@ export default async function LoginPage({
               Sign in
             </button>
             <p className="text-xs leading-relaxed text-muted-soft">
-              Demo logins: admin@, dispatch@, or tech@thewildlifepros.com · password <strong className="text-foreground">demo</strong>
+              Demo logins: admin@ or tech@thewildlifepros.com · password <strong className="text-foreground">demo</strong>
             </p>
           </form>
         </div>

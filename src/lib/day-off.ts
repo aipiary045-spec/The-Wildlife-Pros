@@ -1,4 +1,5 @@
 import { startOfDay } from "date-fns";
+import { isOfficeRole } from "@/lib/roles";
 
 export const DAY_OFF_STATUS = ["REQUESTED", "APPROVED", "DENIED"] as const;
 export type DayOffStatus = (typeof DAY_OFF_STATUS)[number];
@@ -34,7 +35,7 @@ export function isApprovedDayOff(status: string) {
 }
 
 export function canReviewDayOff(role: string) {
-  return ["OWNER", "ADMIN", "DISPATCHER"].includes(role);
+  return isOfficeRole(role);
 }
 
 export function nextDayOffStatus(bodyStatus: unknown): DayOffStatus | null {

@@ -1,4 +1,4 @@
-import { isTechnician } from "@/lib/paths";
+import { isOfficeRole } from "@/lib/roles";
 import { APP_TIMEZONE, dateKeyInZone } from "@/lib/timezone";
 
 export const INTAKE_SOURCES = ["phone", "web", "walk-in", "referral"] as const;
@@ -7,7 +7,7 @@ export type IntakeSource = (typeof INTAKE_SOURCES)[number];
 export const OPEN_REQUEST_STATUSES = ["NEW", "ASSESSED"] as const;
 
 export function canManageIntake(role: string) {
-  return !isTechnician(role);
+  return isOfficeRole(role);
 }
 
 export function requestIsOpen(status: string) {

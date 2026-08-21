@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth";
-import { homePath, isOfficeOnlyPath, isTechnician, safeNextPath } from "@/lib/paths";
+import { homePath, safeNextPath, shouldBlockOfficePath } from "@/lib/paths";
+import { readViewMode, VIEW_MODE_COOKIE } from "@/lib/view-mode";
 
 const PUBLIC_PREFIXES = [
   "/login",
@@ -29,11 +30,15 @@ export async function proxy(request: NextRequest) {
   }
 
   if ((pathname === "/login" || pathname === "/") && session) {
-    return NextResponse.redirect(new URL(homePath(session.role), request.url));
+    const viewMode = readViewMode(request.cookies.get(VIEW_MODE_COOKIE)?.value);
+    return NextResponse.redirect(new URL(homePath(session.role, viewMode), request.url));
   }
 
-  if (session && isTechnician(session.role) && isOfficeOnlyPath(pathname)) {
-    return NextResponse.redirect(new URL(homePath(session.role), request.url));
+  if (session) {
+    const viewMode = readViewMode(request.cookies.get(VIEW_MODE_COOKIE)?.value);
+    if (shouldBlockOfficePath(session.role, pathname, viewMode)) {
+      return NextResponse.redirect(new URL(homePath(session.role, viewMode), request.url));
+    }
   }
 
   return NextResponse.next();

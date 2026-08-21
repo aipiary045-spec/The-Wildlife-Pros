@@ -1,0 +1,9 @@
+-- Simplify UserRole to ADMIN and TECHNICIAN only.
+UPDATE "User" SET role = 'ADMIN' WHERE role IN ('OWNER', 'DISPATCHER', 'ACCOUNTING');
+
+ALTER TYPE "UserRole" RENAME TO "UserRole_old";
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'TECHNICIAN');
+ALTER TABLE "User" ALTER COLUMN role DROP DEFAULT;
+ALTER TABLE "User" ALTER COLUMN role TYPE "UserRole" USING role::text::"UserRole";
+ALTER TABLE "User" ALTER COLUMN role SET DEFAULT 'TECHNICIAN';
+DROP TYPE "UserRole_old";

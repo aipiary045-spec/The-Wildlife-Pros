@@ -1,5 +1,5 @@
 import { endOfDay, startOfDay } from "date-fns";
-import { getActiveCheckIns } from "@/lib/active-checkins";
+import { getActiveCheckIns } from "@/lib/active-checkins.server";
 import { invoiceAge } from "@/lib/invoice-aging";
 import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
 import { isLateForCheckIn, minutesLate } from "@/lib/late-checkin";
