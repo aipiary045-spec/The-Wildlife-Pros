@@ -2,6 +2,7 @@ import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { UserRole } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 
 export const SESSION_COOKIE = "critterops_session";
 
@@ -72,7 +73,31 @@ export async function getSession(): Promise<SessionUser | null> {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  return readSessionToken(token);
+  const session = await readSessionToken(token);
+  if (!session) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      organizationId: true,
+      status: true,
+    },
+  });
+  if (!user || user.status !== "ACTIVE") return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    organizationId: user.organizationId,
+  };
 }
 
 export async function requireSession() {

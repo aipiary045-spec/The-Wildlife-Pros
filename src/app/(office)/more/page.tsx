@@ -24,7 +24,11 @@ export default async function MorePage() {
             : "Call log, quotes, invoices, and the rest of the office tools — grouped by what they are for."}
         </p>
       </div>
-      {showViewToggle ? <ViewModeToggle mode={viewMode} /> : null}
+      {showViewToggle ? (
+        <div className="md:hidden">
+          <ViewModeToggle mode={viewMode} />
+        </div>
+      ) : null}
       {groups.map((group) => (
         <section key={group.title} className="space-y-2">
           <h2 className="page-eyebrow px-1">{group.title}</h2>

@@ -4,8 +4,13 @@ export const VIEW_MODE_COOKIE = "critterops_view_mode";
 
 export type ViewMode = "office" | "field";
 
+function normalizedRole(role: string) {
+  if (role === "OWNER" || role === "DISPATCHER" || role === "ACCOUNTING") return "ADMIN";
+  return role;
+}
+
 export function canSwitchViewMode(role: string) {
-  return role === "ADMIN";
+  return normalizedRole(role) === "ADMIN";
 }
 
 export function readViewMode(value: string | undefined): ViewMode {

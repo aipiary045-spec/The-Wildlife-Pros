@@ -9,18 +9,20 @@ import { RecentTracker } from "@/components/layout/RecentTracker";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getAppContext } from "@/lib/app-context";
+import { canSwitchViewMode } from "@/lib/view-mode";
 import { getMyTimesheet } from "@/lib/timesheets";
 
 export default async function OfficeLayout({ children }: { children: React.ReactNode }) {
   const context = await getAppContext();
   if (!context) redirect("/login");
-  const { session, fieldView, navRole } = context;
+  const { session, fieldView, navRole, viewMode } = context;
   const myTime = fieldView ? await getMyTimesheet(session.id) : null;
+  const showViewToggle = canSwitchViewMode(session.role);
 
   return (
     <div className="flex min-h-dvh">
       <div className="sticky top-0 hidden h-dvh md:block">
-        <Sidebar role={navRole} />
+        <Sidebar role={navRole} viewMode={viewMode} showViewToggle={showViewToggle} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <header
