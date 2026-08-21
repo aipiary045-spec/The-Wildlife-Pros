@@ -7,10 +7,13 @@ import { OfflineStatus } from "@/components/layout/OfflineStatus";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import { RecentTracker } from "@/components/layout/RecentTracker";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ViewModeToggle } from "@/components/layout/ViewModeToggle";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getAppContext } from "@/lib/app-context";
 import { canSwitchViewMode } from "@/lib/view-mode";
 import { getMyTimesheet } from "@/lib/timesheets";
+
+export const dynamic = "force-dynamic";
 
 export default async function OfficeLayout({ children }: { children: React.ReactNode }) {
   const context = await getAppContext();
@@ -18,11 +21,16 @@ export default async function OfficeLayout({ children }: { children: React.React
   const { session, fieldView, navRole, viewMode } = context;
   const myTime = fieldView ? await getMyTimesheet(session.id) : null;
   const showViewToggle = canSwitchViewMode(session.role);
+  const viewToggle = showViewToggle ? (
+    <div className="mx-3 mb-2 rounded-xl border border-white/10 bg-white/5 p-2">
+      <ViewModeToggle mode={viewMode} compact />
+    </div>
+  ) : null;
 
   return (
     <div className="flex min-h-dvh">
       <div className="sticky top-0 hidden h-dvh md:block">
-        <Sidebar role={navRole} viewMode={viewMode} showViewToggle={showViewToggle} />
+        <Sidebar role={navRole} footer={viewToggle} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <header
