@@ -1,4 +1,5 @@
 import { endOfDay, startOfDay } from "date-fns";
+import { getActiveCheckIns } from "@/lib/active-checkins";
 import { invoiceAge } from "@/lib/invoice-aging";
 import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
 import { isLateForCheckIn, minutesLate } from "@/lib/late-checkin";
@@ -15,6 +16,7 @@ export async function getTodayOverview(now = new Date()) {
   const [
     todayJobs,
     lateRows,
+    activeCheckIns,
     unscheduledCount,
     quotesWaiting,
     quotesApprovedRows,
@@ -43,6 +45,7 @@ export async function getTodayOverview(now = new Date()) {
       orderBy: { scheduledStart: "asc" },
       take: 6,
     }),
+    getActiveCheckIns(now),
     prisma.job.count({ where: { status: "UNSCHEDULED" } }),
     prisma.quote.findMany({
       where: { status: { in: ["SENT", "VIEWED"] } },
@@ -168,5 +171,6 @@ export async function getTodayOverview(now = new Date()) {
       clientPhone: invoice.client.phone,
       balance: Number(invoice.balance),
     })),
+    activeCheckIns,
   };
 }

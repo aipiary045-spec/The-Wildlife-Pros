@@ -19,6 +19,7 @@ export function ScheduleWorkspace({
   clients,
   compact = false,
   availability = [],
+  activeCheckIns = [],
 }: {
   view: "day" | "week";
   date: string;
@@ -29,6 +30,13 @@ export function ScheduleWorkspace({
   clients: ScheduleClient[];
   compact?: boolean;
   availability?: Array<{ technicianId: string; date: string; reason: string | null }>;
+  activeCheckIns?: Array<{
+    jobId: string;
+    jobNumber: string;
+    clientName: string;
+    technicianId: string;
+    minutesOnSite: number;
+  }>;
 }) {
   const router = useRouter();
   const [copyRequest, setCopyRequest] = useState<CopyRequest | null>(null);
@@ -45,6 +53,7 @@ export function ScheduleWorkspace({
           mode="move"
           compact={compact}
           availability={availability}
+          activeCheckIns={activeCheckIns}
           onCopyRequest={setCopyRequest}
           onNewJob={(technicianId, day, time) => setNewJob({ technicianId, day, time })}
         />

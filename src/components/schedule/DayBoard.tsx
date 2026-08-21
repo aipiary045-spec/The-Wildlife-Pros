@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { format } from "date-fns";
 import { Clock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { checkInsByTechnician, formatOnSiteDuration } from "@/lib/active-checkins";
 import {
   dateKey,
   dayTimelineSlots,
@@ -29,6 +31,7 @@ export function DayBoard({
   onCopyRequest,
   onNewJob,
   availability = [],
+  activeCheckIns = [],
 }: {
   jobs: ScheduleJobCard[];
   unscheduled?: ScheduleJobCard[];
@@ -39,6 +42,13 @@ export function DayBoard({
   onCopyRequest?: (request: CopyRequest) => void;
   onNewJob?: (technicianId: string, day: Date, time?: string) => void;
   availability?: Array<{ technicianId: string; date: string; reason: string | null }>;
+  activeCheckIns?: Array<{
+    jobId: string;
+    jobNumber: string;
+    clientName: string;
+    technicianId: string;
+    minutesOnSite: number;
+  }>;
 }) {
   const { saving, error, drag, placeJob, onChipPointerDown, wasRecentDrop } = useScheduleBoard(
     [...jobs, ...unscheduled],
@@ -58,6 +68,7 @@ export function DayBoard({
     () => (focusTech === "all" ? technicians : technicians.filter((tech) => tech.id === focusTech)),
     [focusTech, technicians],
   );
+  const checkInsByTech = useMemo(() => checkInsByTechnician(activeCheckIns), [activeCheckIns]);
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -150,6 +161,7 @@ export function DayBoard({
             .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
           const minutes = techJobs.reduce((sum, job) => sum + (job.durationMin ?? 0), 0);
           const off = availability.find((block) => block.technicianId === tech.id && block.date === dayKey);
+          const onSite = checkInsByTech[tech.id];
           return (
             <section
               key={tech.id}
@@ -176,6 +188,14 @@ export function DayBoard({
                       {formatClockDuration(minutes)}
                       {off ? ` · off${off.reason ? ` · ${off.reason}` : ""}` : ""}
                     </p>
+                    {onSite ? (
+                      <Link
+                        href={`/jobs/${onSite.jobId}`}
+                        className="mt-1 block truncate text-[11px] font-semibold text-emerald-700 hover:underline"
+                      >
+                        On site · {onSite.clientName} · {formatOnSiteDuration(onSite.minutesOnSite)}
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
                 {off ? null : (
@@ -237,6 +257,7 @@ export function DayBoard({
               const minutes = techJobs.reduce((sum, job) => sum + (job.durationMin ?? 0), 0);
               const stacked = stackTimelineJobs(techJobs);
               const off = availability.find((block) => block.technicianId === tech.id && block.date === dayKey);
+              const onSite = checkInsByTech[tech.id];
               const trackHeight = Math.max(7, stacked.lanes * 6.75);
               return (
                 <Lane
@@ -248,6 +269,7 @@ export function DayBoard({
                   technicianId={tech.id}
                   dayKey={dayKey}
                   off={off}
+                  onSite={onSite}
                   active={drag?.overTechId === tech.id}
                   onAdd={() => onNewJob?.(tech.id, day, nextOpenTime(techJobs))}
                 >
@@ -369,6 +391,7 @@ function Lane({
   technicianId,
   dayKey,
   off,
+  onSite,
   active,
   children,
   onAdd,
@@ -380,6 +403,12 @@ function Lane({
   technicianId: string;
   dayKey: string;
   off?: { reason: string | null };
+  onSite?: {
+    jobId: string;
+    jobNumber: string;
+    clientName: string;
+    minutesOnSite: number;
+  };
   active?: boolean;
   children: React.ReactNode;
   onAdd: () => void;
@@ -409,7 +438,14 @@ function Lane({
             <Clock size={11} />
             {hours}
           </p>
-          {off ? (
+          {onSite ? (
+            <Link
+              href={`/jobs/${onSite.jobId}`}
+              className="mt-1 block truncate text-[11px] font-semibold text-emerald-700 hover:underline"
+            >
+              On site · {onSite.clientName} · {formatOnSiteDuration(onSite.minutesOnSite)}
+            </Link>
+          ) : off ? (
             <p className="mt-1 text-[11px] font-semibold text-rose-700">
               Off{off.reason ? ` · ${off.reason}` : ""}
             </p>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react";
+import { formatOnSiteDuration } from "@/lib/active-checkins";
 import { formatMoney } from "@/lib/utils";
 
 type TodayOverview = Awaited<ReturnType<typeof import("@/lib/today").getTodayOverview>>;
@@ -17,6 +18,42 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
+      {data.activeCheckIns.length > 0 ? (
+        <section className="card border-emerald-100 bg-emerald-50/50 p-5 md:p-6">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-sm text-emerald-800/80">Field</p>
+              <h2 className="font-display text-2xl text-emerald-950">
+                {data.activeCheckIns.length} on site now
+              </h2>
+            </div>
+            <Link href="/schedule" className="text-sm font-semibold text-emerald-800 hover:underline">
+              Open schedule
+            </Link>
+          </div>
+          <ul className="divide-y divide-emerald-100/80">
+            {data.activeCheckIns.map((checkIn) => (
+              <li key={checkIn.jobId}>
+                <Link
+                  href={`/jobs/${checkIn.jobId}`}
+                  className="flex items-center gap-3 py-3 transition hover:text-emerald-900"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold text-emerald-950">
+                      {checkIn.technicianName}
+                    </span>
+                    <span className="block truncate text-sm text-emerald-900/80">
+                      {checkIn.jobNumber} · {checkIn.clientName} · {formatOnSiteDuration(checkIn.minutesOnSite)}
+                    </span>
+                  </span>
+                  <ChevronRight size={16} className="shrink-0 text-emerald-700/60" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="card p-5 md:p-6">
         <div className="mb-4 flex items-end justify-between gap-3">
           <div>

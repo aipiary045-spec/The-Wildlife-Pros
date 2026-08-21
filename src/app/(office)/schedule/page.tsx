@@ -3,6 +3,7 @@ import { NeedsPool } from "@/components/schedule/NeedsPool";
 import { CalendarFeedLink } from "@/components/schedule/CalendarFeedLink";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
+import { getActiveCheckIns } from "@/lib/active-checkins";
 import { getSession } from "@/lib/auth";
 import { getSchedule } from "@/lib/data";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
@@ -39,7 +40,7 @@ export default async function SchedulePage({
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
   const { from, to } = scheduleRange(view, date);
-  const [{ jobs, unscheduled, technicians, clients }, needs, blocks] = await Promise.all([
+  const [{ jobs, unscheduled, technicians, clients }, needs, blocks, activeCheckIns] = await Promise.all([
     getSchedule(from, to),
     prisma.scheduleNeed.findMany({
       where: { status: "OPEN" },
@@ -53,6 +54,7 @@ export default async function SchedulePage({
     prisma.availabilityBlock.findMany({
       where: { date: { gte: from, lte: to }, status: "APPROVED" },
     }),
+    getActiveCheckIns(),
   ]);
 
   return (
@@ -93,6 +95,13 @@ export default async function SchedulePage({
           technicianId: block.userId,
           date: dateKey(block.date),
           reason: block.reason,
+        }))}
+        activeCheckIns={activeCheckIns.map((checkIn) => ({
+          jobId: checkIn.jobId,
+          jobNumber: checkIn.jobNumber,
+          clientName: checkIn.clientName,
+          technicianId: checkIn.technicianId,
+          minutesOnSite: checkIn.minutesOnSite,
         }))}
       />
       <NeedsPool
