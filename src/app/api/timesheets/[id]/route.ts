@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { workedMinutes } from "@/lib/time";
 
-const OFFICE = new Set(["OWNER", "ADMIN", "DISPATCHER", "ACCOUNTING"]);
+import { isOfficeRole } from "@/lib/roles";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -23,11 +23,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (!sheet) return NextResponse.json({ error: "Timesheet not found" }, { status: 404 });
 
   const own = sheet.userId === session.id;
-  if (!own && !OFFICE.has(session.role)) {
+  if (!own && !isOfficeRole(session.role)) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
 
-  if ((body.status === "APPROVED" || body.status === "REJECTED") && !OFFICE.has(session.role)) {
+  if ((body.status === "APPROVED" || body.status === "REJECTED") && !isOfficeRole(session.role)) {
     return NextResponse.json({ error: "Only office staff can approve timesheets" }, { status: 403 });
   }
 

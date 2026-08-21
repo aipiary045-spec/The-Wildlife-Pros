@@ -1,8 +1,8 @@
 import { JOB_TYPE_LABEL } from "@/lib/constants";
-import { isTechnician } from "@/lib/paths";
+import { isOfficeRole } from "@/lib/roles";
 
 export function canManagePriceList(role: string) {
-  return !isTechnician(role);
+  return isOfficeRole(role);
 }
 
 export type ServiceInput = {

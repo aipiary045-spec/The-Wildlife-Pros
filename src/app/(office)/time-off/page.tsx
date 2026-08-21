@@ -1,9 +1,8 @@
 import { DayOffPanel } from "@/components/timesheets/DayOffPanel";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { getSession } from "@/lib/auth";
+import { getAppContext } from "@/lib/app-context";
 import { dateKey, monthGrid, monthKey, parseMonthParam } from "@/lib/dates";
 import { canReviewDayOff } from "@/lib/day-off";
-import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
@@ -14,9 +13,10 @@ export default async function TimeOffPage({
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  const office = canReviewDayOff(session.role);
+  const context = await getAppContext();
+  if (!context) redirect("/login");
+  const { session, fieldView } = context;
+  const office = canReviewDayOff(session.role) && !fieldView;
   const params = await searchParams;
   const month = parseMonthParam(params.month);
   const { start, end } = monthGrid(month);
@@ -34,11 +34,11 @@ export default async function TimeOffPage({
       <PageHeader
         title="Time off"
         description={
-          isTechnician(session.role)
-            ? "See your days off on the month, then ask for another. Dispatch blocks the schedule after they approve it."
+          fieldView
+            ? "See your days off on the month, then ask for another. The office blocks the schedule after they approve it."
             : "The month shows who is off. Approve a request to block that day on the schedule."
         }
-        related={isTechnician(session.role) ? undefined : [{ href: "/timesheets", label: "Timesheets" }, { href: "/schedule", label: "Schedule" }]}
+        related={fieldView ? undefined : [{ href: "/timesheets", label: "Timesheets" }, { href: "/schedule", label: "Schedule" }]}
       />
       <DayOffPanel
         userId={session.id}

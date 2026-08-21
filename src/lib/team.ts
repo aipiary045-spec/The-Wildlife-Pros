@@ -1,17 +1,17 @@
-export const TEAM_MANAGER_ROLES = ["OWNER", "ADMIN", "DISPATCHER"] as const;
-export const ALL_ROLES = ["OWNER", "ADMIN", "DISPATCHER", "TECHNICIAN", "ACCOUNTING"] as const;
+import { ALL_ROLES } from "@/lib/roles";
+
+export const TEAM_MANAGER_ROLES = ["ADMIN"] as const;
+export { ALL_ROLES };
 
 export type TeamActor = { id: string; role: string };
 export type TeamTarget = { id: string; role: string; status: string };
 
 export function canManageTeam(role: string) {
-  return (TEAM_MANAGER_ROLES as readonly string[]).includes(role);
+  return role === "ADMIN";
 }
 
 export function rolesActorCanAssign(actorRole: string): string[] {
-  if (actorRole === "OWNER") return [...ALL_ROLES];
-  if (actorRole === "ADMIN") return ["ADMIN", "DISPATCHER", "TECHNICIAN", "ACCOUNTING"];
-  if (actorRole === "DISPATCHER") return ["TECHNICIAN"];
+  if (actorRole === "ADMIN") return [...ALL_ROLES];
   return [];
 }
 
@@ -23,14 +23,12 @@ export function canChangeUser(
   actor: TeamActor,
   target: TeamTarget,
   action: "disable" | "enable" | "edit",
-  activeOwnerCount: number,
+  activeAdminCount: number,
 ) {
   if (!canManageTeam(actor.role)) return false;
-  if (actor.role === "DISPATCHER" && target.role !== "TECHNICIAN") return false;
-  if (actor.role === "ADMIN" && target.role === "OWNER") return false;
   if (action === "disable") {
     if (actor.id === target.id) return false;
-    if (target.role === "OWNER" && target.status === "ACTIVE" && activeOwnerCount <= 1) return false;
+    if (target.role === "ADMIN" && target.status === "ACTIVE" && activeAdminCount <= 1) return false;
   }
   return true;
 }

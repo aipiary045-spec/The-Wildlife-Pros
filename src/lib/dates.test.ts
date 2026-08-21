@@ -47,12 +47,13 @@ test("safeNextPath rejects Chrome DevTools and protocol-relative URLs", () => {
   assert.equal(safeNextPath("/schedule"), "/schedule");
   assert.equal(safeNextPath("/field?view=week"), "/field?view=week");
   assert.equal(homePath("TECHNICIAN"), "/field");
-  assert.equal(homePath("OWNER"), "/dashboard");
+  assert.equal(homePath("ADMIN"), "/dashboard");
+  assert.equal(homePath("ADMIN", "field"), "/field");
 });
 
 test("technicians are kept off dispatch and office pages", () => {
   assert.equal(isTechnician("TECHNICIAN"), true);
-  assert.equal(isTechnician("DISPATCHER"), false);
+  assert.equal(isTechnician("ADMIN"), false);
   assert.equal(isOfficeOnlyPath("/schedule"), true);
   assert.equal(isOfficeOnlyPath("/clients/abc"), true);
   assert.equal(isOfficeOnlyPath("/field"), false);
@@ -71,20 +72,20 @@ test("technician time off lives under More, not the main tabs", () => {
   assert.deepEqual(tabs, ["/field", "/jobs", "/timesheets", "/more"]);
   assert.equal(more[0], "/quotes");
   assert.ok(more.includes("/time-off"));
-  assert.ok(!primaryTabs("DISPATCHER").some((item) => item.href === "/time-off"));
+  assert.ok(!primaryTabs("ADMIN").some((item) => item.href === "/time-off"));
 });
 
-test("office dispatch prioritizes today, schedule, and calls on mobile", () => {
-  const tabs = primaryTabs("DISPATCHER").map((item) => item.href);
-  const more = moreItems("DISPATCHER").map((item) => item.href);
-  assert.deepEqual(tabs, ["/dashboard", "/schedule", "/calls", "/more"]);
+test("admin mobile tabs prioritize today, schedule, and clients", () => {
+  const tabs = primaryTabs("ADMIN").map((item) => item.href);
+  const more = moreItems("ADMIN").map((item) => item.href);
+  assert.deepEqual(tabs, ["/dashboard", "/schedule", "/clients", "/more"]);
   assert.ok(!tabs.includes("/reports"));
   assert.ok(more.includes("/reports"));
   assert.ok(more.includes("/jobs"));
-  assert.ok(!more.includes("/calls"));
+  assert.ok(more.includes("/calls"));
   assert.ok(!moreItems("TECHNICIAN").some((item) => item.href === "/calls"));
   assert.equal(isOfficeOnlyPath("/calls"), true);
-  assert.equal(primaryTabs("DISPATCHER")[0]?.label, "Today");
+  assert.equal(primaryTabs("ADMIN")[0]?.label, "Today");
 });
 
 test("quote price list is an office page under quotes", () => {

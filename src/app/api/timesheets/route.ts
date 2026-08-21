@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/api";
+import { isOfficeRole } from "@/lib/roles";
 import { workedMinutes } from "@/lib/time";
 
 export const GET = withAuth(async (session, request) => {
@@ -9,7 +10,7 @@ export const GET = withAuth(async (session, request) => {
   const userId = url.searchParams.get("userId");
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
-  const office = ["OWNER", "ADMIN", "DISPATCHER", "ACCOUNTING"].includes(session.role);
+  const office = isOfficeRole(session.role);
 
   const sheets = await prisma.timesheet.findMany({
     where: {

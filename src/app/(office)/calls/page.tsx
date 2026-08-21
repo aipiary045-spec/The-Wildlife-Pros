@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { IntakeBoard } from "@/components/intake/IntakeBoard";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { getSession } from "@/lib/auth";
+import { getAppContext } from "@/lib/app-context";
 import { canManageIntake, phoneDigits } from "@/lib/intake";
-import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -13,9 +12,9 @@ export default async function CallLogPage({
 }: {
   searchParams: Promise<{ phone?: string }>;
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  if (isTechnician(session.role) || !canManageIntake(session.role)) redirect("/field");
+  const context = await getAppContext();
+  if (!context) redirect("/login");
+  if (context.fieldView || !canManageIntake(context.session.role)) redirect("/field");
 
   const params = await searchParams;
   const [requests, clients] = await Promise.all([

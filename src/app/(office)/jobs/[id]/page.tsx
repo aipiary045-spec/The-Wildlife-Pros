@@ -15,10 +15,9 @@ import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { getSession } from "@/lib/auth";
+import { getAppContext } from "@/lib/app-context";
 import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
-import { isTechnician } from "@/lib/paths";
 import { jobNotifyProps } from "@/lib/messaging";
 import { quoteBillingAction } from "@/lib/quotes";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
@@ -55,8 +54,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
     },
   });
   if (!job) notFound();
-  const session = await getSession();
-  const techView = Boolean(session && isTechnician(session.role));
+  const context = await getAppContext();
+  const session = context?.session ?? null;
+  const techView = Boolean(context?.fieldView);
   const canBill = session ? canBillJob(session, job) : false;
   const quoteInvoice = job.quote?.invoices[0] ?? null;
   const quoteBilling = job.quote
@@ -77,7 +77,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
     prisma.equipment.findMany({ select: { serialNumber: true } }),
     prisma.species.findMany({ orderBy: { commonName: "asc" }, select: { id: true, commonName: true } }),
     prisma.user.findMany({
-      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "ADMIN"] } },
       orderBy: { firstName: "asc" },
       select: { id: true, firstName: true, lastName: true, color: true },
     }),

@@ -21,7 +21,7 @@ export default async function TeamPage() {
     where: { organizationId: session.organizationId },
     orderBy: [{ status: "asc" }, { lastName: "asc" }, { firstName: "asc" }],
   });
-  const activeOwnerCount = users.filter((user) => user.role === "OWNER" && user.status === "ACTIVE").length;
+  const activeAdminCount = users.filter((user) => user.role === "ADMIN" && user.status === "ACTIVE").length;
   const active = users.filter((user) => user.status !== "DISABLED");
   const disabled = users.filter((user) => user.status === "DISABLED");
 
@@ -38,7 +38,7 @@ export default async function TeamPage() {
         users={active}
         actorId={session.id}
         actorRole={session.role}
-        activeOwnerCount={activeOwnerCount}
+        activeAdminCount={activeAdminCount}
       />
       {disabled.length > 0 ? (
         <MemberList
@@ -46,7 +46,7 @@ export default async function TeamPage() {
           users={disabled}
           actorId={session.id}
           actorRole={session.role}
-          activeOwnerCount={activeOwnerCount}
+          activeAdminCount={activeAdminCount}
         />
       ) : null}
     </div>
@@ -58,7 +58,7 @@ function MemberList({
   users,
   actorId,
   actorRole,
-  activeOwnerCount,
+  activeAdminCount,
 }: {
   title: string;
   users: Array<{
@@ -74,7 +74,7 @@ function MemberList({
   }>;
   actorId: string;
   actorRole: string;
-  activeOwnerCount: number;
+  activeAdminCount: number;
 }) {
   return (
     <section className="space-y-2">
@@ -106,7 +106,7 @@ function MemberList({
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <EditTeamMemberButton actorRole={actorRole} user={user} />
-              <TeamStatusButton actorId={actorId} actorRole={actorRole} user={user} activeOwnerCount={activeOwnerCount} />
+              <TeamStatusButton actorId={actorId} actorRole={actorRole} user={user} activeAdminCount={activeAdminCount} />
             </div>
           </article>
         ))}
@@ -148,7 +148,7 @@ function MemberList({
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-2">
                     <EditTeamMemberButton actorRole={actorRole} user={user} />
-                    <TeamStatusButton actorId={actorId} actorRole={actorRole} user={user} activeOwnerCount={activeOwnerCount} />
+                    <TeamStatusButton actorId={actorId} actorRole={actorRole} user={user} activeAdminCount={activeAdminCount} />
                   </div>
                 </td>
               </tr>

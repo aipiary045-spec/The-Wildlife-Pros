@@ -3,9 +3,8 @@ import { test } from "node:test";
 import { canManagePriceList, parseServiceBody } from "./services";
 
 test("office can edit the quote price list; technicians cannot", () => {
-  assert.equal(canManagePriceList("OWNER"), true);
-  assert.equal(canManagePriceList("DISPATCHER"), true);
-  assert.equal(canManagePriceList("ACCOUNTING"), true);
+  assert.equal(canManagePriceList("ADMIN"), true);
+  assert.equal(canManagePriceList("TECHNICIAN"), false);
   assert.equal(canManagePriceList("TECHNICIAN"), false);
 });
 

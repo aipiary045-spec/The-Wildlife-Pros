@@ -4,7 +4,7 @@ import { canAccessInvoice, canBillJob, canBillQuote } from "./billing-access";
 
 test("technicians bill from quotes, not work orders", () => {
   const tech = { id: "tech-1", role: "TECHNICIAN" };
-  const office = { id: "office-1", role: "DISPATCHER" };
+  const office = { id: "office-1", role: "ADMIN" };
   assert.equal(canBillQuote(tech), true);
   assert.equal(canBillJob(tech, { technicianId: "tech-1" }), false);
   assert.equal(canBillJob(office, { technicianId: "tech-2" }), true);

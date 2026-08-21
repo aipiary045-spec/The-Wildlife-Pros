@@ -27,7 +27,7 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
       },
     }),
     prisma.user.findMany({
-      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "ADMIN", "DISPATCHER"] } },
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "ADMIN"] } },
       orderBy: { firstName: "asc" },
       select: { id: true, firstName: true, lastName: true, color: true },
     }),

@@ -76,7 +76,7 @@ function AddTeamMemberDialog({
       <form onSubmit={submit} className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-panel p-5 shadow-xl">
         <p className="text-xs font-bold uppercase tracking-widest text-orange">New team member</p>
         <h2 className="mt-1 font-display text-2xl">Add to the crew</h2>
-        <p className="mt-2 text-sm text-stone-600">Give them a login. They show up on the calendar if they are a technician or dispatcher.</p>
+        <p className="mt-2 text-sm text-stone-600">Give them a login. Technicians show up on the calendar; admins can switch to field view when they are on a trapline.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className="block text-sm">
             First name

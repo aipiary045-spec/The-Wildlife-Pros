@@ -1,27 +1,30 @@
 import { LogoutButton } from "@/components/layout/LogoutButton";
-import { getSession } from "@/lib/auth";
+import { ViewModeToggle } from "@/components/layout/ViewModeToggle";
+import { getAppContext } from "@/lib/app-context";
 import { moreGroups } from "@/lib/nav";
-import { isTechnician } from "@/lib/paths";
+import { canSwitchViewMode } from "@/lib/view-mode";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function MorePage() {
-  const session = await getSession();
-  if (!session) return null;
-  const groups = moreGroups(session.role);
-  const tech = isTechnician(session.role);
+  const context = await getAppContext();
+  if (!context) return null;
+  const { session, viewMode, fieldView, navRole } = context;
+  const groups = moreGroups(navRole);
+  const showViewToggle = canSwitchViewMode(session.role);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="page-title">More</h1>
         <p className="mt-1 max-w-2xl text-[0.9375rem] leading-relaxed text-muted">
-          {tech
+          {fieldView
             ? "Time off, traps, species log, and sign out."
             : "Call log, quotes, invoices, and the rest of the office tools — grouped by what they are for."}
         </p>
       </div>
+      {showViewToggle ? <ViewModeToggle mode={viewMode} /> : null}
       {groups.map((group) => (
         <section key={group.title} className="space-y-2">
           <h2 className="page-eyebrow px-1">{group.title}</h2>

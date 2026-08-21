@@ -24,7 +24,7 @@ export default async function RoutesPage({
 
   const [technicians, routes] = await Promise.all([
     prisma.user.findMany({
-      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "OWNER", "DISPATCHER"] } },
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "ADMIN"] } },
       orderBy: { firstName: "asc" },
       select: { id: true, firstName: true, lastName: true, homeLat: true, homeLng: true },
     }),

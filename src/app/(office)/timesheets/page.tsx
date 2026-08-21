@@ -4,10 +4,10 @@ import { ApproveButton } from "@/components/timesheets/ApproveButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PeriodToolbar } from "@/components/schedule/PeriodToolbar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { getSession } from "@/lib/auth";
+import { getAppContext } from "@/lib/app-context";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { hoursByDay } from "@/lib/hours";
-import { isTechnician } from "@/lib/paths";
+import { isOfficeRole } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { formatDuration, workedMinutes } from "@/lib/time";
 import { getMyTimesheet } from "@/lib/timesheets";
@@ -19,14 +19,15 @@ export default async function TimesheetsPage({
 }: {
   searchParams: Promise<{ view?: string; date?: string }>;
 }) {
-  const session = await getSession();
+  const context = await getAppContext();
+  const session = context?.session ?? null;
   const params = await searchParams;
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
   const { from, to } = scheduleRange(view, date);
   const myTime = session ? await getMyTimesheet(session.id) : { current: null, recent: [] };
-  const techView = Boolean(session && isTechnician(session.role));
-  const canApproveHours = Boolean(session && ["OWNER", "ADMIN", "DISPATCHER", "ACCOUNTING"].includes(session.role));
+  const techView = Boolean(context?.fieldView);
+  const canApproveHours = Boolean(session && isOfficeRole(session.role));
 
   const sheets = await prisma.timesheet.findMany({
     where: {

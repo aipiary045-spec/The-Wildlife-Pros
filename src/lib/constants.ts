@@ -57,11 +57,8 @@ export const INVOICE_STATUS_LABEL: Record<string, string> = {
 };
 
 export const USER_ROLE_LABEL: Record<string, string> = {
-  OWNER: "Owner",
   ADMIN: "Admin",
-  DISPATCHER: "Dispatch",
   TECHNICIAN: "Technician",
-  ACCOUNTING: "Accounting",
 };
 
 export const USER_STATUS_LABEL: Record<string, string> = {

@@ -40,15 +40,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (!selfEditOnly) {
     if (!canManageTeam(session.role)) return jsonError("Only office staff can update the team.", 403);
     const action = body.status === "DISABLED" ? "disable" : body.status === "ACTIVE" ? "enable" : "edit";
-    const activeOwners = await prisma.user.count({
-      where: { organizationId: session.organizationId, role: "OWNER", status: "ACTIVE" },
+    const activeAdmins = await prisma.user.count({
+      where: { organizationId: session.organizationId, role: "ADMIN", status: "ACTIVE" },
     });
     if (
       !canChangeUser(
         { id: session.id, role: session.role },
         { id: target.id, role: target.role, status: target.status },
         action,
-        activeOwners,
+        activeAdmins,
       )
     ) {
       return jsonError("You cannot change that team member.");

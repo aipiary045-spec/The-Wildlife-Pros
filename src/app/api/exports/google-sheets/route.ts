@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { jsonError, withAuth } from "@/lib/api";
 import { EXPORT_CATEGORIES, EXPORT_CATEGORY_IDS, isExportCategory, loadExportRowCounts } from "@/lib/exports";
+import { isOfficeRole } from "@/lib/roles";
 import { sheetsConfigured, syncOrganizationToGoogleSheets } from "@/lib/sheets";
 
-const OFFICE = new Set(["OWNER", "ADMIN", "DISPATCHER", "ACCOUNTING"]);
-
 export const GET = withAuth(async (session) => {
-  if (!OFFICE.has(session.role)) return jsonError("Office role required", 403);
+  if (!isOfficeRole(session.role)) return jsonError("Office role required", 403);
   const [org, counts] = await Promise.all([
     prisma.organization.findFirst({
       select: {
@@ -34,7 +33,7 @@ export const GET = withAuth(async (session) => {
 });
 
 export const POST = withAuth(async (session, request) => {
-  if (!OFFICE.has(session.role)) return jsonError("Office role required", 403);
+  if (!isOfficeRole(session.role)) return jsonError("Office role required", 403);
   if (!sheetsConfigured()) {
     return jsonError("Add GOOGLE_SERVICE_ACCOUNT_JSON to enable Google Sheets sync", 503);
   }
