@@ -25,7 +25,7 @@ export function JobFieldBar({
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 border-t border-line bg-panel/95 px-3 py-2 backdrop-blur md:hidden">
+    <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 border-t border-line bg-panel/95 px-3 py-2 backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-lg gap-2">
         <a
           href={mapsUrl}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -8,6 +9,8 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 export function InstallHint() {
+  const pathname = usePathname();
+  const onJobDetail = /^\/jobs\/[^/]+$/.test(pathname);
   const [show, setShow] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [installing, setInstalling] = useState(false);
@@ -30,7 +33,7 @@ export function InstallHint() {
     return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
   }, []);
 
-  if (!show) return null;
+  if (!show || onJobDetail) return null;
 
   async function installApp() {
     if (!installEvent) return;

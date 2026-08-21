@@ -84,7 +84,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   ]);
 
   return (
-    <div className={`space-y-6 ${techView ? "pb-24 md:pb-0" : ""}`}>
+    <div className={`space-y-6 ${techView ? "pb-[calc(7.5rem+env(safe-area-inset-bottom))] md:pb-0" : ""}`}>
       <Breadcrumbs
         items={[
           { label: techView ? "My work orders" : "Work orders", href: "/jobs" },
