@@ -10,7 +10,6 @@ const PUBLIC_PREFIXES = [
   "/api/auth",
   "/api/portal",
   "/api/health",
-  "/api/setup/migrate",
   "/.well-known",
 ];
 
