@@ -6,18 +6,9 @@ import { LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { pathMatches, sidebarGroups } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-import { ViewModeToggle } from "@/components/layout/ViewModeToggle";
-import type { ViewMode } from "@/lib/view-mode";
+import type { ReactNode } from "react";
 
-export function Sidebar({
-  role,
-  viewMode = "office",
-  showViewToggle = false,
-}: {
-  role: string;
-  viewMode?: ViewMode;
-  showViewToggle?: boolean;
-}) {
+export function Sidebar({ role, footer }: { role: string; footer?: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const groups = sidebarGroups(role);
@@ -68,11 +59,7 @@ export function Sidebar({
           </div>
         ))}
       </nav>
-      {showViewToggle ? (
-        <div className="mx-3 mb-2 rounded-xl border border-white/10 bg-white/5 p-2">
-          <ViewModeToggle mode={viewMode} compact />
-        </div>
-      ) : null}
+      {footer}
       <button
         type="button"
         onClick={logout}
