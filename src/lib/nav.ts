@@ -52,7 +52,7 @@ const OFFICE_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
 ];
 
 const OFFICE_MORE_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Daily office", hrefs: ["/calls", "/quotes", "/invoices", "/routes"] },
+  { title: "Daily office", hrefs: ["/calls", "/clients", "/jobs", "/quotes", "/invoices", "/routes"] },
   { title: "Business", hrefs: ["/reports", "/exports"] },
   { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
   { title: "Field records", hrefs: ["/inventory", "/activity"] },
@@ -80,7 +80,7 @@ export function primaryTabs(role: string): NavItem[] {
     return [
       { href: "/dashboard", label: "Today", icon: Home },
       { href: "/schedule", label: "Schedule", icon: CalendarDays },
-      { href: "/calls", label: "Calls", icon: Phone },
+      { href: "/clients", label: "Clients", icon: Users },
       { href: "/more", label: "More", icon: Menu },
     ];
   }

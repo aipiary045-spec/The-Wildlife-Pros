@@ -10,9 +10,9 @@ import {
   sidebarGroups,
 } from "./nav";
 
-test("dispatch mobile tabs prioritize today, schedule, and calls", () => {
+test("dispatch mobile tabs prioritize today, schedule, and clients", () => {
   const tabs = primaryTabs("DISPATCHER").map((item) => item.href);
-  assert.deepEqual(tabs, ["/dashboard", "/schedule", "/calls", "/more"]);
+  assert.deepEqual(tabs, ["/dashboard", "/schedule", "/clients", "/more"]);
 });
 
 test("accounting mobile tabs prioritize today, invoices, and clients", () => {
@@ -24,8 +24,9 @@ test("office more still holds quotes, work orders, and reports for dispatch", ()
   const more = moreItems("DISPATCHER").map((item) => item.href);
   assert.ok(more.includes("/quotes"));
   assert.ok(more.includes("/jobs"));
+  assert.ok(more.includes("/calls"));
   assert.ok(more.includes("/reports"));
-  assert.ok(!more.includes("/calls"));
+  assert.ok(!more.includes("/clients"));
 });
 
 test("office sidebar starts with today", () => {
@@ -47,8 +48,9 @@ test("page labels and destinations follow the current screen", () => {
   assert.equal(pageLabel("/quotes", "OWNER"), "Quotes");
   assert.equal(pageLabel("/jobs", "OWNER"), "Work orders");
   assert.equal(pageLabel("/jobs", "TECHNICIAN"), "My work orders");
-  assert.equal(isPrimaryDestination("/calls", "DISPATCHER"), true);
-  assert.equal(isMoreDestination("/calls", "DISPATCHER"), false);
+  assert.equal(isPrimaryDestination("/calls", "DISPATCHER"), false);
+  assert.equal(isMoreDestination("/calls", "DISPATCHER"), true);
+  assert.equal(isPrimaryDestination("/clients", "DISPATCHER"), true);
   assert.equal(isMoreDestination("/quotes", "DISPATCHER"), true);
   assert.equal(isMoreDestination("/schedule", "OWNER"), false);
 });
@@ -61,6 +63,6 @@ test("office More is grouped so money and field tools are easy to find", () => {
   );
   assert.deepEqual(
     groups[0]?.items.map((item) => item.href),
-    ["/quotes", "/invoices", "/routes"],
+    ["/calls", "/jobs", "/quotes", "/invoices", "/routes"],
   );
 });
