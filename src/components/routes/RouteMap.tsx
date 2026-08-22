@@ -7,9 +7,13 @@ import {
   Marker,
   NavigationControl,
   Popup,
+  setWorkerUrl,
   type GeoJSONSource,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+// Next.js/Turbopack does not emit the worker's shared sibling chunk; serve both from /public.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 export type RouteMapStop = {
   sequence: number;
@@ -104,6 +108,9 @@ export function RouteMap({ data, className }: { data: RouteMapData | null; class
       attributionControl: { compact: true },
     });
     map.addControl(new NavigationControl({ showCompass: false }), "top-right");
+    map.on("error", (event) => {
+      console.error("Route map error:", event.error?.message ?? event);
+    });
     mapRef.current = map;
     const resize = () => {
       if (mapRef.current) mapRef.current.resize();
