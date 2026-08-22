@@ -12,6 +12,7 @@ type FieldJob = {
   id: string;
   number: string;
   title: string;
+  type?: string;
   status: string;
   scheduledStart: Date | null;
   technicianId?: string | null;
@@ -30,7 +31,12 @@ type FieldJob = {
     lng?: number | null;
   };
   deployments: unknown[];
+  emergencyDispatch?: { acknowledgedAt: Date | null } | null;
 };
+
+function isEmergencyJob(job: FieldJob) {
+  return job.type === "EMERGENCY" || Boolean(job.emergencyDispatch);
+}
 
 export type FieldJobNotify = {
   jobId: string;
@@ -67,6 +73,9 @@ export function FieldJobList({
         const dayJobs = jobs
           .filter((job) => job.scheduledStart && dateKey(job.scheduledStart) === dateKey(day))
           .sort((a, b) => {
+            const emergencyA = isEmergencyJob(a) ? 0 : 1;
+            const emergencyB = isEmergencyJob(b) ? 0 : 1;
+            if (emergencyA !== emergencyB) return emergencyA - emergencyB;
             const hintA = routeByJobId[a.id];
             const hintB = routeByJobId[b.id];
             if (hintA && hintB) return hintA.sequence - hintB.sequence;
@@ -107,18 +116,24 @@ export function FieldJobList({
                 const hint = routeByJobId[job.id];
                 const stopNumber = hint?.sequence ?? index + 1;
                 const eta = hint?.eta ?? job.scheduledStart;
+                const emergency = isEmergencyJob(job);
                 const place = {
                   address: propertyAddress(job.property),
                   lat: job.property.lat,
                   lng: job.property.lng,
                 };
                 return (
-                  <article key={job.id} className="rounded-2xl border border-line bg-panel p-4 shadow-sm">
+                  <article
+                    key={job.id}
+                    className={`rounded-2xl border bg-panel p-4 shadow-sm ${
+                      emergency ? "border-rose-400 bg-rose-50/80" : "border-line"
+                    }`}
+                  >
                     <Link href={`/jobs/${job.id}`} className="block">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-xs font-semibold text-orange">
-                            Stop {stopNumber} · {eta ? format(eta, "h:mm a") : "Flex"}
+                          <p className={`text-xs font-semibold ${emergency ? "text-rose-700" : "text-orange"}`}>
+                            {emergency ? "Emergency" : `Stop ${stopNumber}`} · {eta ? format(eta, "h:mm a") : "Flex"}
                           </p>
                           <p className="text-xs text-stone-500">{job.number}</p>
                           <h2 className="font-semibold">{job.title}</h2>

@@ -1,14 +1,17 @@
 import { redirect } from "next/navigation";
+import { EmergencyFieldBanner } from "@/components/emergency/EmergencyFieldBanner";
 import { FieldJobList } from "@/components/field/FieldJobList";
 import { RecentPanel } from "@/components/layout/RecentPanel";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getSession } from "@/lib/auth";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
+import { sortJobsEmergencyFirst } from "@/lib/emergency";
 import { isTechnician } from "@/lib/paths";
 import { jobNotifyProps } from "@/lib/messaging";
 import { prisma } from "@/lib/prisma";
 import { getMyTimesheet } from "@/lib/timesheets";
+import { propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -26,14 +29,20 @@ export default async function FieldPage({
   const { from, to, days } = scheduleRange(view, date);
   const technicianFilter = isTechnician(session.role) ? session.id : undefined;
   const myTime = await getMyTimesheet(session.id);
-  const [jobs, routeDays, technicians] = await Promise.all([
+  const [jobs, routeDays, technicians, pendingEmergency] = await Promise.all([
     prisma.job.findMany({
       where: {
         technicianId: technicianFilter,
         status: { notIn: ["CANCELLED"] },
         scheduledStart: { gte: from, lte: to },
       },
-      include: { client: true, property: true, technician: true, deployments: { include: { equipment: true } } },
+      include: {
+        client: true,
+        property: true,
+        technician: true,
+        deployments: { include: { equipment: true } },
+        emergencyDispatch: true,
+      },
       orderBy: { scheduledStart: "asc" },
     }),
     prisma.routeDay.findMany({
@@ -48,7 +57,20 @@ export default async function FieldPage({
       orderBy: { firstName: "asc" },
       select: { id: true, firstName: true, lastName: true, color: true },
     }),
+    technicianFilter
+      ? prisma.emergencyDispatch.findFirst({
+          where: {
+            assignedTechnicianId: technicianFilter,
+            acknowledgedAt: null,
+            job: { status: { notIn: ["COMPLETED", "CANCELLED", "INVOICED"] } },
+          },
+          include: { job: { include: { property: true } } },
+          orderBy: { createdAt: "desc" },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const sortedJobs = sortJobsEmergencyFirst(jobs);
 
   const routeByJobId = Object.fromEntries(
     routeDays.flatMap((route) =>
@@ -75,6 +97,16 @@ export default async function FieldPage({
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
+      {pendingEmergency ? (
+        <EmergencyFieldBanner
+          jobId={pendingEmergency.jobId}
+          title={pendingEmergency.job.title}
+          address={propertyAddress(pendingEmergency.job.property)}
+          message={pendingEmergency.message}
+          lat={pendingEmergency.job.property.lat}
+          lng={pendingEmergency.job.property.lng}
+        />
+      ) : null}
       <div className="sunset-panel rounded-2xl px-5 py-6 text-ink">
         <p className="text-xs font-bold uppercase tracking-[0.25em]">Field route</p>
         <h1 className="mt-1 font-display text-3xl">
@@ -90,7 +122,7 @@ export default async function FieldPage({
       <RecentPanel title="Recent stops" />
       <ScheduleToolbar view={view} date={date} basePath="/field" />
       <FieldJobList
-        jobs={jobs}
+        jobs={sortedJobs}
         days={days}
         showTech={session.role !== "TECHNICIAN"}
         routeByJobId={routeByJobId}

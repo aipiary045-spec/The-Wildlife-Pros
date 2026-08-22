@@ -17,7 +17,7 @@ export default async function CallLogPage({
   if (context.fieldView || !canManageIntake(context.session.role)) redirect("/field");
 
   const params = await searchParams;
-  const [requests, clients] = await Promise.all([
+  const [requests, clients, technicians] = await Promise.all([
     prisma.serviceRequest.findMany({
       include: { client: true, property: true },
       orderBy: { createdAt: "desc" },
@@ -25,6 +25,11 @@ export default async function CallLogPage({
     prisma.client.findMany({
       include: { properties: { select: { id: true, address1: true, city: true, state: true, postalCode: true } } },
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    }),
+    prisma.user.findMany({
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "ADMIN"] } },
+      orderBy: { firstName: "asc" },
+      select: { id: true, firstName: true, lastName: true },
     }),
   ]);
 
@@ -41,6 +46,7 @@ export default async function CallLogPage({
       <IntakeBoard
         initialPhone={phoneDigits(params.phone)}
         clients={clients}
+        technicians={technicians}
         requests={requests.map((item) => ({
           id: item.id,
           title: item.title,
@@ -50,7 +56,9 @@ export default async function CallLogPage({
           preferredAt: item.preferredAt,
           createdAt: item.createdAt,
           client: item.client,
-          property: item.property,
+          property: item.property
+            ? { id: item.property.id, address1: item.property.address1, city: item.property.city }
+            : null,
         }))}
       />
     </div>

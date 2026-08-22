@@ -27,6 +27,44 @@ test("technicians only see their late check-ins", () => {
   assert.match(items[0]?.body ?? "", /1 hour 30 minutes late/);
 });
 
+test("emergency dispatches outrank other alerts", () => {
+  const items = buildNotifications({
+    techView: false,
+    lateJobs: [lateJob],
+    emergencyDispatches: [
+      {
+        jobId: "em1",
+        title: "Snake in kitchen",
+        address: "12 Oak St",
+        techName: "Jordan Blake",
+        acknowledged: false,
+        overdue: false,
+      },
+    ],
+  });
+  assert.equal(items[0]?.kind, "emergency_dispatch");
+  assert.match(items[0]?.title ?? "", /Emergency dispatched/);
+});
+
+test("technicians see emergency go-now alert", () => {
+  const items = buildNotifications({
+    techView: true,
+    lateJobs: [],
+    emergencyDispatches: [
+      {
+        jobId: "em1",
+        title: "Bat in bedroom",
+        address: "9 Elm St",
+        techName: "Jordan Blake",
+        acknowledged: false,
+        overdue: false,
+      },
+    ],
+  });
+  assert.equal(items.length, 1);
+  assert.match(items[0]?.title ?? "", /go now/i);
+});
+
 test("office sees late check-ins first, then other useful counts", () => {
   const items = buildNotifications(
     {

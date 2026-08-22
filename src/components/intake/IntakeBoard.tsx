@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import {
+  EmergencyDispatchButton,
+  type EmergencyPrefill,
+} from "@/components/emergency/EmergencyDispatchButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { INTAKE_SOURCE_LABEL, REQUEST_STATUS_LABEL } from "@/lib/constants";
 import {
@@ -35,7 +39,7 @@ export type IntakeRequest = {
     phone: string | null;
     email: string | null;
   };
-  property: { address1: string; city: string } | null;
+  property: { id: string; address1: string; city: string } | null;
 };
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-3 text-base";
@@ -58,10 +62,12 @@ const empty = {
 export function IntakeBoard({
   requests,
   clients,
+  technicians = [],
   initialPhone = "",
 }: {
   requests: IntakeRequest[];
   clients: IntakeMatchClient[];
+  technicians?: Array<{ id: string; firstName: string; lastName: string }>;
   initialPhone?: string;
 }) {
   const router = useRouter();
@@ -72,6 +78,7 @@ export function IntakeBoard({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [emergencyPrefill, setEmergencyPrefill] = useState<EmergencyPrefill | null>(null);
 
   const hits = useMemo(
     () =>
@@ -215,6 +222,23 @@ export function IntakeBoard({
 
   return (
     <div className="space-y-6">
+      {technicians.length > 0 ? (
+        <EmergencyDispatchButton
+          technicians={technicians}
+          clients={clients.map((client) => ({
+            id: client.id,
+            firstName: client.firstName,
+            lastName: client.lastName,
+            companyName: client.companyName,
+            properties: client.properties.map((property) => ({
+              id: property.id,
+              address1: property.address1,
+              city: property.city,
+            })),
+          }))}
+          prefill={emergencyPrefill}
+        />
+      ) : null}
       {composing ? (
         <form onSubmit={(event) => void save(event)} className="space-y-3 rounded-2xl border border-line bg-panel p-5">
           <div className="flex items-start justify-between gap-3">
@@ -440,6 +464,16 @@ export function IntakeBoard({
                   onFinish={() => finish(item)}
                   onQuote={() => void convert(item.id, "quote")}
                   onTrip={() => void convert(item.id, "job")}
+                  onEmergency={() =>
+                    setEmergencyPrefill({
+                      clientId: item.client.id,
+                      propertyId: item.property?.id,
+                      serviceRequestId: item.id,
+                      situation: item.title,
+                      phone: item.client.phone ?? undefined,
+                    })
+                  }
+                  showEmergency={technicians.length > 0}
                   onClose={() => void patch(item.id, "CLOSED")}
                 />
               ))}
@@ -495,6 +529,8 @@ function RequestCard({
   onFinish,
   onQuote,
   onTrip,
+  onEmergency,
+  showEmergency,
   onClose,
 }: {
   item: IntakeRequest;
@@ -502,6 +538,8 @@ function RequestCard({
   onFinish: () => void;
   onQuote: () => void;
   onTrip: () => void;
+  onEmergency: () => void;
+  showEmergency: boolean;
   onClose: () => void;
 }) {
   const callHref = telHref(item.client.phone);
@@ -545,6 +583,16 @@ function RequestCard({
         >
           First trip
         </button>
+        {showEmergency ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onEmergency}
+            className="min-h-11 rounded-lg border border-rose-200 bg-rose-50 px-4 text-sm font-semibold text-rose-800 disabled:opacity-60"
+          >
+            Emergency dispatch
+          </button>
+        ) : null}
         {callHref ? (
           <a href={callHref} className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-sm font-semibold">
             Call back

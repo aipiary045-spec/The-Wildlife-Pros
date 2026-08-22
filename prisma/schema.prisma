@@ -267,8 +267,38 @@ model User {
   scheduleNeeds  ScheduleNeed[] @relation("ScheduleNeedTech")
   availabilityBlocks AvailabilityBlock[]
   reviewedDayOffs AvailabilityBlock[] @relation("DayOffReviewer")
+  emergencyDispatchesCreated EmergencyDispatch[] @relation("EmergencyDispatchedBy")
+  emergencyDispatchesAssigned EmergencyDispatch[] @relation("EmergencyAssignedTech")
+  emergencyDispatchesBackup EmergencyDispatch[] @relation("EmergencyBackupTech")
+  emergencyDispatchesAcked EmergencyDispatch[] @relation("EmergencyAckBy")
 
   @@index([organizationId, role])
+}
+
+model EmergencyDispatch {
+  id                   String    @id @default(cuid())
+  jobId                String    @unique
+  job                  Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  dispatchedById       String
+  dispatchedBy         User      @relation("EmergencyDispatchedBy", fields: [dispatchedById], references: [id])
+  assignedTechnicianId String
+  assignedTechnician   User      @relation("EmergencyAssignedTech", fields: [assignedTechnicianId], references: [id])
+  backupTechnicianId   String?
+  backupTechnician     User?     @relation("EmergencyBackupTech", fields: [backupTechnicianId], references: [id])
+  message              String
+  hazardTags           Json?
+  techSmsSentAt        DateTime?
+  backupSmsSentAt      DateTime?
+  customerSmsSentAt    DateTime?
+  acknowledgedAt       DateTime?
+  acknowledgedById     String?
+  acknowledgedBy       User?     @relation("EmergencyAckBy", fields: [acknowledgedById], references: [id])
+  escalatedAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([assignedTechnicianId, acknowledgedAt])
+  @@index([createdAt])
 }
 
 model Client {
@@ -485,6 +515,7 @@ model Job {
   formSubmissions FormSubmission[]
   followUpNeeds  ScheduleNeed[] @relation("JobScheduleNeeds")
   scheduledNeeds ScheduleNeed[] @relation("ScheduledFromNeed")
+  emergencyDispatch EmergencyDispatch?
 
   @@index([technicianId, scheduledStart])
   @@index([status, scheduledStart])

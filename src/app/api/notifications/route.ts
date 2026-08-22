@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { canReviewDayOff } from "@/lib/day-off";
+import { emergencyIsOverdue, formatDispatchAddress } from "@/lib/emergency";
 import { invoiceAge } from "@/lib/invoice-aging";
 import { isLateForCheckIn, minutesLate, type LateCheckInJob } from "@/lib/late-checkin";
 import { buildNotifications } from "@/lib/notifications";
@@ -17,6 +18,30 @@ export const GET = async () => {
 
   const now = new Date();
   const techView = isTechnician(session.role);
+
+  const emergencyRows = await prisma.emergencyDispatch.findMany({
+    where: {
+      job: { status: { notIn: ["COMPLETED", "CANCELLED", "INVOICED"] } },
+      ...(techView ? { assignedTechnicianId: session.id } : {}),
+    },
+    include: {
+      job: { include: { property: true, technician: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: techView ? 3 : 8,
+  });
+
+  const emergencyDispatches = emergencyRows.map((dispatch) => ({
+    jobId: dispatch.jobId,
+    title: dispatch.job.title,
+    address: formatDispatchAddress(dispatch.job.property),
+    techName: dispatch.job.technician
+      ? `${dispatch.job.technician.firstName} ${dispatch.job.technician.lastName}`
+      : "Unassigned",
+    acknowledged: Boolean(dispatch.acknowledgedAt),
+    overdue: emergencyIsOverdue(dispatch, now),
+  }));
+
   const cutoff = new Date(now.getTime() - 60 * 60 * 1000);
 
   const lateRows = await prisma.job.findMany({
@@ -42,7 +67,10 @@ export const GET = async () => {
   }));
 
   if (techView) {
-    return NextResponse.json({ notifications: buildNotifications({ techView: true, lateJobs }), newCalls: 0 });
+    return NextResponse.json({
+      notifications: buildNotifications({ techView: true, lateJobs, emergencyDispatches }),
+      newCalls: 0,
+    });
   }
 
   const todayEnd = endOfDay(now);
@@ -81,6 +109,7 @@ export const GET = async () => {
     notifications: buildNotifications({
       techView: false,
       lateJobs,
+      emergencyDispatches,
       followUps: followUps.map((need) => ({
         id: need.id,
         title: need.title,

@@ -8,6 +8,8 @@ export type GeoPoint = {
 
 export type RouteJob = GeoPoint & {
   technicianId?: string | null;
+  /** Emergency dispatches stay first in driving order. */
+  priority?: boolean;
 };
 
 export type TechnicianHome = GeoPoint & {
@@ -219,8 +221,17 @@ export function optimizeRoute(
     return emptyRoute();
   }
 
-  const seeded = nearestNeighbor(stops, start, travel);
-  const ordered = twoOpt(seeded, start, travel);
+  const pinned = stops.filter((stop) => (stop as RouteJob).priority);
+  const flexible = stops.filter((stop) => !(stop as RouteJob).priority);
+  let current = start;
+  const head: GeoPoint[] = [];
+  if (pinned.length > 0) {
+    const pinnedOrder = nearestNeighbor(pinned, current, travel);
+    head.push(...pinnedOrder);
+    current = pinnedOrder[pinnedOrder.length - 1] ?? current;
+  }
+  const tail = flexible.length ? twoOpt(nearestNeighbor(flexible, current, travel), current, travel) : [];
+  const ordered = [...head, ...tail];
 
   let prev = start;
   let miles = 0;

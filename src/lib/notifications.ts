@@ -3,6 +3,7 @@ import { formatMinutesLate, type LateCheckInJob } from "@/lib/late-checkin";
 import { needPriority } from "@/lib/schedule-needs";
 
 export const NOTIFICATION_KINDS = [
+  "emergency_dispatch",
   "late_checkin",
   "follow_up",
   "time_off",
@@ -27,6 +28,33 @@ export type NotificationItem = {
 };
 
 const KIND_ORDER = new Map(NOTIFICATION_KINDS.map((kind, index) => [kind, index]));
+
+export function emergencyDispatchItems(
+  dispatches: Array<{
+    jobId: string;
+    title: string;
+    address: string;
+    techName: string;
+    acknowledged: boolean;
+    overdue: boolean;
+  }>,
+  techView: boolean,
+): NotificationItem[] {
+  return dispatches.map((dispatch) => ({
+    id: `emergency:${dispatch.jobId}`,
+    kind: "emergency_dispatch" as const,
+    urgency: "high" as const,
+    title: techView
+      ? dispatch.acknowledged
+        ? "Emergency acknowledged"
+        : "Emergency — go now"
+      : dispatch.overdue
+        ? "Emergency not acknowledged yet"
+        : "Emergency dispatched",
+    body: [dispatch.title, dispatch.techName, dispatch.address].filter(Boolean).join(" · "),
+    href: `/jobs/${dispatch.jobId}`,
+  }));
+}
 
 export function lateCheckInItems(jobs: LateCheckInJob[], techView: boolean): NotificationItem[] {
   return jobs.map((job) => ({
@@ -105,6 +133,14 @@ export function sortNotifications(items: NotificationItem[]) {
 
 export function buildNotifications(input: {
   techView: boolean;
+  emergencyDispatches?: Array<{
+    jobId: string;
+    title: string;
+    address: string;
+    techName: string;
+    acknowledged: boolean;
+    overdue: boolean;
+  }>;
   lateJobs: LateCheckInJob[];
   followUps?: Array<{ id: string; title: string; dueOn: Date | string; clientName: string; address: string }>;
   timeOff?: Array<{ id: string; date: Date | string; name: string; reason?: string | null }>;
@@ -116,10 +152,14 @@ export function buildNotifications(input: {
   newCalls?: number;
 }, now = new Date()) {
   if (input.techView) {
-    return sortNotifications(lateCheckInItems(input.lateJobs, true));
+    return sortNotifications([
+      ...emergencyDispatchItems(input.emergencyDispatches ?? [], true),
+      ...lateCheckInItems(input.lateJobs, true),
+    ]);
   }
   return sortNotifications(
     [
+      ...emergencyDispatchItems(input.emergencyDispatches ?? [], false),
       ...lateCheckInItems(input.lateJobs, false),
       ...followUpItems(input.followUps ?? [], now),
       ...timeOffItems(input.timeOff ?? []),
