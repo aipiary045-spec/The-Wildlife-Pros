@@ -9,6 +9,8 @@ import { HeaderContext } from "@/components/layout/HeaderContext";
 import { InstallHint } from "@/components/layout/InstallHint";
 import { OfflineStatus } from "@/components/layout/OfflineStatus";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
+import { EmergencyDispatchButton } from "@/components/emergency/EmergencyDispatchButton";
+import { EmergencyStatusStrip } from "@/components/emergency/EmergencyStatusStrip";
 import { RecentTracker } from "@/components/layout/RecentTracker";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
@@ -19,16 +21,22 @@ type MyTime = {
   recent: ComponentProps<typeof ClockControls>["initialRecent"];
 };
 
+type EmergencyData = {
+  technicians: ComponentProps<typeof EmergencyDispatchButton>["technicians"];
+  clients: ComponentProps<typeof EmergencyDispatchButton>["clients"];
+};
+
 type OfficeShellProps = {
   role: string;
   name: string;
   fieldView: boolean;
   sidebarFooter?: ReactNode;
   myTime: MyTime | null;
+  emergency?: EmergencyData | null;
   children: ReactNode;
 };
 
-export function OfficeShell({ role, name, fieldView, sidebarFooter, myTime, children }: OfficeShellProps) {
+export function OfficeShell({ role, name, fieldView, sidebarFooter, myTime, emergency, children }: OfficeShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -91,11 +99,15 @@ export function OfficeShell({ role, name, fieldView, sidebarFooter, myTime, chil
             <HeaderContext role={role} name={name} />
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {!fieldView && emergency ? (
+              <EmergencyDispatchButton technicians={emergency.technicians} clients={emergency.clients} />
+            ) : null}
             <GlobalSearch />
             <NotificationCenter showIntake={!fieldView} />
             {myTime ? <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} /> : null}
           </div>
         </header>
+        {!fieldView ? <EmergencyStatusStrip /> : null}
         <OfflineStatus />
         <main className="min-w-0 flex-1 overflow-x-clip p-4 md:p-8">{children}</main>
       </div>

@@ -28,7 +28,11 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 60_000);
+    const hasOpenEmergency = items.some(
+      (item) => item.kind === "emergency_dispatch" && !item.title.toLowerCase().includes("acknowledged"),
+    );
+    const intervalMs = hasOpenEmergency ? 15_000 : 60_000;
+    const timer = window.setInterval(() => void load(), intervalMs);
     const onReturn = () => {
       if (document.visibilityState === "visible") void load();
     };
@@ -37,7 +41,7 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onReturn);
     };
-  }, [load]);
+  }, [load, items]);
 
   useEffect(() => {
     if (!open) return;

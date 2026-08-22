@@ -119,6 +119,7 @@ export function splitRoutableJobs(
       durationMin: job.durationMin,
       title: `${job.number} · ${job.client.lastName}`,
       technicianId: job.technicianId,
+      priority: job.type === "EMERGENCY",
       job,
     });
   }
