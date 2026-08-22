@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { RoutePlanner } from "@/components/routes/RoutePlanner";
 import { dateKey, parseDateParam } from "@/lib/dates";
-import { hasMapboxDirections } from "@/lib/geocode";
+import { hasRoadRouting, roadRoutingProvider } from "@/lib/geocode";
 import { prisma } from "@/lib/prisma";
 import { dayWindow } from "@/lib/route-plan";
 import { propertyAddress } from "@/lib/utils";
@@ -22,7 +22,13 @@ export default async function RoutesPage({
   const { date: dayStart } = dayWindow(date);
   const prev = dateKey(addDays(date, -1));
   const next = dateKey(addDays(date, 1));
-  const mapboxConfigured = hasMapboxDirections();
+  const roadRoutingConfigured = hasRoadRouting();
+  const roadRoutingLabel =
+    roadRoutingProvider() === "openrouteservice"
+      ? "OpenRouteService"
+      : roadRoutingProvider() === "mapbox"
+        ? "Mapbox"
+        : null;
 
   const [technicians, routes] = await Promise.all([
     prisma.user.findMany({
@@ -51,9 +57,9 @@ export default async function RoutesPage({
         <p className="hidden text-stone-600 sm:block">
           Preview a driving order on the map, then apply it to the schedule. Techs still navigate in Google
           or Apple Maps by street address.{" "}
-          {mapboxConfigured
-            ? "Mapbox is configured — stop order uses real road distance and the map can draw the driving path."
-            : "Without MAPBOX_TOKEN, order uses straight-line miles; the map still shows numbered pins."}
+          {roadRoutingConfigured
+            ? `${roadRoutingLabel} is configured — stop order uses real road distance and the map can draw the driving path.`
+            : "Add OPENROUTESERVICE_API_KEY (free, no credit card) or MAPBOX_TOKEN for road-distance optimization and a drawn driving path on the map."}
         </p>
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-orange">
           <Link href="/schedule" className="hover:underline">
@@ -87,7 +93,12 @@ export default async function RoutesPage({
         )}
       </div>
 
-      <RoutePlanner date={dateParam} technicians={technicians} mapboxConfigured={mapboxConfigured} />
+      <RoutePlanner
+        date={dateParam}
+        technicians={technicians}
+        roadRoutingConfigured={roadRoutingConfigured}
+        roadRoutingLabel={roadRoutingLabel}
+      />
 
       <section className="space-y-3">
         <div className="flex items-baseline justify-between gap-2">

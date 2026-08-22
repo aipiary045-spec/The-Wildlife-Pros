@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { geocodeAddress, planAssignmentsWithRoadCosts, snapAssignmentsToRoads } from "@/lib/geocode";
+import { geocodeAddress, isRoadDriveTimes, planAssignmentsWithRoadCosts, snapAssignmentsToRoads, type DriveTimesSource } from "@/lib/geocode";
 import { dateKey, parseDateParam } from "@/lib/dates";
 import { clientName, propertyAddress } from "@/lib/utils";
 import {
@@ -193,7 +193,7 @@ export function buildPlanPayload(input: {
   mode: OptimizeMode;
   startHour: number;
   persisted: boolean;
-  driveTimes: "haversine" | "mapbox";
+  driveTimes: DriveTimesSource;
   technicians: Awaited<ReturnType<typeof loadRoutableTechnicians>>;
   geoTechs: TechnicianHome[];
   geoJobs: Array<RouteJob & { job: LoadedJob }>;
@@ -274,8 +274,12 @@ export async function buildDayPlan(input: {
   const { geoJobs, skipped } = splitRoutableJobs(jobs, selectedIds, geoTechIds);
   const planned = await planAssignmentsWithRoadCosts(geoTechs, geoJobs, input.mode);
   const snapped = await snapAssignmentsToRoads(planned.assignments, geoTechs);
-  const driveTimes =
-    planned.driveTimes === "mapbox" || snapped.driveTimes === "mapbox" ? "mapbox" : "haversine";
+  const driveTimes: DriveTimesSource =
+    isRoadDriveTimes(planned.driveTimes) || isRoadDriveTimes(snapped.driveTimes)
+      ? isRoadDriveTimes(snapped.driveTimes)
+        ? snapped.driveTimes
+        : planned.driveTimes
+      : "haversine";
   const plan = buildPlanPayload({
     day: input.day,
     mode: input.mode,
