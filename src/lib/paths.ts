@@ -39,6 +39,18 @@ export function shouldBlockOfficePath(role: string, pathname: string, viewMode: 
   return isFieldView(role, viewMode) && isOfficeOnlyPath(pathname);
 }
 
+/** Technicians in field view may only open jobs assigned to them; admins in field view may open any job. */
+export function canAccessJobInFieldView(
+  session: { id: string; role: string },
+  job: { technicianId: string | null },
+  fieldView: boolean,
+) {
+  if (!fieldView) return true;
+  if (!isTechnician(session.role)) return true;
+  if (!job.technicianId) return true;
+  return job.technicianId === session.id;
+}
+
 export function safeNextPath(value: string | null | undefined, fallback = "/dashboard") {
   if (!value) return fallback;
   if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/.")) return fallback;

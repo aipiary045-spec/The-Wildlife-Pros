@@ -15,7 +15,7 @@ import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { getAppContext } from "@/lib/app-context";
+import { canAccessJobInFieldView } from "@/lib/paths";
 import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { jobNotifyProps } from "@/lib/messaging";
@@ -67,7 +67,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
     : null;
   const showQuoteBanner = Boolean(techView && job.quote && quoteBilling);
   const notify = jobNotifyProps(job, session?.firstName);
-  if (techView && job.technicianId && job.technicianId !== session?.id) notFound();
+  if (session && !canAccessJobInFieldView(session, job, techView)) notFound();
 
   const [stock, allGear, species, technicians] = await Promise.all([
     prisma.equipment.findMany({
@@ -88,7 +88,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       <Breadcrumbs
         items={[
           { label: techView ? "My work orders" : "Work orders", href: "/jobs" },
-          { label: clientName(job.client), href: `/clients/${job.clientId}` },
+          { label: clientName(job.client), href: techView ? undefined : `/clients/${job.clientId}` },
           { label: job.number },
         ]}
       />
