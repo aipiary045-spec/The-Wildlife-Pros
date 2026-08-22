@@ -150,6 +150,7 @@ export function RoutePlanner({
   }
 
   const stopCount = plan?.assignments.reduce((sum, item) => sum + item.stops.length, 0) ?? 0;
+  const skippedCount = plan?.skipped.length ?? 0;
   const mapAssignment = plan?.assignments.find((item) => item.technicianId === mapTechId) ?? null;
   const mapData = mapAssignment
     ? {
@@ -165,6 +166,7 @@ export function RoutePlanner({
           })),
       }
     : null;
+  const canShowMap = Boolean(mapData && (mapData.stops.length > 0 || mapData.home));
 
   return (
     <div className="space-y-4">
@@ -309,13 +311,24 @@ export function RoutePlanner({
           <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-line bg-background px-4 text-center text-sm text-stone-500 md:h-64">
             Click <span className="mx-1 font-semibold text-ink">Preview</span> above to draw the route on the map.
           </div>
+        ) : canShowMap ? (
+          <div className="space-y-2">
+            {stopCount === 0 ? (
+              <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                No stops could be mapped for this day
+                {skippedCount > 0
+                  ? ` (${skippedCount} job${skippedCount === 1 ? "" : "s"} skipped — fake or incomplete addresses need real street addresses with coordinates).`
+                  : ". Put jobs on the schedule for the date you picked, then preview again."}{" "}
+                Showing the technician home pin below.
+              </p>
+            ) : null}
+            <RouteMap key={mapTechId ?? "route-map"} data={mapData} />
+          </div>
         ) : stopCount === 0 ? (
           <div className="rounded-xl bg-background px-3 py-6 text-center text-sm text-stone-500">
             No routable stops on this day. Put jobs on the schedule (with addresses) for the date you picked, then
             preview again.
           </div>
-        ) : mapData && (mapData.stops.length > 0 || mapData.home) ? (
-          <RouteMap key={mapTechId ?? "route-map"} data={mapData} />
         ) : (
           <p className="rounded-xl bg-background px-3 py-6 text-center text-sm text-stone-500">
             No mapped stops for this technician. Try another tech in the dropdown.

@@ -9,6 +9,7 @@ import {
   Popup,
   setWorkerUrl,
   type GeoJSONSource,
+  type StyleSpecification,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -29,7 +30,24 @@ export type RouteMapData = {
   geometry?: Array<[number, number]>;
 };
 
-const STYLE_URL = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+/** Raster OSM tiles — reliable in Next.js without vector-tile worker edge cases. */
+const MAP_STYLE: StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: "raster",
+      tiles: [
+        "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      ],
+      tileSize: 256,
+      attribution: "© OpenStreetMap contributors",
+    },
+  },
+  layers: [{ id: "osm", type: "raster", source: "osm" }],
+};
+
 const ROUTE_SOURCE = "critterops-route";
 const ROUTE_LAYER = "critterops-route-line";
 
@@ -94,6 +112,7 @@ function markerElement(label: string, variant: "home" | "stop") {
 }
 
 export function RouteMap({ data, className }: { data: RouteMapData | null; className?: string }) {
+  const shellRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
@@ -102,7 +121,7 @@ export function RouteMap({ data, className }: { data: RouteMapData | null; class
     if (!containerRef.current || mapRef.current) return;
     const map = new MapLibreMap({
       container: containerRef.current,
-      style: STYLE_URL,
+      style: MAP_STYLE,
       center: [-80.84, 35.23],
       zoom: 10,
       attributionControl: { compact: true },
@@ -112,12 +131,23 @@ export function RouteMap({ data, className }: { data: RouteMapData | null; class
       console.error("Route map error:", event.error?.message ?? event);
     });
     mapRef.current = map;
-    const resize = () => {
-      if (mapRef.current) mapRef.current.resize();
-    };
-    map.once("load", resize);
+
+    const resize = () => map.resize();
+    map.once("load", () => {
+      resize();
+      window.setTimeout(resize, 100);
+    });
+
+    const shell = shellRef.current;
+    const observer =
+      shell && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => resize())
+        : null;
+    if (shell) observer?.observe(shell);
     window.addEventListener("resize", resize);
+
     return () => {
+      observer?.disconnect();
       window.removeEventListener("resize", resize);
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
@@ -169,10 +199,13 @@ export function RouteMap({ data, className }: { data: RouteMapData | null; class
 
   return (
     <div
-      ref={containerRef}
-      className={className ?? "h-72 w-full overflow-hidden rounded-2xl border border-line bg-background md:h-[28rem]"}
-      role="img"
-      aria-label="Route map preview"
-    />
+      ref={shellRef}
+      className={
+        className ??
+        "route-map-shell h-72 w-full overflow-hidden rounded-2xl border border-line bg-background md:h-[28rem]"
+      }
+    >
+      <div ref={containerRef} className="h-full w-full" aria-label="Route map preview" role="img" />
+    </div>
   );
 }
