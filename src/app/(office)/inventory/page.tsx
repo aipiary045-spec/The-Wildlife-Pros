@@ -17,6 +17,7 @@ export default async function InventoryPage() {
           orderBy: { deployedAt: "desc" },
           take: 1,
         },
+        _count: { select: { deployments: true } },
       },
       orderBy: { serialNumber: "asc" },
     }),
@@ -36,7 +37,10 @@ export default async function InventoryPage() {
       <InventoryBoard
         serials={equipment.map((item) => item.serialNumber)}
         locations={locations}
-        equipment={equipment}
+        equipment={equipment.map((item) => ({
+          ...item,
+          deploymentCount: item._count.deployments,
+        }))}
       />
     </div>
   );

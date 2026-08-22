@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AddEquipmentForm } from "@/components/inventory/AddEquipmentForm";
-import { TrapQrHint } from "@/components/inventory/TrapQrHint";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EQUIPMENT_TYPE_LABEL } from "@/lib/constants";
+import { EquipmentCard } from "@/components/inventory/EquipmentCard";
 
 type Gear = {
   id: string;
@@ -12,8 +10,11 @@ type Gear = {
   name: string;
   type: string;
   status: string;
+  manufacturer: string | null;
+  notes: string | null;
   locationId: string | null;
   location: { id: string; name: string } | null;
+  deploymentCount: number;
   deployments: Array<{
     locationNote: string;
     targetSpecies: string | null;
@@ -58,30 +59,9 @@ export function InventoryBoard({
         <section key={name} className="space-y-2">
           <h2 className="font-semibold">{name}</h2>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => {
-              const live = item.deployments[0];
-              return (
-                <article key={item.id} className="rounded-2xl border border-line bg-panel p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-widest text-orange">{item.serialNumber}</p>
-                      <h3 className="font-semibold">{item.name}</h3>
-                      <p className="text-sm text-stone-500">{EQUIPMENT_TYPE_LABEL[item.type] ?? item.type}</p>
-                    </div>
-                    <StatusBadge status={item.status} />
-                  </div>
-                  {live ? (
-                    <p className="mt-3 text-sm">
-                      {live.locationNote} · {live.property.address1}
-                      {live.targetSpecies ? ` · ${live.targetSpecies}` : ""}
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-sm text-stone-500">{item.location?.name ?? "No location assigned"}</p>
-                  )}
-                  <TrapQrHint serial={item.serialNumber} />
-                </article>
-              );
-            })}
+            {items.map((item) => (
+              <EquipmentCard key={item.id} item={item} locations={locations} />
+            ))}
           </div>
         </section>
       ))}
