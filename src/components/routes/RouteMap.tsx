@@ -105,7 +105,13 @@ export function RouteMap({ data, className }: { data: RouteMapData | null; class
     });
     map.addControl(new NavigationControl({ showCompass: false }), "top-right");
     mapRef.current = map;
+    const resize = () => {
+      if (mapRef.current) mapRef.current.resize();
+    };
+    map.once("load", resize);
+    window.addEventListener("resize", resize);
     return () => {
+      window.removeEventListener("resize", resize);
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
       map.remove();
@@ -147,6 +153,7 @@ export function RouteMap({ data, className }: { data: RouteMapData | null; class
       if (fitCoords.length === 0 && data.home) fitCoords.push([data.home.lng, data.home.lat]);
       for (const stop of data.stops) fitCoords.push([stop.lng, stop.lat]);
       fitMap(map, fitCoords);
+      window.requestAnimationFrame(() => map.resize());
     };
 
     if (map.isStyleLoaded()) apply();

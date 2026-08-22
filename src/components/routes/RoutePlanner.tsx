@@ -277,6 +277,52 @@ export function RoutePlanner({
         {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
       </div>
 
+      <div className="space-y-3 rounded-2xl border border-line bg-panel p-4 md:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="font-semibold">Map preview</h3>
+            <p className="text-xs text-stone-500">
+              {plan
+                ? "Numbered stops on the map. Navigate still opens Google Maps for turn-by-turn."
+                : "Pick technicians, then click Preview — the map loads here with numbered stops."}
+            </p>
+          </div>
+          {plan && plan.assignments.length > 1 ? (
+            <label className="text-sm">
+              Technician
+              <select
+                value={mapTechId ?? ""}
+                onChange={(event) => setMapTechId(event.target.value)}
+                className="ml-2 rounded-lg border border-line bg-white px-2 py-1.5"
+              >
+                {plan.assignments.map((assignment) => (
+                  <option key={assignment.technicianId} value={assignment.technicianId}>
+                    {assignment.technician.firstName} {assignment.technician.lastName}
+                    {assignment.stops.length ? ` · ${assignment.stops.length}` : " · empty"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </div>
+        {!plan ? (
+          <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-line bg-background px-4 text-center text-sm text-stone-500 md:h-64">
+            Click <span className="mx-1 font-semibold text-ink">Preview</span> above to draw the route on the map.
+          </div>
+        ) : stopCount === 0 ? (
+          <div className="rounded-xl bg-background px-3 py-6 text-center text-sm text-stone-500">
+            No routable stops on this day. Put jobs on the schedule (with addresses) for the date you picked, then
+            preview again.
+          </div>
+        ) : mapData && (mapData.stops.length > 0 || mapData.home) ? (
+          <RouteMap key={mapTechId ?? "route-map"} data={mapData} />
+        ) : (
+          <p className="rounded-xl bg-background px-3 py-6 text-center text-sm text-stone-500">
+            No mapped stops for this technician. Try another tech in the dropdown.
+          </p>
+        )}
+      </div>
+
       {plan ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -314,41 +360,6 @@ export function RoutePlanner({
               </ul>
             </div>
           ) : null}
-
-          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4 md:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 className="font-semibold">Map preview</h3>
-                <p className="text-xs text-stone-500">
-                  Numbered stops on the map. Navigate still opens Google Maps for turn-by-turn.
-                </p>
-              </div>
-              {plan.assignments.length > 1 ? (
-                <label className="text-sm">
-                  Technician
-                  <select
-                    value={mapTechId ?? ""}
-                    onChange={(event) => setMapTechId(event.target.value)}
-                    className="ml-2 rounded-lg border border-line bg-white px-2 py-1.5"
-                  >
-                    {plan.assignments.map((assignment) => (
-                      <option key={assignment.technicianId} value={assignment.technicianId}>
-                        {assignment.technician.firstName} {assignment.technician.lastName}
-                        {assignment.stops.length ? ` · ${assignment.stops.length}` : " · empty"}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-            </div>
-            {mapData && (mapData.stops.length > 0 || mapData.home) ? (
-              <RouteMap data={mapData} />
-            ) : (
-              <p className="rounded-xl bg-background px-3 py-6 text-center text-sm text-stone-500">
-                No mapped stops for this technician.
-              </p>
-            )}
-          </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             {plan.assignments.map((assignment) => (
