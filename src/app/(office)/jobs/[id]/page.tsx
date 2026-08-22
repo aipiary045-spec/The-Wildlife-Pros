@@ -16,6 +16,7 @@ import { NavigateLink } from "@/components/maps/NavigateLink";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { canAccessJobInFieldView } from "@/lib/paths";
+import { getAppContext } from "@/lib/app-context";
 import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { jobNotifyProps } from "@/lib/messaging";
