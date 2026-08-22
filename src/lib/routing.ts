@@ -93,17 +93,64 @@ export function driveMinutes(miles: number) {
   return Math.round((miles / AVG_MPH) * 60);
 }
 
-function pathCost(order: GeoPoint[], start: GeoPoint) {
+export type TravelLeg = { miles: number; minutes: number };
+
+export type TravelEstimator = {
+  between(a: { lat: number; lng: number }, b: { lat: number; lng: number }): TravelLeg;
+};
+
+export function pointKey(point: { lat: number; lng: number }) {
+  return `${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
+}
+
+export function haversineEstimator(): TravelEstimator {
+  return {
+    between(a, b) {
+      const miles = haversineMiles(a, b);
+      return { miles, minutes: driveMinutes(miles) };
+    },
+  };
+}
+
+/** Prefer road matrix cells; fall back to Haversine when a cell is missing. */
+export function matrixTravelEstimator(
+  points: Array<{ lat: number; lng: number }>,
+  miles: number[][],
+  minutes: number[][],
+  fallback: TravelEstimator = haversineEstimator(),
+): TravelEstimator {
+  const index = new Map(points.map((point, idx) => [pointKey(point), idx]));
+  return {
+    between(a, b) {
+      const i = index.get(pointKey(a));
+      const j = index.get(pointKey(b));
+      if (i == null || j == null) return fallback.between(a, b);
+      const legMiles = miles[i]?.[j];
+      const legMinutes = minutes[i]?.[j];
+      if (
+        legMiles == null ||
+        legMinutes == null ||
+        !Number.isFinite(legMiles) ||
+        !Number.isFinite(legMinutes)
+      ) {
+        return fallback.between(a, b);
+      }
+      return { miles: legMiles, minutes: Math.max(0, Math.round(legMinutes)) };
+    },
+  };
+}
+
+function pathCost(order: GeoPoint[], start: GeoPoint, travel: TravelEstimator) {
   let miles = 0;
   let prev = start;
   for (const stop of order) {
-    miles += haversineMiles(prev, stop);
+    miles += travel.between(prev, stop).miles;
     prev = stop;
   }
   return miles;
 }
 
-function nearestNeighbor(stops: GeoPoint[], start: GeoPoint) {
+function nearestNeighbor(stops: GeoPoint[], start: GeoPoint, travel: TravelEstimator) {
   const remaining = [...stops];
   const ordered: GeoPoint[] = [];
   let current = start;
@@ -111,7 +158,7 @@ function nearestNeighbor(stops: GeoPoint[], start: GeoPoint) {
     let bestIdx = 0;
     let bestDist = Number.POSITIVE_INFINITY;
     remaining.forEach((stop, idx) => {
-      const dist = haversineMiles(current, stop);
+      const dist = travel.between(current, stop).miles;
       if (dist < bestDist) {
         bestDist = dist;
         bestIdx = idx;
@@ -124,7 +171,7 @@ function nearestNeighbor(stops: GeoPoint[], start: GeoPoint) {
   return ordered;
 }
 
-function twoOpt(order: GeoPoint[], start: GeoPoint) {
+function twoOpt(order: GeoPoint[], start: GeoPoint, travel: TravelEstimator) {
   const path = [...order];
   let improved = true;
   while (improved) {
@@ -136,7 +183,7 @@ function twoOpt(order: GeoPoint[], start: GeoPoint) {
           ...path.slice(i, k + 1).reverse(),
           ...path.slice(k + 1),
         ];
-        if (pathCost(candidate, start) + 0.05 < pathCost(path, start)) {
+        if (pathCost(candidate, start, travel) + 0.05 < pathCost(path, start, travel)) {
           path.splice(0, path.length, ...candidate);
           improved = true;
         }
@@ -146,11 +193,15 @@ function twoOpt(order: GeoPoint[], start: GeoPoint) {
   return path;
 }
 
-export function nearestTechnician<T extends GeoPoint>(job: GeoPoint, technicians: T[]) {
+export function nearestTechnician<T extends GeoPoint>(
+  job: GeoPoint,
+  technicians: T[],
+  travel: TravelEstimator = haversineEstimator(),
+) {
   let best = technicians[0];
   let bestDist = Number.POSITIVE_INFINITY;
   for (const tech of technicians) {
-    const dist = haversineMiles(tech, job);
+    const dist = travel.between(tech, job).miles;
     if (dist < bestDist) {
       bestDist = dist;
       best = tech;
@@ -159,13 +210,17 @@ export function nearestTechnician<T extends GeoPoint>(job: GeoPoint, technicians
   return best;
 }
 
-export function optimizeRoute(stops: GeoPoint[], start: GeoPoint): OptimizedRoute {
+export function optimizeRoute(
+  stops: GeoPoint[],
+  start: GeoPoint,
+  travel: TravelEstimator = haversineEstimator(),
+): OptimizedRoute {
   if (stops.length === 0) {
     return emptyRoute();
   }
 
-  const seeded = nearestNeighbor(stops, start);
-  const ordered = twoOpt(seeded, start);
+  const seeded = nearestNeighbor(stops, start, travel);
+  const ordered = twoOpt(seeded, start, travel);
 
   let prev = start;
   let miles = 0;
@@ -174,11 +229,10 @@ export function optimizeRoute(stops: GeoPoint[], start: GeoPoint): OptimizedRout
   let service = 0;
 
   const result: OptimizedStop[] = ordered.map((stop, index) => {
-    const legMiles = haversineMiles(prev, stop);
-    const legMin = driveMinutes(legMiles);
-    miles += legMiles;
-    drive += legMin;
-    elapsed += legMin;
+    const leg = travel.between(prev, stop);
+    miles += leg.miles;
+    drive += leg.minutes;
+    elapsed += leg.minutes;
     const eta = elapsed;
     elapsed += stop.durationMin ?? 60;
     service += stop.durationMin ?? 60;
@@ -186,29 +240,29 @@ export function optimizeRoute(stops: GeoPoint[], start: GeoPoint): OptimizedRout
     return {
       ...stop,
       sequence: index + 1,
-      milesFromPrev: Number(legMiles.toFixed(2)),
-      driveMinFromPrev: legMin,
+      milesFromPrev: Number(leg.miles.toFixed(2)),
+      driveMinFromPrev: Math.round(leg.minutes),
       etaMinutesFromStart: eta,
     };
   });
 
   const last = result[result.length - 1] ?? start;
-  const retMiles = haversineMiles(last, start);
-  const retMin = driveMinutes(retMiles);
+  const ret = travel.between(last, start);
 
   return {
     stops: result,
     totalMiles: Number(miles.toFixed(2)),
-    totalDriveMin: drive,
+    totalDriveMin: Math.round(drive),
     totalServiceMin: service,
-    returnMiles: Number(retMiles.toFixed(2)),
-    returnDriveMin: retMin,
+    returnMiles: Number(ret.miles.toFixed(2)),
+    returnDriveMin: Math.round(ret.minutes),
   };
 }
 
 export function assignJobsToTechnicians<T extends GeoPoint>(
   jobs: T[],
   techs: Array<GeoPoint & { capacity?: number }>,
+  travel: TravelEstimator = haversineEstimator(),
 ): TechnicianRoute[] {
   if (techs.length === 0) return [];
 
@@ -217,8 +271,8 @@ export function assignJobsToTechnicians<T extends GeoPoint>(
 
   const unused = [...jobs];
   unused.sort((a, b) => {
-    const aNearest = Math.min(...techs.map((t) => haversineMiles(t, a)));
-    const bNearest = Math.min(...techs.map((t) => haversineMiles(t, b)));
+    const aNearest = Math.min(...techs.map((t) => travel.between(t, a).miles));
+    const bNearest = Math.min(...techs.map((t) => travel.between(t, b).miles));
     return aNearest - bNearest;
   });
 
@@ -229,7 +283,7 @@ export function assignJobsToTechnicians<T extends GeoPoint>(
       const assigned = buckets.get(tech.id) ?? [];
       if (assigned.length >= (tech.capacity ?? DEFAULT_CAPACITY)) continue;
       const last = assigned[assigned.length - 1] ?? tech;
-      const score = haversineMiles(last, job) + assigned.length * 0.4;
+      const score = travel.between(last, job).miles + assigned.length * 0.4;
       if (score < bestScore) {
         bestScore = score;
         bestTech = tech;
@@ -240,12 +294,16 @@ export function assignJobsToTechnicians<T extends GeoPoint>(
 
   return techs.map((tech) => ({
     technicianId: tech.id,
-    route: optimizeRoute(buckets.get(tech.id) ?? [], tech),
+    route: optimizeRoute(buckets.get(tech.id) ?? [], tech, travel),
   }));
 }
 
 /** Keep each job on its technician; only fix driving order. Unassigned → nearest home. */
-export function reorderJobsByTechnician(technicians: TechnicianHome[], jobs: RouteJob[]): TechnicianRoute[] {
+export function reorderJobsByTechnician(
+  technicians: TechnicianHome[],
+  jobs: RouteJob[],
+  travel: TravelEstimator = haversineEstimator(),
+): TechnicianRoute[] {
   if (technicians.length === 0) return [];
 
   const buckets = new Map<string, RouteJob[]>();
@@ -253,13 +311,16 @@ export function reorderJobsByTechnician(technicians: TechnicianHome[], jobs: Rou
   const techIds = new Set(technicians.map((tech) => tech.id));
 
   for (const job of jobs) {
-    const keepId = job.technicianId && techIds.has(job.technicianId) ? job.technicianId : nearestTechnician(job, technicians).id;
+    const keepId =
+      job.technicianId && techIds.has(job.technicianId)
+        ? job.technicianId
+        : nearestTechnician(job, technicians, travel).id;
     buckets.get(keepId)?.push(job);
   }
 
   return technicians.map((tech) => ({
     technicianId: tech.id,
-    route: optimizeRoute(buckets.get(tech.id) ?? [], tech),
+    route: optimizeRoute(buckets.get(tech.id) ?? [], tech, travel),
   }));
 }
 
@@ -267,11 +328,12 @@ export function planDayRoutes(
   technicians: TechnicianHome[],
   jobs: RouteJob[],
   mode: OptimizeMode = "reorder",
+  travel: TravelEstimator = haversineEstimator(),
 ): TechnicianRoute[] {
   if (mode === "rebalance") {
-    return assignJobsToTechnicians(jobs, technicians);
+    return assignJobsToTechnicians(jobs, technicians, travel);
   }
-  return reorderJobsByTechnician(technicians, jobs);
+  return reorderJobsByTechnician(technicians, jobs, travel);
 }
 
 /** Replace Haversine legs with measured road miles/minutes after the stop order is chosen. */
