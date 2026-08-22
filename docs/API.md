@@ -50,7 +50,7 @@ Clients never pay through CritterOps. Square is the processor.
 
 Default `mode` is `reorder`: keep each job on its technician and only fix driving order. Unassigned jobs go to the nearest home. `rebalance` may move stops between selected techs. `persist: false` (the UI preview) returns the plan without writing. `persist: true` upserts `RouteDay` / `RouteStop`, rewrites `scheduledStart` from `startHour` (default 8:00) plus each stop’s ETA offset, and deletes a saved route when a selected tech ends up with zero stops.
 
-Jobs that are on site, in progress, completed, invoiced, cancelled, or on hold are left alone. Jobs without coordinates are geocoded from the property **address** when possible (Mapbox if `MAPBOX_TOKEN` is set, otherwise OpenStreetMap Nominatim). If geocoding fails they come back in `skipped`. Techs navigate by address in Google/Apple Maps; GPS is only the backup pin. Average speed is 22 mph (Haversine) unless Mapbox Directions snaps the previewed order to road time. `driveTimes` in the POST response is `haversine` or `mapbox`.
+Jobs that are on site, in progress, completed, invoiced, cancelled, or on hold are left alone. Jobs without coordinates are geocoded from the property **address** when possible (Mapbox if `MAPBOX_TOKEN` is set, otherwise OpenStreetMap Nominatim). If geocoding fails they come back in `skipped`. Techs navigate by address in Google/Apple Maps; GPS is only the backup pin. When Mapbox is configured, stop order uses the Directions Matrix (road miles) and ETAs/path use Directions; otherwise average speed is 22 mph (Haversine). `driveTimes` in the POST response is `haversine` or `mapbox`. Assignments may include `geometry` (`[lng,lat]` polyline) and `home` for the Routes map preview.
 
 ## Wildlife field data
 

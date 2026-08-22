@@ -1,12 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { geocodeAddress, snapAssignmentsToRoads } from "@/lib/geocode";
+import { geocodeAddress, planAssignmentsWithRoadCosts, snapAssignmentsToRoads } from "@/lib/geocode";
 import { dateKey, parseDateParam } from "@/lib/dates";
 import { clientName, propertyAddress } from "@/lib/utils";
 import {
   applyStartClock,
   parseOptimizeMode,
   parseStartHour,
-  planDayRoutes,
   type OptimizeMode,
   type RouteJob,
   type TechnicianHome,
@@ -199,6 +198,7 @@ export function buildPlanPayload(input: {
   geoTechs: TechnicianHome[];
   geoJobs: Array<RouteJob & { job: LoadedJob }>;
   assignments: TechnicianRoute[];
+  geometries?: Map<string, Array<[number, number]>>;
   skipped: SkippedJob[];
   warnings: RouteWarning[];
 }) {
@@ -212,11 +212,14 @@ export function buildPlanPayload(input: {
     driveTimes: input.driveTimes,
     assignments: input.assignments.map((assignment) => {
       const tech = input.technicians.find((item) => item.id === assignment.technicianId);
+      const home = input.geoTechs.find((item) => item.id === assignment.technicianId);
       return {
         technicianId: assignment.technicianId,
         technician: tech
           ? { id: tech.id, firstName: tech.firstName, lastName: tech.lastName }
           : { id: assignment.technicianId, firstName: "Tech", lastName: "" },
+        home: home ? { lat: home.lat, lng: home.lng } : null,
+        geometry: input.geometries?.get(assignment.technicianId) ?? [],
         stops: assignment.route.stops.map((stop) => {
           const job = jobsById.get(stop.id);
           const durationMin = stop.durationMin ?? job?.durationMin ?? 60;
@@ -269,18 +272,21 @@ export async function buildDayPlan(input: {
   const warnings = technicianWarnings(technicians);
   const geoTechIds = new Set(geoTechs.map((tech) => tech.id));
   const { geoJobs, skipped } = splitRoutableJobs(jobs, selectedIds, geoTechIds);
-  const planned = planDayRoutes(geoTechs, geoJobs, input.mode);
-  const snapped = await snapAssignmentsToRoads(planned, geoTechs);
+  const planned = await planAssignmentsWithRoadCosts(geoTechs, geoJobs, input.mode);
+  const snapped = await snapAssignmentsToRoads(planned.assignments, geoTechs);
+  const driveTimes =
+    planned.driveTimes === "mapbox" || snapped.driveTimes === "mapbox" ? "mapbox" : "haversine";
   const plan = buildPlanPayload({
     day: input.day,
     mode: input.mode,
     startHour: input.startHour,
     persisted: input.persist,
-    driveTimes: snapped.driveTimes,
+    driveTimes,
     technicians,
     geoTechs,
     geoJobs,
     assignments: snapped.assignments,
+    geometries: snapped.geometries,
     skipped,
     warnings,
   });

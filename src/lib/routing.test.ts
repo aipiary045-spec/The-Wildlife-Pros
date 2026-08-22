@@ -5,6 +5,7 @@ import {
   applyStartClock,
   assignJobsToTechnicians,
   haversineMiles,
+  matrixTravelEstimator,
   optimizeRoute,
   parseOptimizeMode,
   parseStartHour,
@@ -34,6 +35,29 @@ test("optimizeRoute orders nearby stops and returns totals plus a return-to-shop
   assert.ok(route.returnMiles > 0);
   assert.ok(route.returnDriveMin > 0);
   assert.equal(route.stops[0].sequence, 1);
+});
+
+test("matrixTravelEstimator prefers road miles when ordering stops", () => {
+  const start = { id: "shop", lat: 35.2, lng: -80.84 };
+  const near = { id: "near", lat: 35.198, lng: -80.842, durationMin: 30 };
+  const far = { id: "far", lat: 35.12, lng: -80.72, durationMin: 30 };
+  // Make the geographically near stop expensive on the road matrix.
+  const points = [start, near, far];
+  const miles = [
+    [0, 40, 5],
+    [40, 0, 50],
+    [5, 50, 0],
+  ];
+  const minutes = [
+    [0, 60, 10],
+    [60, 0, 70],
+    [10, 70, 0],
+  ];
+  const travel = matrixTravelEstimator(points, miles, minutes);
+  const route = optimizeRoute([near, far], start, travel);
+  assert.equal(route.stops[0].id, "far");
+  assert.equal(route.stops[0].milesFromPrev, 5);
+  assert.equal(route.stops[0].driveMinFromPrev, 10);
 });
 
 test("assignJobsToTechnicians balances two techs", () => {

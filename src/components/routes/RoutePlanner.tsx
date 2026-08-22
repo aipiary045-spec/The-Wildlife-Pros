@@ -1,10 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { NavigateLink } from "@/components/maps/NavigateLink";
+
+const RouteMap = dynamic(() => import("@/components/routes/RouteMap").then((mod) => mod.RouteMap), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-72 items-center justify-center rounded-2xl border border-dashed border-line bg-background text-sm text-stone-500 md:h-[28rem]">
+      Loading map…
+    </div>
+  ),
+});
 
 type TechOption = {
   id: string;
@@ -34,6 +44,8 @@ type PlanStop = {
 type PlanAssignment = {
   technicianId: string;
   technician: { id: string; firstName: string; lastName: string };
+  home?: { lat: number; lng: number } | null;
+  geometry?: Array<[number, number]>;
   stops: PlanStop[];
   totalMiles: number;
   totalDriveMin: number;
@@ -59,9 +71,11 @@ const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2
 export function RoutePlanner({
   date,
   technicians,
+  mapboxConfigured = false,
 }: {
   date: string;
   technicians: TechOption[];
+  mapboxConfigured?: boolean;
 }) {
   const router = useRouter();
   const gpsTechs = useMemo(
@@ -74,10 +88,24 @@ export function RoutePlanner({
   const [loading, setLoading] = useState<"preview" | "apply" | null>(null);
   const [error, setError] = useState("");
   const [plan, setPlan] = useState<PlanResponse | null>(null);
+  const [mapTechId, setMapTechId] = useState<string | null>(null);
 
   useEffect(() => {
     setPlan(null);
+    setMapTechId(null);
   }, [date]);
+
+  useEffect(() => {
+    if (!plan?.assignments.length) {
+      setMapTechId(null);
+      return;
+    }
+    const withStops = plan.assignments.find((item) => item.stops.length > 0);
+    setMapTechId((current) => {
+      if (current && plan.assignments.some((item) => item.technicianId === current)) return current;
+      return withStops?.technicianId ?? plan.assignments[0]?.technicianId ?? null;
+    });
+  }, [plan]);
 
   function invalidate() {
     setPlan(null);
@@ -120,6 +148,21 @@ export function RoutePlanner({
   }
 
   const stopCount = plan?.assignments.reduce((sum, item) => sum + item.stops.length, 0) ?? 0;
+  const mapAssignment = plan?.assignments.find((item) => item.technicianId === mapTechId) ?? null;
+  const mapData = mapAssignment
+    ? {
+        home: mapAssignment.home ?? null,
+        geometry: mapAssignment.geometry,
+        stops: mapAssignment.stops
+          .filter((stop) => stop.lat != null && stop.lng != null)
+          .map((stop) => ({
+            sequence: stop.sequence,
+            title: stop.title,
+            lat: stop.lat as number,
+            lng: stop.lng as number,
+          })),
+      }
+    : null;
 
   return (
     <div className="space-y-4">
@@ -225,6 +268,9 @@ export function RoutePlanner({
         </div>
         <p className="mt-2 text-xs text-stone-500">
           Preview does not move the schedule. Apply writes stop order, drive times, and visit start times.
+          {mapboxConfigured
+            ? " Mapbox is on — stop order uses road distance, and the map can draw the driving path."
+            : " Add MAPBOX_TOKEN for road-distance optimization and a drawn driving path on the map."}
         </p>
         {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
       </div>
@@ -264,14 +310,59 @@ export function RoutePlanner({
               </ul>
             </div>
           ) : null}
+
+          <div className="space-y-3 rounded-2xl border border-line bg-panel p-4 md:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="font-semibold">Map preview</h3>
+                <p className="text-xs text-stone-500">
+                  Numbered stops on the map. Navigate still opens Google Maps for turn-by-turn.
+                </p>
+              </div>
+              {plan.assignments.length > 1 ? (
+                <label className="text-sm">
+                  Technician
+                  <select
+                    value={mapTechId ?? ""}
+                    onChange={(event) => setMapTechId(event.target.value)}
+                    className="ml-2 rounded-lg border border-line bg-white px-2 py-1.5"
+                  >
+                    {plan.assignments.map((assignment) => (
+                      <option key={assignment.technicianId} value={assignment.technicianId}>
+                        {assignment.technician.firstName} {assignment.technician.lastName}
+                        {assignment.stops.length ? ` · ${assignment.stops.length}` : " · empty"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+            </div>
+            {mapData && (mapData.stops.length > 0 || mapData.home) ? (
+              <RouteMap data={mapData} />
+            ) : (
+              <p className="rounded-xl bg-background px-3 py-6 text-center text-sm text-stone-500">
+                No mapped stops for this technician.
+              </p>
+            )}
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-2">
             {plan.assignments.map((assignment) => (
-              <article key={assignment.technicianId} className="rounded-2xl border border-line bg-panel p-4">
+              <article
+                key={assignment.technicianId}
+                className={`rounded-2xl border bg-panel p-4 ${
+                  assignment.technicianId === mapTechId ? "border-orange" : "border-line"
+                }`}
+              >
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold">
+                    <button
+                      type="button"
+                      className="text-left font-semibold hover:text-orange"
+                      onClick={() => setMapTechId(assignment.technicianId)}
+                    >
                       {assignment.technician.firstName} {assignment.technician.lastName}
-                    </h3>
+                    </button>
                     {assignment.stops.length > 0 ? (
                       <NavigateLink
                         className="mt-2"
