@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { WorkOrderBoard } from "@/components/jobs/WorkOrderBoard";
+import { JobsPageActions } from "@/components/jobs/JobsPageActions";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getSession } from "@/lib/auth";
 import { isTechnician } from "@/lib/paths";
@@ -17,11 +18,26 @@ export default async function JobsPage({
   const params = await searchParams;
   const views = workOrderViews(techView);
   const activeKey = parseWorkOrderView(params.view, techView);
-  const jobs = await prisma.job.findMany({
-    where: techView && session ? { technicianId: session.id } : undefined,
-    include: { client: true, property: true, technician: true },
-    orderBy: [{ scheduledStart: "asc" }, { createdAt: "desc" }],
-  });
+  const [jobs, technicians, clients] = await Promise.all([
+    prisma.job.findMany({
+      where: techView && session ? { technicianId: session.id } : undefined,
+      include: { client: true, property: true, technician: true },
+      orderBy: [{ scheduledStart: "asc" }, { createdAt: "desc" }],
+    }),
+    techView
+      ? []
+      : prisma.user.findMany({
+          where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "ADMIN"] } },
+          orderBy: { firstName: "asc" },
+          select: { id: true, firstName: true, lastName: true, color: true },
+        }),
+    techView
+      ? []
+      : prisma.client.findMany({
+          include: { properties: { select: { id: true, address1: true, city: true } } },
+          orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+        }),
+  ]);
 
   return (
     <div className="space-y-5">
@@ -33,6 +49,20 @@ export default async function JobsPage({
             : "The file for every job. Action needed is late leftovers, today, and anything without a day yet. The schedule is still where you place the time."
         }
         related={techView ? undefined : [{ href: "/schedule", label: "Schedule" }, { href: "/quotes", label: "Quotes" }]}
+        actions={
+          techView ? undefined : (
+            <JobsPageActions
+              technicians={technicians}
+              clients={clients.map((client) => ({
+                id: client.id,
+                firstName: client.firstName,
+                lastName: client.lastName,
+                companyName: client.companyName,
+                properties: client.properties,
+              }))}
+            />
+          )
+        }
       />
       <WorkOrderBoard
         jobs={jobs.map((job) => ({
