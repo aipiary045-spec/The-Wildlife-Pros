@@ -59,7 +59,7 @@ type PlanResponse = {
   mode: "reorder" | "rebalance";
   startHour: number;
   persisted: boolean;
-  driveTimes?: "haversine" | "mapbox";
+  driveTimes?: "haversine" | "mapbox" | "openrouteservice";
   assignments: PlanAssignment[];
   skipped: Array<{ id: string; number: string; title: string; reason: string }>;
   warnings: Array<{ technicianId: string; message: string }>;
@@ -71,11 +71,13 @@ const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2
 export function RoutePlanner({
   date,
   technicians,
-  mapboxConfigured = false,
+  roadRoutingConfigured = false,
+  roadRoutingLabel = null,
 }: {
   date: string;
   technicians: TechOption[];
-  mapboxConfigured?: boolean;
+  roadRoutingConfigured?: boolean;
+  roadRoutingLabel?: string | null;
 }) {
   const router = useRouter();
   const gpsTechs = useMemo(
@@ -268,9 +270,9 @@ export function RoutePlanner({
         </div>
         <p className="mt-2 text-xs text-stone-500">
           Preview does not move the schedule. Apply writes stop order, drive times, and visit start times.
-          {mapboxConfigured
-            ? " Mapbox is on — stop order uses road distance, and the map can draw the driving path."
-            : " Add MAPBOX_TOKEN for road-distance optimization and a drawn driving path on the map."}
+          {roadRoutingConfigured
+            ? ` ${roadRoutingLabel ?? "Road routing"} is on — stop order uses road distance, and the map can draw the driving path.`
+            : " Add OPENROUTESERVICE_API_KEY (free, no credit card) for road-distance optimization and a drawn driving path."}
         </p>
         {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
       </div>
@@ -284,7 +286,9 @@ export function RoutePlanner({
             <p className="text-sm text-stone-500">
               {plan.mode === "reorder" ? "Kept assignments" : "Rebalanced"} · start{" "}
               {format(new Date(2026, 0, 1, plan.startHour), "h:mm a")}
-              {plan.driveTimes === "mapbox" ? " · road times" : " · straight-line miles"}
+              {plan.driveTimes === "openrouteservice" || plan.driveTimes === "mapbox"
+                ? ` · road times${plan.driveTimes === "openrouteservice" ? " (OpenRouteService)" : ""}`
+                : " · straight-line miles"}
             </p>
           </div>
           {plan.warnings.map((warning) => (
