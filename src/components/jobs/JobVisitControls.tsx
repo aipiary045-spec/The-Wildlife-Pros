@@ -85,6 +85,9 @@ export function JobVisitControls({
   const buttonClass = compact
     ? "mt-1 w-full rounded-lg bg-orange px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
     : "min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto";
+  const inProgressButtonClass = compact
+    ? "mt-1 w-full rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-900 disabled:opacity-60"
+    : "min-h-11 w-full rounded-lg border border-emerald-300 bg-emerald-50 px-4 text-sm font-semibold text-emerald-900 disabled:opacity-60 sm:w-auto";
 
   useEffect(() => {
     if (checkedIn && visitActionForStatus(status) !== "check-out") {
@@ -266,8 +269,8 @@ export function JobVisitControls({
           {saving ? "Checking in…" : "Check in"}
         </button>
       ) : (
-        <button id="check-out" type="button" disabled={saving} className={buttonClass} onClick={() => setOpen(true)}>
-          Check out
+        <button id="check-out" type="button" disabled={saving} className={inProgressButtonClass} onClick={() => setOpen(true)}>
+          In progress
         </button>
       )}
       {error && !open ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
@@ -327,9 +330,11 @@ export function JobVisitControls({
             }}
           >
             <div className="flex-1 overflow-y-auto px-5 pb-4 pt-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-orange">Check out</p>
-              <h2 className="mt-1 font-display text-2xl">Done at this property?</h2>
-              <p className="mt-1 text-sm text-stone-600">Pick one, log captures or traps if you need to, then check out.</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-800">In progress</p>
+              <h2 className="mt-1 font-display text-2xl">Still on this job</h2>
+              <p className="mt-1 text-sm text-stone-600">
+                Log captures, traps, or exclusion if you need to, then check out when you leave.
+              </p>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <button
@@ -686,14 +691,14 @@ export function JobVisitControls({
 
             <div className="flex shrink-0 gap-2 border-t border-line bg-panel px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button type="button" onClick={closeCheckout} className="flex-1 rounded-lg border border-line px-3 py-2.5 text-sm font-semibold">
-                Stay on site
+                Keep working
               </button>
               <button
                 type="submit"
                 disabled={saving || !canSubmit}
                 className="flex-1 rounded-lg bg-orange px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {saving ? "Saving…" : finishedHere === false ? "Check out & schedule" : "Check out"}
+                {saving ? "Saving…" : finishedHere === false ? "Check out & schedule" : finishedHere === true ? "Check out" : "Check out"}
               </button>
             </div>
           </form>
