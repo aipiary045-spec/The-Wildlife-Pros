@@ -1,6 +1,7 @@
 import type { ViewMode } from "@/lib/view-mode";
 import { homePathFor, isFieldView } from "@/lib/view-mode";
 import { isTechnicianRole } from "@/lib/roles";
+import { isEmergencyJob } from "@/lib/emergency";
 
 export function isTechnician(role: string) {
   return isTechnicianRole(role);
@@ -39,16 +40,21 @@ export function shouldBlockOfficePath(role: string, pathname: string, viewMode: 
   return isFieldView(role, viewMode) && isOfficeOnlyPath(pathname);
 }
 
-/** Technicians in field view may only open jobs assigned to them; admins in field view may open any job. */
+/** Technicians in field view may open their jobs and any active emergency job on the team. */
 export function canAccessJobInFieldView(
   session: { id: string; role: string },
-  job: { technicianId: string | null },
+  job: {
+    technicianId: string | null;
+    type: string;
+    emergencyDispatch?: { acknowledgedAt: Date | null } | null;
+  },
   fieldView: boolean,
 ) {
   if (!fieldView) return true;
   if (!isTechnician(session.role)) return true;
   if (!job.technicianId) return true;
-  return job.technicianId === session.id;
+  if (job.technicianId === session.id) return true;
+  return isEmergencyJob(job);
 }
 
 export function safeNextPath(value: string | null | undefined, fallback = "/dashboard") {

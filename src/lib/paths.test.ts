@@ -4,18 +4,26 @@ import { canAccessJobInFieldView } from "./paths";
 
 const admin = { id: "admin-1", role: "ADMIN" };
 const tech = { id: "tech-1", role: "TECHNICIAN" };
-const job = { technicianId: "tech-2" };
-const ownJob = { technicianId: "tech-1" };
+const otherJob = { technicianId: "tech-2", type: "INSPECTION" };
+const ownJob = { technicianId: "tech-1", type: "INSPECTION" };
+const teamEmergency = { technicianId: "tech-2", type: "EMERGENCY" };
 
 test("admins in field view can open any assigned job", () => {
-  assert.equal(canAccessJobInFieldView(admin, job, true), true);
+  assert.equal(canAccessJobInFieldView(admin, otherJob, true), true);
 });
 
-test("technicians in field view can only open their own jobs", () => {
+test("technicians in field view can open their own jobs", () => {
   assert.equal(canAccessJobInFieldView(tech, ownJob, true), true);
-  assert.equal(canAccessJobInFieldView(tech, job, true), false);
+});
+
+test("technicians in field view can open another tech's emergency job", () => {
+  assert.equal(canAccessJobInFieldView(tech, teamEmergency, true), true);
+});
+
+test("technicians in field view cannot open another tech's regular job", () => {
+  assert.equal(canAccessJobInFieldView(tech, otherJob, true), false);
 });
 
 test("office view does not restrict job access", () => {
-  assert.equal(canAccessJobInFieldView(tech, job, false), true);
+  assert.equal(canAccessJobInFieldView(tech, otherJob, false), true);
 });
