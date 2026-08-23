@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { TodayBoard } from "@/components/dashboard/TodayBoard";
-import { RecentPanel } from "@/components/layout/RecentPanel";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getSession } from "@/lib/auth";
 import { isTechnician } from "@/lib/paths";
@@ -26,7 +25,6 @@ export default async function DashboardPage() {
         ]}
       />
       <TodayBoard data={data} />
-      <RecentPanel />
     </div>
   );
 }
