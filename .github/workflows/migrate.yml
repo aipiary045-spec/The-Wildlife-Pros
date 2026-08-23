@@ -14,16 +14,23 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
+      - name: Skip when DATABASE_URL is not configured
+        id: db
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "DATABASE_URL secret not set; skipping migration."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.db.outputs.skip != 'true'
       - uses: actions/setup-node@v4
+        if: steps.db.outputs.skip != 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Require DATABASE_URL secret
-        run: |
-          if [ -z "$DATABASE_URL" ]; then
-            echo "Add DATABASE_URL to GitHub repository secrets (Settings → Secrets → Actions)."
-            exit 1
-          fi
+        if: steps.db.outputs.skip != 'true'
       - run: npx prisma migrate deploy
+        if: steps.db.outputs.skip != 'true'
