@@ -16,7 +16,6 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       client: true,
       property: true,
       technician: true,
-      lineItems: true,
       visits: true,
       deployments: { include: { equipment: true, captures: true, checks: true } },
       captures: { include: { species: true } },

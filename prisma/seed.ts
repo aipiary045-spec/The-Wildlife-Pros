@@ -328,17 +328,6 @@ async function main() {
       message: "Full trapping program, one-way on the soffit, and seal remaining gaps after the last capture.",
       sentAt: addDays(today, -2),
       validUntil: addDays(today, 12),
-      subtotal: 1490,
-      taxAmount: 108.03,
-      total: 1598.03,
-      lineItems: {
-        create: [
-          { name: "Wildlife inspection", quantity: 1, unitPrice: 149, serviceId: services[0].id },
-          { name: "Raccoon trapping program", quantity: 1, unitPrice: 325, serviceId: services[1].id },
-          { name: "Squirrel / raccoon exclusion", quantity: 1, unitPrice: 890, serviceId: services[2].id },
-          { name: "Attic sanitation", quantity: 1, unitPrice: 126, serviceId: services[4].id },
-        ],
-      },
     },
   });
 
@@ -357,10 +346,6 @@ async function main() {
       scheduledStart: morning,
       scheduledEnd: addHours(morning, 1),
       durationMin: 45,
-      subtotal: 325,
-      taxAmount: 23.56,
-      total: 348.56,
-      lineItems: { create: [{ name: "Raccoon trapping program", quantity: 1, unitPrice: 325 }] },
     },
   });
 
@@ -377,10 +362,6 @@ async function main() {
       scheduledStart: midday,
       scheduledEnd: addHours(midday, 2),
       durationMin: 120,
-      subtotal: 890,
-      taxAmount: 64.53,
-      total: 954.53,
-      lineItems: { create: [{ name: "Squirrel exclusion", quantity: 1, unitPrice: 890 }] },
     },
   });
 
@@ -397,10 +378,6 @@ async function main() {
       scheduledStart: afternoon,
       scheduledEnd: addHours(afternoon, 1),
       durationMin: 75,
-      subtotal: 149,
-      taxAmount: 10.8,
-      total: 159.8,
-      lineItems: { create: [{ name: "Wildlife inspection", quantity: 1, unitPrice: 149 }] },
     },
   });
 
@@ -417,10 +394,6 @@ async function main() {
       scheduledStart: addDays(morning, -1),
       completedAt: addDays(morning, -1),
       durationMin: 60,
-      subtotal: 275,
-      taxAmount: 19.94,
-      total: 294.94,
-      lineItems: { create: [{ name: "One-way door install", quantity: 1, unitPrice: 275 }] },
     },
   });
 
@@ -436,10 +409,6 @@ async function main() {
       title: "Rodent station service",
       scheduledStart: businessAt(1, 10),
       durationMin: 40,
-      subtotal: 89,
-      taxAmount: 6.45,
-      total: 95.45,
-      lineItems: { create: [{ name: "Rodent baiting visit", quantity: 1, unitPrice: 89 }] },
     },
   });
 
@@ -456,9 +425,6 @@ async function main() {
       scheduledStart: businessAt(3, 9),
       scheduledEnd: addHours(businessAt(3, 9), 1),
       durationMin: 45,
-      subtotal: 0,
-      taxAmount: 0,
-      total: 0,
     },
   });
 
@@ -475,9 +441,6 @@ async function main() {
       scheduledStart: businessAt(10, 13),
       scheduledEnd: addHours(businessAt(10, 13), 1),
       durationMin: 60,
-      subtotal: 149,
-      taxAmount: 10.8,
-      total: 159.8,
     },
   });
 
@@ -494,9 +457,6 @@ async function main() {
       scheduledStart: businessAt(21, 9),
       scheduledEnd: addHours(businessAt(21, 9), 1),
       durationMin: 75,
-      subtotal: 149,
-      taxAmount: 10.8,
-      total: 159.8,
     },
   });
 
@@ -696,11 +656,6 @@ async function main() {
       status: "SENT",
       dueOn: addDays(today, 10),
       sentAt: addDays(today, -1),
-      subtotal: 275,
-      taxAmount: 19.94,
-      total: 294.94,
-      balance: 294.94,
-      lineItems: { create: [{ name: "One-way door / bird follow-up", quantity: 1, unitPrice: 275 }] },
     },
   });
 
@@ -712,11 +667,7 @@ async function main() {
       createdById: admin.id,
       status: "PARTIAL",
       dueOn: addDays(today, 5),
-      subtotal: 149,
-      taxAmount: 10.8,
-      total: 159.8,
       balance: 59.8,
-      lineItems: { create: [{ name: "Wildlife inspection", quantity: 1, unitPrice: 149 }] },
       payments: {
         create: [
           {
