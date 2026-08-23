@@ -1,7 +1,7 @@
 import { phoneDigits } from "@/lib/intake";
 import { clientName, propertyAddress } from "@/lib/utils";
 
-export type SearchResultKind = "client" | "job" | "quote" | "invoice" | "equipment";
+export type SearchResultKind = "client" | "job" | "equipment";
 
 export type SearchResult = {
   id: string;
@@ -23,7 +23,7 @@ export function searchQueryReady(query: string) {
 }
 
 export function groupSearchResults(results: SearchResult[]) {
-  const order: SearchResultKind[] = ["client", "job", "quote", "invoice", "equipment"];
+  const order: SearchResultKind[] = ["client", "job", "equipment"];
   return order
     .map((kind) => ({
       kind,
@@ -35,8 +35,6 @@ export function groupSearchResults(results: SearchResult[]) {
 export const SEARCH_KIND_LABEL: Record<SearchResultKind, string> = {
   client: "Clients",
   job: "Work orders",
-  quote: "Quotes",
-  invoice: "Invoices",
   equipment: "Traps & gear",
 };
 
@@ -71,36 +69,6 @@ export function jobSearchResult(job: {
     title: `${job.number} · ${job.title}`,
     subtitle: `${clientName(job.client)} · ${propertyAddress(job.property)}`,
     href: `/jobs/${job.id}`,
-  };
-}
-
-export function quoteSearchResult(quote: {
-  id: string;
-  number: string;
-  title: string;
-  client: { firstName: string; lastName: string; companyName?: string | null };
-}): SearchResult {
-  return {
-    id: quote.id,
-    kind: "quote",
-    title: `${quote.number} · ${quote.title}`,
-    subtitle: clientName(quote.client),
-    href: `/quotes/${quote.id}`,
-  };
-}
-
-export function invoiceSearchResult(invoice: {
-  id: string;
-  number: string;
-  client: { firstName: string; lastName: string; companyName?: string | null };
-  balance: { toString(): string } | number;
-}): SearchResult {
-  return {
-    id: invoice.id,
-    kind: "invoice",
-    title: invoice.number,
-    subtitle: `${clientName(invoice.client)} · $${Number(invoice.balance).toFixed(2)} due`,
-    href: `/invoices/${invoice.id}`,
   };
 }
 

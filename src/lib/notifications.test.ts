@@ -18,7 +18,6 @@ test("technicians only see their late check-ins", () => {
   const items = buildNotifications({
     techView: true,
     lateJobs: [lateJob],
-    pastDueInvoices: 4,
     needsADay: 3,
   });
   assert.equal(items.length, 1);
@@ -109,7 +108,7 @@ test("technicians see go-now alert when assigned", () => {
   assert.match(items[0]?.title ?? "", /go now/i);
 });
 
-test("office sees late check-ins first, then other useful counts", () => {
+test("office sees late check-ins first, then scheduling and intake counts", () => {
   const items = buildNotifications(
     {
       techView: false,
@@ -124,9 +123,6 @@ test("office sees late check-ins first, then other useful counts", () => {
         },
       ],
       timeOff: [{ id: "off1", date: new Date(2026, 7, 20), name: "Alex Nguyen", reason: "Wedding" }],
-      pastDueInvoices: 2,
-      needsInvoice: 1,
-      quotesWaiting: 3,
       needsADay: 5,
       newCalls: 2,
     },
@@ -136,11 +132,10 @@ test("office sees late check-ins first, then other useful counts", () => {
   assert.match(items[0]?.title ?? "", /Jordan Blake/);
   assert.equal(items.some((item) => item.kind === "follow_up" && item.title === "Return trip is overdue"), true);
   assert.equal(items.some((item) => item.kind === "time_off" && item.title.includes("Alex Nguyen")), true);
-  assert.equal(items.some((item) => item.title === "2 invoices are past due"), true);
   assert.equal(items.some((item) => item.title === "5 jobs need a day on the schedule"), true);
-  assert.equal(items.some((item) => item.title === "3 quotes are waiting on the customer"), true);
-  assert.equal(items.some((item) => item.title === "1 finished job still needs an invoice"), true);
   assert.equal(items.some((item) => item.title === "2 calls still need a next step"), true);
+  assert.equal(items.some((item) => item.title.includes("invoice")), false);
+  assert.equal(items.some((item) => item.title.includes("quote")), false);
 });
 
 test("office with nothing waiting gets an empty list", () => {

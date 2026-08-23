@@ -17,7 +17,7 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
 import { listCaptureEvents, summarizeCapturesBySpecies } from "@/lib/species-log";
-import { clientName, formatMoney, formatPhone, propertyAddress } from "@/lib/utils";
+import { clientName, formatPhone, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -28,8 +28,6 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
     include: {
       properties: { include: { entryPoints: true, deployments: { include: { equipment: true } } } },
       jobs: { include: { technician: true }, orderBy: { createdAt: "desc" } },
-      quotes: { orderBy: { createdAt: "desc" } },
-      invoices: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!client) notFound();
@@ -43,10 +41,6 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
   const speciesSummary = summarizeCapturesBySpecies(captures);
 
   const openJobs = client.jobs.filter((job) => !["COMPLETED", "INVOICED", "CANCELLED"].includes(job.status));
-  const openQuotes = client.quotes.filter((quote) => !["DECLINED", "CONVERTED", "VOID"].includes(quote.status));
-  const openInvoices = client.invoices.filter(
-    (invoice) => !["PAID", "VOID"].includes(invoice.status) && Number(invoice.balance) > 0,
-  );
 
   return (
     <div className="space-y-6">
@@ -62,35 +56,16 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
           <p className="text-stone-600">
             {formatPhone(client.phone)} · {client.email}
           </p>
-          <p className="text-sm text-stone-500">Billing is collected by staff in Square — clients do not log in to pay.</p>
         </div>
       </div>
 
       <ClientPortalLink portalToken={client.portalToken} />
 
       <ClientQuickActions clientId={client.id} phone={client.phone} />
-      <ClientPipeline
-        openCalls={openCalls}
-        quotes={client.quotes}
-        jobs={client.jobs}
-        invoices={client.invoices.map((invoice) => ({
-          id: invoice.id,
-          status: invoice.status,
-          balance: Number(invoice.balance),
-        }))}
-      />
+      <ClientPipeline openCalls={openCalls} jobs={client.jobs} />
 
-      <section id="open-work" className="grid gap-6 lg:grid-cols-2">
-        <ClientHubPanel title="Open work" empty="No open quotes or work orders.">
-          {openQuotes.map((quote) => (
-            <ClientRecordRow
-              key={quote.id}
-              href={`/quotes/${quote.id}`}
-              primary={`${quote.number} · ${quote.title}`}
-              secondary={formatMoney(quote.total)}
-              badge={<StatusBadge status={quote.status} />}
-            />
-          ))}
+      <section id="open-work">
+        <ClientHubPanel title="Open work" empty="No open work orders.">
           {openJobs.map((job) => (
             <ClientRecordRow
               key={job.id}
@@ -98,18 +73,6 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
               primary={`${job.number} · ${job.title}`}
               secondary={formatWhen(job.scheduledStart)}
               badge={<StatusBadge status={job.status} />}
-            />
-          ))}
-        </ClientHubPanel>
-
-        <ClientHubPanel title="Money" empty="No open invoices.">
-          {openInvoices.map((invoice) => (
-            <ClientRecordRow
-              key={invoice.id}
-              href={`/invoices/${invoice.id}`}
-              primary={invoice.number}
-              secondary={`${formatMoney(invoice.balance)} due`}
-              badge={<StatusBadge status={invoice.status} />}
             />
           ))}
         </ClientHubPanel>
@@ -150,7 +113,7 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
         ))}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-3">
+      <section>
         <ClientHubPanel title="All work orders" empty="No work orders yet.">
           {client.jobs.map((job) => (
             <ClientRecordRow
@@ -158,26 +121,6 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
               href={`/jobs/${job.id}`}
               primary={`${job.number} · ${job.title}`}
               badge={<StatusBadge status={job.status} />}
-            />
-          ))}
-        </ClientHubPanel>
-        <ClientHubPanel title="All quotes" empty="No quotes yet.">
-          {client.quotes.map((quote) => (
-            <ClientRecordRow
-              key={quote.id}
-              href={`/quotes/${quote.id}`}
-              primary={`${quote.number} · ${formatMoney(quote.total)}`}
-              badge={<StatusBadge status={quote.status} />}
-            />
-          ))}
-        </ClientHubPanel>
-        <ClientHubPanel title="All invoices" empty="No invoices yet.">
-          {client.invoices.map((invoice) => (
-            <ClientRecordRow
-              key={invoice.id}
-              href={`/invoices/${invoice.id}`}
-              primary={`${invoice.number} · ${formatMoney(invoice.balance)} due`}
-              badge={<StatusBadge status={invoice.status} />}
             />
           ))}
         </ClientHubPanel>

@@ -4,7 +4,6 @@ import { jsonError } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { canReviewDayOff } from "@/lib/day-off";
 import { emergencyIsOverdue, formatDispatchAddress } from "@/lib/emergency";
-import { invoiceAge } from "@/lib/invoice-aging";
 import { isLateForCheckIn, minutesLate, type LateCheckInJob } from "@/lib/late-checkin";
 import { buildNotifications } from "@/lib/notifications";
 import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
@@ -75,7 +74,7 @@ export const GET = async () => {
   }
 
   const todayEnd = endOfDay(now);
-  const [followUps, timeOff, invoices, needsInvoice, quotesWaiting, needsADay, newCalls] = await Promise.all([
+  const [followUps, timeOff, needsADay, newCalls] = await Promise.all([
     prisma.scheduleNeed.findMany({
       where: { status: "OPEN", dueOn: { lte: todayEnd } },
       include: { client: true, property: true },
@@ -88,23 +87,9 @@ export const GET = async () => {
           orderBy: { date: "asc" },
         })
       : Promise.resolve([]),
-    prisma.invoice.findMany({
-      where: { status: { notIn: ["PAID", "VOID"] } },
-      select: { status: true, dueOn: true, balance: true },
-    }),
-    prisma.job.count({ where: { status: "COMPLETED", invoices: { none: {} } } }),
-    prisma.quote.count({ where: { status: { in: ["SENT", "VIEWED"] } } }),
     prisma.job.count({ where: { status: "UNSCHEDULED" } }),
     prisma.serviceRequest.count({ where: { status: { in: [...OPEN_REQUEST_STATUSES] } } }),
   ]);
-
-  const pastDueInvoices = invoices.filter((invoice) =>
-    invoiceAge({ status: invoice.status, dueOn: invoice.dueOn, balance: Number(invoice.balance) }, now) === "past_due",
-  ).length;
-
-  const quotesApproved = await prisma.quote.count({
-    where: { status: "APPROVED", jobs: { none: {} } },
-  });
 
   return NextResponse.json({
     notifications: buildNotifications({
@@ -124,10 +109,6 @@ export const GET = async () => {
         name: `${block.user.firstName} ${block.user.lastName}`,
         reason: block.reason,
       })),
-      pastDueInvoices,
-      needsInvoice,
-      quotesWaiting,
-      quotesApproved,
       needsADay,
       newCalls,
     }),

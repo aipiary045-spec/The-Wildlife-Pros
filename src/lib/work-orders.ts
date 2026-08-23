@@ -6,7 +6,6 @@ export const WORK_ORDER_BUCKETS = [
   "today",
   "needs_day",
   "upcoming",
-  "needs_invoice",
   "closed",
   "parked",
 ] as const;
@@ -19,7 +18,6 @@ export type WorkOrderViewKey =
   | "today"
   | "needs_day"
   | "upcoming"
-  | "needs_invoice"
   | "closed"
   | "parked"
   | "done"
@@ -43,8 +41,7 @@ export const OFFICE_WORK_ORDER_VIEWS: WorkOrderView[] = [
   { key: "today", label: "Today", hint: "On the schedule for today, including anyone already on site.", buckets: ["today"] },
   { key: "needs_day", label: "Needs a day", hint: "No calendar slot yet. Put these on the schedule.", buckets: ["needs_day"] },
   { key: "upcoming", label: "Upcoming", hint: "On the schedule for a later day.", buckets: ["upcoming"] },
-  { key: "needs_invoice", label: "Needs invoice", hint: "Work is done. Still needs to be billed.", buckets: ["needs_invoice"] },
-  { key: "closed", label: "Closed", hint: "Invoiced work orders.", buckets: ["closed"] },
+  { key: "closed", label: "Closed", hint: "Finished work orders.", buckets: ["closed"] },
   { key: "parked", label: "On hold", hint: "Held or cancelled.", buckets: ["parked"] },
   { key: "all", label: "All", hint: "Every work order, grouped by stage.", buckets: null },
 ];
@@ -53,7 +50,7 @@ export const TECH_WORK_ORDER_VIEWS: WorkOrderView[] = [
   { key: "today", label: "Today", hint: "Your stops for today.", buckets: ["today"] },
   { key: "late", label: "Late", hint: "Older assigned stops that are still open.", buckets: ["late"] },
   { key: "upcoming", label: "Upcoming", hint: "Assigned to you on a later day.", buckets: ["upcoming"] },
-  { key: "done", label: "Done", hint: "Finished and invoiced jobs assigned to you.", buckets: ["needs_invoice", "closed"] },
+  { key: "done", label: "Done", hint: "Finished jobs assigned to you.", buckets: ["closed"] },
   { key: "all", label: "All", hint: "Everything assigned to you.", buckets: null },
 ];
 
@@ -62,8 +59,7 @@ const BUCKET_TITLE: Record<WorkOrderBucket, string> = {
   today: "Today",
   needs_day: "Needs a day on the schedule",
   upcoming: "Upcoming",
-  needs_invoice: "Needs an invoice",
-  closed: "Closed",
+  closed: "Finished",
   parked: "On hold / cancelled",
 };
 
@@ -82,8 +78,7 @@ export function workOrderBucket(
   now = new Date(),
 ): WorkOrderBucket {
   if (job.status === "ON_HOLD" || job.status === "CANCELLED") return "parked";
-  if (job.status === "INVOICED") return "closed";
-  if (job.status === "COMPLETED") return "needs_invoice";
+  if (job.status === "COMPLETED" || job.status === "INVOICED") return "closed";
   if (job.status === "UNSCHEDULED" || !job.scheduledStart) return "needs_day";
   if (job.status === "ON_SITE" || job.status === "IN_PROGRESS") return "today";
   const start = new Date(job.scheduledStart);

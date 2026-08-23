@@ -2,6 +2,8 @@
 
 All office endpoints require the `critterops_session` cookie unless noted.
 
+Billing happens in Square outside CritterOps. These APIs cover scheduling and field data only.
+
 ## Auth
 
 `POST /api/auth/login` `{ email, password }`  
@@ -26,19 +28,11 @@ All office endpoints require the `critterops_session` cookie unless noted.
 `POST /api/jobs/:id/check-in` — on site: job `ON_SITE`, open `TimeEntry` + `Visit`, auto day clock-in if needed  
 `POST /api/jobs/:id/check-out` `{ outcome: "complete"|"follow_up", notes?, followUp?: { scheduledStart, scheduledEnd, technicianId, durationMin, instructions } }` — closes the visit. `complete` marks the job `COMPLETED`. `follow_up` does the same and creates a new scheduled job for the same client/address
 
-## Quotes, invoices, payments
+## Intake
 
-`GET|POST /api/quotes` `{ clientId, propertyId, title, message?, validUntil?, lineItems[] }`  
-`GET|PATCH /api/quotes/:id` — PATCH `{ status: "SENT"|"APPROVED"|"DECLINED" }`  
-`POST /api/quotes/:id/convert` `{ technicianId?, scheduledStart?, durationMin? }` — copies line items onto a job and marks the quote `CONVERTED`  
-`GET /api/services` — active price-list catalog  
-`GET|POST /api/invoices` — `POST` with `jobId` copies job line items and marks the job `INVOICED`  
-`GET|PATCH /api/invoices/:id` — PATCH `{ status: "SENT"|"VOID" }`  
-`POST /api/payments` `{ invoiceId, amount, method: "SQUARE"|"CASH"|"CHECK", reference }` — staff record of a Terminal/POS/cash/check payment  
-`GET /api/payments/square/config` — application id, location, sandbox, configured  
-`POST /api/payments/square` `{ invoiceId, sourceId, amount, idempotencyKey }` — staff-keyed Square charge
-
-Clients never pay through CritterOps. Square is the processor.
+`GET|POST /api/requests` — call log  
+`PATCH /api/requests/:id` — mark looked at, close, or spam  
+`POST /api/requests/:id/convert` — create a first-trip work order from an open call
 
 ## Dispatch & routing
 
@@ -72,11 +66,10 @@ Jobs that are on site, in progress, completed, invoiced, cancelled, or on hold a
 
 Worked minutes = sum of punch spans minus `breakMin`.
 
-## Client hub (public token)
+## Exports & client hub
 
 `GET /api/exports/google-sheets` — whether Sheets is configured, linked workbook, and export categories with row counts  
-`POST /api/exports/google-sheets` — `{ categories?: ["clients","invoices",...] }` syncs selected tabs (or all when omitted) into the shared workbook  
+`POST /api/exports/google-sheets` — `{ categories?: ["clients","jobs",...] }` syncs selected tabs (or all when omitted) into the shared workbook  
 `GET /api/exports/csv/:category` — download one category as CSV (office roles)
 
-`GET /api/portal/:token` — visits and quotes only  
-`POST /api/portal/:token/actions` `{ type: "approve_quote"|"decline_quote", id, note? }`
+`GET /api/portal/:token` — upcoming visits only

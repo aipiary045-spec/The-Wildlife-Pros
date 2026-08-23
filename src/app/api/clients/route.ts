@@ -5,7 +5,7 @@ import { resolvePropertyCoordinates } from "@/lib/geocode";
 
 export const GET = withAuth(async () => {
   const clients = await prisma.client.findMany({
-    include: { properties: true, _count: { select: { jobs: true, invoices: true } } },
+    include: { properties: true, _count: { select: { jobs: true } } },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
   return NextResponse.json({ clients });
