@@ -272,28 +272,10 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     });
   });
 
-  let followUp = null;
-  if (input.outcome === "follow_up" && input.followUp) {
-    followUp = await prisma.scheduleNeed.create({
-      data: {
-        clientId: job.clientId,
-        propertyId: job.propertyId,
-        sourceJobId: job.id,
-        preferredTechId: job.technicianId,
-        title: job.title,
-        notes: input.followUp.notes ?? input.notes,
-        returnInDays: input.followUp.returnInDays,
-        dueOn: input.followUp.dueOn,
-        status: "OPEN",
-      },
-      include: { client: true, property: true },
-    });
-  }
-
   const updated = await prisma.job.findUnique({
     where: { id: jobId },
     include: { client: true, property: true, technician: true },
   });
 
-  return { job: updated, followUp };
+  return { job: updated, followUp: null };
 }

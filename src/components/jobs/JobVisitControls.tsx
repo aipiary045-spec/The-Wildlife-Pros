@@ -627,13 +627,14 @@ export function JobVisitControls({
                   }`}
                 >
                   Need another visit
-                  <span className="mt-0.5 block text-xs font-normal text-stone-500">Goes to needs-scheduled</span>
+                  <span className="mt-0.5 block text-xs font-normal text-stone-500">Notes + customer text only</span>
                 </button>
               </div>
 
               {finishedHere === false ? (
                 <div className="mt-4">
-                  <p className="text-sm font-medium">About when to come back</p>
+                  <p className="text-sm font-medium">About when to come back (optional)</p>
+                  <p className="mt-1 text-xs text-stone-500">For the visit-summary text only — office schedules the return trip.</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {RETURN_PRESETS.map((days) => (
                       <button
@@ -1037,7 +1038,7 @@ export function JobVisitControls({
                 disabled={saving || !canSubmit}
                 className="flex-1 rounded-lg bg-orange px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {saving ? "Saving…" : finishedHere === false ? "Check out & schedule" : "Check out"}
+                {saving ? "Saving…" : "Check out"}
               </button>
             </div>
           </form>
