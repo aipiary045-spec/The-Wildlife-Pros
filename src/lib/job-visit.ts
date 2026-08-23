@@ -1,12 +1,20 @@
 import { addDays, startOfDay } from "date-fns";
 import { parseReturnInDays } from "@/lib/schedule-needs";
 
+export type OpenJobConflict = {
+  id: string;
+  number: string;
+  title: string;
+};
+
 export class JobVisitError extends Error {
   status: number;
-  constructor(message: string, status = 400) {
+  openJob?: OpenJobConflict;
+  constructor(message: string, status = 400, openJob?: OpenJobConflict) {
     super(message);
     this.name = "JobVisitError";
     this.status = status;
+    this.openJob = openJob;
   }
 }
 

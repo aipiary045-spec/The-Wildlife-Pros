@@ -22,7 +22,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const result = await checkInToJob(id, session, occurredAt);
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof JobVisitError) return jsonError(error.message, error.status);
+    if (error instanceof JobVisitError) {
+      return NextResponse.json(
+        { error: error.message, openJob: error.openJob ?? null },
+        { status: error.status },
+      );
+    }
     throw error;
   }
 }

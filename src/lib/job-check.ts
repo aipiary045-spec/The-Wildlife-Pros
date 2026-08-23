@@ -41,6 +41,8 @@ async function ensureDayClock(userId: string, at: Date) {
   });
 }
 
+const CLOSED_JOB_STATUSES = new Set(["COMPLETED", "CANCELLED", "INVOICED"]);
+
 export async function checkInToJob(jobId: string, user: SessionUser, occurredAt = new Date()) {
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) throw new JobVisitError("Job not found", 404);
@@ -53,12 +55,30 @@ export async function checkInToJob(jobId: string, user: SessionUser, occurredAt 
 
   const openEntry = await prisma.timeEntry.findFirst({
     where: { userId: user.id, endedAt: null },
+    include: { job: { select: { id: true, number: true, title: true, status: true } } },
   });
   if (openEntry) {
     if (openEntry.jobId === jobId) {
       return { job, already: true as const };
     }
-    throw new JobVisitError("Check out of the job you are on before starting another.");
+    // Stale open punch on a finished job — close it so the tech is not stuck.
+    if (!openEntry.job || CLOSED_JOB_STATUSES.has(openEntry.job.status)) {
+      await prisma.timeEntry.update({
+        where: { id: openEntry.id },
+        data: { endedAt: occurredAt, notes: "Auto-closed: job was already finished." },
+      });
+    } else {
+      const openJob = {
+        id: openEntry.job.id,
+        number: openEntry.job.number,
+        title: openEntry.job.title,
+      };
+      throw new JobVisitError(
+        `Still checked in at ${openJob.number} — ${openJob.title}. Check out there before starting another.`,
+        409,
+        openJob,
+      );
+    }
   }
 
   const sheet = await ensureDayClock(user.id, occurredAt);
