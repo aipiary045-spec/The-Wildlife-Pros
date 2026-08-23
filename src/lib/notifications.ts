@@ -60,7 +60,7 @@ export function emergencyDispatchItems(
         : "Emergency dispatched",
     body: [dispatch.title, dispatch.techName, dispatch.address].filter(Boolean).join(" · "),
     href: `/jobs/${dispatch.jobId}`,
-    stealJobId: techView && !dispatch.assignedToMe && !dispatch.acknowledged ? dispatch.jobId : undefined,
+    stealJobId: techView && !dispatch.assignedToMe ? dispatch.jobId : undefined,
   }));
 }
 

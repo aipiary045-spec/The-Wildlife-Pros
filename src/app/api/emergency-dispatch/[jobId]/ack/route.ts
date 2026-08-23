@@ -9,8 +9,11 @@ export async function POST(_request: Request, context: { params: Promise<{ jobId
   const { jobId } = await context.params;
   const dispatch = await prisma.emergencyDispatch.findUnique({
     where: { jobId },
+    include: { job: { include: { client: { select: { organizationId: true } } } } },
   });
-  if (!dispatch) return jsonError("Emergency dispatch not found", 404);
+  if (!dispatch || dispatch.job.client.organizationId !== session.organizationId) {
+    return jsonError("Emergency dispatch not found", 404);
+  }
   if (
     dispatch.assignedTechnicianId &&
     dispatch.assignedTechnicianId !== session.id &&
@@ -26,7 +29,16 @@ export async function POST(_request: Request, context: { params: Promise<{ jobId
     data: {
       acknowledgedAt: new Date(),
       acknowledgedById: session.id,
+      ...(dispatch.assignedTechnicianId
+        ? {}
+        : { assignedTechnicianId: session.id }),
     },
   });
+  if (!dispatch.assignedTechnicianId) {
+    await prisma.job.update({
+      where: { id: jobId },
+      data: { technicianId: session.id },
+    });
+  }
   return NextResponse.json({ dispatch: updated });
 }

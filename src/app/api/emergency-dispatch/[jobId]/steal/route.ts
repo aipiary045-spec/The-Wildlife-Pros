@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { canStealEmergencyDispatch, isActiveEmergencyJobStatus } from "@/lib/emergency";
+import { claimEmergencyDispatch } from "@/lib/emergency-claim";
 import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
 import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
@@ -28,22 +29,19 @@ export async function POST(_request: Request, context: { params: Promise<{ jobId
     return NextResponse.json({ job: dispatch.job, dispatch, alreadyAssigned: true });
   }
 
-  const now = new Date();
-  const [job, updated] = await prisma.$transaction([
-    prisma.job.update({
-      where: { id: jobId },
-      data: { technicianId: session.id },
-    }),
-    prisma.emergencyDispatch.update({
-      where: { id: dispatch.id },
-      data: {
-        assignedTechnicianId: session.id,
-        acknowledgedAt: now,
-        acknowledgedById: session.id,
-      },
-    }),
-  ]);
+  const result = await prisma.$transaction(async (tx) => {
+    await claimEmergencyDispatch(tx, {
+      dispatchId: dispatch.id,
+      jobId,
+      technicianId: session.id,
+    });
+    const [job, updated] = await Promise.all([
+      tx.job.findUniqueOrThrow({ where: { id: jobId } }),
+      tx.emergencyDispatch.findUniqueOrThrow({ where: { id: dispatch.id } }),
+    ]);
+    return { job, dispatch: updated };
+  });
 
   queueJobGoogleCalendarSync(jobId);
-  return NextResponse.json({ job, dispatch: updated });
+  return NextResponse.json(result);
 }

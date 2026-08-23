@@ -44,6 +44,7 @@ export const POST = withAuth(async (session, request) => {
     });
     if (!job) return jsonError("Job not found", 404);
     if (!canBillJob(session, job)) return jsonError("You cannot invoice from a work order in the field. Bill from the quote instead.", 403);
+    if (job.status !== "COMPLETED") return jsonError("Finish the job before creating an invoice.");
     if (job.invoices.length > 0) return jsonError("This job already has an invoice.");
     clientId = clientId ?? job.clientId;
     propertyId = propertyId ?? job.propertyId;

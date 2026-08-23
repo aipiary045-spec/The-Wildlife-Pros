@@ -13,18 +13,19 @@ test("jobTypeFromQuoteLines uses the catalog job type", () => {
   );
 });
 
-test("quoteCanConvert blocks declined, expired, and already converted", () => {
-  assert.equal(quoteCanConvert("SENT"), true);
+test("quoteCanConvert only allows approved quotes", () => {
+  assert.equal(quoteCanConvert("SENT"), false);
+  assert.equal(quoteCanConvert("VIEWED"), false);
   assert.equal(quoteCanConvert("APPROVED"), true);
-  assert.equal(quoteCanConvert("DRAFT"), true);
+  assert.equal(quoteCanConvert("DRAFT"), false);
   assert.equal(quoteCanConvert("CONVERTED"), false);
   assert.equal(quoteCanConvert("DECLINED"), false);
 });
 
-test("quoteCanInvoice only allows sent, viewed, approved, or converted quotes", () => {
+test("quoteCanInvoice only allows approved or converted quotes", () => {
   assert.equal(quoteCanInvoice("APPROVED"), true);
-  assert.equal(quoteCanInvoice("SENT"), true);
-  assert.equal(quoteCanInvoice("VIEWED"), true);
+  assert.equal(quoteCanInvoice("SENT"), false);
+  assert.equal(quoteCanInvoice("VIEWED"), false);
   assert.equal(quoteCanInvoice("CONVERTED"), true);
   assert.equal(quoteCanInvoice("DRAFT"), false);
   assert.equal(quoteCanInvoice("DECLINED"), false);
@@ -36,6 +37,8 @@ test("quoteBillingAction picks create, pay, paid, or waiting", () => {
   assert.equal(quoteBillingAction({ status: "APPROVED" }, { balance: 100 }), "pay");
   assert.equal(quoteBillingAction({ status: "APPROVED" }, { balance: 0 }), "paid");
   assert.equal(quoteBillingAction({ status: "DRAFT" }, null), "waiting");
+  assert.equal(quoteBillingAction({ status: "SENT" }, null), "waiting");
+  assert.equal(quoteBillingAction({ status: "VIEWED" }, null), "waiting");
   assert.equal(quoteBillingAction({ status: "DECLINED" }, null), null);
 });
 

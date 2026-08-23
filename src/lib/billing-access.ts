@@ -1,16 +1,16 @@
 import { isTechnician } from "@/lib/paths";
 
+/** Staff may invoice from an approved quote (field or office). */
 export function canBillQuote(session: { id: string; role: string }) {
-  if (!isTechnician(session.role)) return true;
-  return true;
+  return Boolean(session.id && session.role);
 }
 
+/** Technicians cannot create invoices from work orders — office only. */
 export function canBillJob(
   session: { id: string; role: string },
-  job: { technicianId: string | null },
+  _job: { technicianId: string | null },
 ) {
-  if (!isTechnician(session.role)) return true;
-  return false;
+  return !isTechnician(session.role);
 }
 
 export function canAccessInvoice(
@@ -28,5 +28,5 @@ export function canAccessInvoice(
 }
 
 export function canAccessQuote(session: { role: string }) {
-  return true;
+  return Boolean(session.role);
 }

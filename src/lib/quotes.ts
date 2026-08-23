@@ -13,11 +13,11 @@ export function jobTypeFromQuoteLines(items: QuoteLineForJob[]) {
 }
 
 export function quoteCanConvert(status: string) {
-  return !["DECLINED", "EXPIRED", "CONVERTED"].includes(status);
+  return status === "APPROVED";
 }
 
 export function quoteCanInvoice(status: string) {
-  return ["SENT", "VIEWED", "APPROVED", "CONVERTED"].includes(status);
+  return ["APPROVED", "CONVERTED"].includes(status);
 }
 
 export type QuoteBillingAction = "create" | "pay" | "paid" | "waiting" | null;
@@ -28,6 +28,6 @@ export function quoteBillingAction(
 ): QuoteBillingAction {
   if (invoice) return Number(invoice.balance) > 0 ? "pay" : "paid";
   if (quoteCanInvoice(quote.status)) return "create";
-  if (quote.status === "DRAFT") return "waiting";
+  if (quote.status === "DRAFT" || quote.status === "SENT" || quote.status === "VIEWED") return "waiting";
   return null;
 }

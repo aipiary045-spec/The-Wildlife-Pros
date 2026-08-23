@@ -20,8 +20,17 @@ export default async function JobsPage({
   const activeKey = parseWorkOrderView(params.view, techView);
   const [jobs, technicians, clients] = await Promise.all([
     prisma.job.findMany({
-      where: techView && session ? { technicianId: session.id } : undefined,
-      include: { client: true, property: true, technician: true },
+      where:
+        techView && session
+          ? {
+              OR: [
+                { technicianId: session.id },
+                { technicianId: null, type: "EMERGENCY" },
+                { technicianId: null, emergencyDispatch: { isNot: null } },
+              ],
+            }
+          : undefined,
+      include: { client: true, property: true, technician: true, emergencyDispatch: true },
       orderBy: [{ scheduledStart: "asc" }, { createdAt: "desc" }],
     }),
     techView

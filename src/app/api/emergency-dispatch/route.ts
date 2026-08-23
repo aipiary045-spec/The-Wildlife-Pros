@@ -4,16 +4,12 @@ import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { resolvePropertyCoordinates } from "@/lib/geocode";
 import {
-  buildEmergencyBackupSms,
   buildEmergencyInstructions,
-  emergencyIsOverdue,
   emergencyJobWindow,
   formatDispatchAddress,
-  notifyEmergencyCustomer,
   notifyOpenEmergencyTeam,
   parseHazardTags,
 } from "@/lib/emergency";
-import { sendSms } from "@/lib/messaging";
 import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
 import { nextNumber } from "@/lib/utils";
 
@@ -42,32 +38,6 @@ async function loadActiveDispatches() {
   });
 }
 
-async function maybeEscalate(dispatch: Awaited<ReturnType<typeof loadActiveDispatches>>[number], now = new Date()) {
-  if (
-    !dispatch.assignedTechnician ||
-    !emergencyIsOverdue(dispatch, now) ||
-    dispatch.escalatedAt ||
-    !dispatch.backupTechnician?.phone
-  ) {
-    return dispatch;
-  }
-  const address = formatDispatchAddress(dispatch.job.property);
-  const body = buildEmergencyBackupSms({
-    techName: `${dispatch.assignedTechnician.firstName} ${dispatch.assignedTechnician.lastName}`,
-    situation: dispatch.job.title,
-    address,
-  });
-  const sms = await sendSms({ to: dispatch.backupTechnician.phone, body });
-  return prisma.emergencyDispatch.update({
-    where: { id: dispatch.id },
-    data: {
-      escalatedAt: now,
-      backupSmsSentAt: sms.ok ? now : undefined,
-    },
-    include: dispatchInclude,
-  });
-}
-
 export const GET = withAuth(async (session) => {
   if (isTechnician(session.role)) {
     const mine = await prisma.emergencyDispatch.findFirst({
@@ -83,8 +53,7 @@ export const GET = withAuth(async (session) => {
   }
 
   const active = await loadActiveDispatches();
-  const escalated = await Promise.all(active.map((dispatch) => maybeEscalate(dispatch)));
-  return NextResponse.json({ dispatches: escalated });
+  return NextResponse.json({ dispatches: active });
 });
 
 export const POST = withAuth(async (session, request) => {
@@ -200,16 +169,6 @@ export const POST = withAuth(async (session, request) => {
     lng: property.lng,
   });
 
-  let customerSmsSentAt: Date | undefined;
-  if (body.notifyCustomer) {
-    const customerSms = await notifyEmergencyCustomer({
-      phone: job.client.phone,
-      clientFirstName: job.client.firstName,
-      jobTitle: job.title,
-    });
-    if (customerSms.ok) customerSmsSentAt = new Date();
-  }
-
   const dispatch = await prisma.emergencyDispatch.create({
     data: {
       jobId: job.id,
@@ -219,7 +178,8 @@ export const POST = withAuth(async (session, request) => {
       message: internalMessage,
       hazardTags: hazardTags.length ? hazardTags : undefined,
       techSmsSentAt: teamSms.sent > 0 ? new Date() : null,
-      customerSmsSentAt: customerSmsSentAt ?? null,
+      notifyCustomerRequested: Boolean(body.notifyCustomer),
+      customerSmsSentAt: null,
     },
     include: dispatchInclude,
   });

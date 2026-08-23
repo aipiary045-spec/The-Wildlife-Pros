@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { withAuth } from "@/lib/api";
+import { jsonError, withAuth } from "@/lib/api";
 import { dateKey } from "@/lib/dates";
+import { isTechnician } from "@/lib/paths";
 import {
   buildDayPlan,
   dayWindow,
@@ -11,7 +12,7 @@ import {
   persistPlan,
 } from "@/lib/route-plan";
 
-export const POST = withAuth(async (_session, request) => {
+export const POST = withAuth(async (session, request) => {
   const body = (await request.json()) as {
     date?: string;
     technicianIds?: string[];
@@ -22,6 +23,9 @@ export const POST = withAuth(async (_session, request) => {
 
   const day = parsePlanDate(body.date);
   const persist = body.persist === true;
+  if (persist && isTechnician(session.role)) {
+    return jsonError("Office only.", 403);
+  }
   const technicianIds = Array.isArray(body.technicianIds)
     ? body.technicianIds.filter((id) => typeof id === "string" && id.length > 0)
     : undefined;

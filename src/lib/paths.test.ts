@@ -24,6 +24,14 @@ test("technicians in field view cannot open another tech's regular job", () => {
   assert.equal(canAccessJobInFieldView(tech, otherJob, true), false);
 });
 
+test("technicians in field view cannot open unassigned regular jobs", () => {
+  assert.equal(canAccessJobInFieldView(tech, { technicianId: null, type: "INSPECTION" }, true), false);
+});
+
+test("technicians in field view can open unassigned emergency jobs", () => {
+  assert.equal(canAccessJobInFieldView(tech, { technicianId: null, type: "EMERGENCY" }, true), true);
+});
+
 test("office view does not restrict job access", () => {
   assert.equal(canAccessJobInFieldView(tech, otherJob, false), true);
 });

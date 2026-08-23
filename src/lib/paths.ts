@@ -52,8 +52,9 @@ export function canAccessJobInFieldView(
 ) {
   if (!fieldView) return true;
   if (!isTechnician(session.role)) return true;
-  if (!job.technicianId) return true;
   if (job.technicianId === session.id) return true;
+  // Unassigned non-emergency jobs stay office/dispatch only.
+  if (!job.technicianId) return isEmergencyJob(job);
   return isEmergencyJob(job);
 }
 
