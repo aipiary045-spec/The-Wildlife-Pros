@@ -11,7 +11,6 @@ import { OfflineStatus } from "@/components/layout/OfflineStatus";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import { EmergencyDispatchButton } from "@/components/emergency/EmergencyDispatchButton";
 import { EmergencyStatusStrip } from "@/components/emergency/EmergencyStatusStrip";
-import { RecentTracker } from "@/components/layout/RecentTracker";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
 import { cn } from "@/lib/utils";
@@ -112,7 +111,6 @@ export function OfficeShell({ role, name, fieldView, sidebarFooter, myTime, emer
         <main className="min-w-0 flex-1 overflow-x-clip p-4 md:p-8">{children}</main>
       </div>
       <BottomNav role={role} />
-      <RecentTracker role={role} />
       <InstallHint />
     </div>
   );

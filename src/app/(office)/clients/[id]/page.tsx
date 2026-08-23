@@ -12,7 +12,6 @@ import {
   ClientRecordRow,
   formatWhen,
 } from "@/components/crm/ClientHub";
-import { PinClientButton } from "@/components/crm/PinClientButton";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -65,7 +64,6 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
           </p>
           <p className="text-sm text-stone-500">Billing is collected by staff in Square — clients do not log in to pay.</p>
         </div>
-        <PinClientButton clientId={client.id} label={clientName(client)} />
       </div>
 
       <ClientPortalLink portalToken={client.portalToken} />
