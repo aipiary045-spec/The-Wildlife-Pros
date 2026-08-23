@@ -18,6 +18,7 @@ import { canAccessJobInFieldView } from "@/lib/paths";
 import { getAppContext } from "@/lib/app-context";
 import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
+import { visitActionForStatus } from "@/lib/job-visit";
 import { jobNotifyProps } from "@/lib/messaging";
 import { quoteBillingAction } from "@/lib/quotes";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
@@ -70,7 +71,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   const notify = jobNotifyProps(job, session?.firstName);
   if (session && !canAccessJobInFieldView(session, job, techView)) notFound();
 
-  const [stock, allGear, species, technicians] = await Promise.all([
+  const [stock, allGear, species, technicians, openCheckIn] = await Promise.all([
     prisma.equipment.findMany({
       where: { status: { in: ["IN_INVENTORY", "RETRIEVED"] } },
       orderBy: { serialNumber: "asc" },
@@ -82,7 +83,23 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       orderBy: { firstName: "asc" },
       select: { id: true, firstName: true, lastName: true, color: true },
     }),
+    session
+      ? prisma.timeEntry.findFirst({
+          where: { userId: session.id, jobId: job.id, endedAt: null },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const checkedInHere = Boolean(openCheckIn);
+  let displayStatus = job.status;
+  if (checkedInHere && visitActionForStatus(job.status) !== "check-out") {
+    const repaired = await prisma.job.update({
+      where: { id: job.id },
+      data: { status: "ON_SITE", technicianId: job.technicianId ?? session!.id },
+    });
+    displayStatus = repaired.status;
+  }
 
   return (
     <div className="space-y-6">
@@ -110,11 +127,12 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           />
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <StatusBadge status={job.status} />
+          <StatusBadge status={displayStatus} />
           <StatusBadge status={job.type} label={JOB_TYPE_LABEL[job.type]} />
           <JobVisitControls
             jobId={job.id}
-            status={job.status}
+            status={displayStatus}
+            checkedIn={checkedInHere}
             technicianId={job.technicianId}
             technicians={technicians}
           />

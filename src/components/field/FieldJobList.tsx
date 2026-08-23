@@ -182,6 +182,7 @@ export function FieldJobList({
                       <JobVisitControls
                         jobId={job.id}
                         status={job.status}
+                        checkedIn={onSite}
                         technicianId={job.technicianId}
                         technicians={technicians}
                       />
