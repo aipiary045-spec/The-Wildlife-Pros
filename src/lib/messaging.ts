@@ -68,9 +68,8 @@ export function buildEmergencyCustomerMessage(input: {
   clientFirstName: string;
   techName?: string;
   jobTitle: string;
-  companyName?: string;
 }) {
-  const who = input.companyName?.trim() || "The Wildlife Pros";
+  const who = "The Wildlife Pros";
   const tech = input.techName ? `${input.techName} from ${who}` : `A ${who} technician`;
   return [
     `Hi ${input.clientFirstName},`,
