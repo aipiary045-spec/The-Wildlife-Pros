@@ -85,9 +85,6 @@ export function JobVisitControls({
   const buttonClass = compact
     ? "mt-1 w-full rounded-lg bg-orange px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
     : "min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto";
-  const inProgressButtonClass = compact
-    ? "mt-1 w-full rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-900 disabled:opacity-60"
-    : "min-h-11 w-full rounded-lg border border-emerald-300 bg-emerald-50 px-4 text-sm font-semibold text-emerald-900 disabled:opacity-60 sm:w-auto";
 
   useEffect(() => {
     if (checkedIn && visitActionForStatus(status) !== "check-out") {
@@ -142,11 +139,15 @@ export function JobVisitControls({
     setCaptures((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)));
   }
 
-  async function checkIn() {
-    setSaving(true);
+  async function openVisit() {
     setError("");
     setOpenJobConflict(null);
     setQueuedNote("");
+    if (action === "check-out") {
+      setOpen(true);
+      return;
+    }
+    setSaving(true);
     const response = await fieldFetch(`/api/jobs/${jobId}/check-in`, { method: "POST" });
     const data = (await response.json()) as {
       error?: string;
@@ -164,12 +165,11 @@ export function JobVisitControls({
       setError(data.error ?? "Could not check in");
       return;
     }
-    if (isQueuedResponse(data)) {
-      setLocalStatus("ON_SITE");
-      setQueuedNote("Check-in saved on this phone. It uploads when you have data.");
-      return;
-    }
     setLocalStatus("ON_SITE");
+    if (isQueuedResponse(data)) {
+      setQueuedNote("Check-in saved on this phone. It uploads when you have data.");
+    }
+    setOpen(true);
     router.refresh();
   }
 
@@ -264,15 +264,9 @@ export function JobVisitControls({
 
   return (
     <div onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-      {action === "check-in" ? (
-        <button id="check-in" type="button" disabled={saving} className={buttonClass} onClick={() => void checkIn()}>
-          {saving ? "Checking in…" : "Check in"}
-        </button>
-      ) : (
-        <button id="check-out" type="button" disabled={saving} className={inProgressButtonClass} onClick={() => setOpen(true)}>
-          In progress
-        </button>
-      )}
+      <button id="check-in" type="button" disabled={saving} className={buttonClass} onClick={() => void openVisit()}>
+        {saving ? "Checking in…" : "Check in"}
+      </button>
       {error && !open ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
       {queuedNote && !open ? <p className="mt-1 text-xs text-amber-800">{queuedNote}</p> : null}
 
@@ -321,7 +315,7 @@ export function JobVisitControls({
 
       {open ? (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 sm:justify-center sm:p-3">
-          <button type="button" aria-label="Close check out" className="min-h-0 flex-1 sm:hidden" onClick={closeCheckout} />
+          <button type="button" aria-label="Close" className="min-h-0 flex-1 sm:hidden" onClick={closeCheckout} />
           <form
             className="flex max-h-[min(92dvh,720px)] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-panel shadow-xl sm:mx-auto sm:max-w-lg sm:rounded-2xl"
             onSubmit={(event) => {
@@ -330,8 +324,8 @@ export function JobVisitControls({
             }}
           >
             <div className="flex-1 overflow-y-auto px-5 pb-4 pt-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-emerald-800">In progress</p>
-              <h2 className="mt-1 font-display text-2xl">Still on this job</h2>
+              <p className="text-xs font-bold uppercase tracking-widest text-orange">Check in</p>
+              <h2 className="mt-1 font-display text-2xl">On this job</h2>
               <p className="mt-1 text-sm text-stone-600">
                 Log captures, traps, or exclusion if you need to, then check out when you leave.
               </p>
@@ -698,7 +692,7 @@ export function JobVisitControls({
                 disabled={saving || !canSubmit}
                 className="flex-1 rounded-lg bg-orange px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {saving ? "Saving…" : finishedHere === false ? "Check out & schedule" : finishedHere === true ? "Check out" : "Check out"}
+                {saving ? "Saving…" : finishedHere === false ? "Check out & schedule" : "Check out"}
               </button>
             </div>
           </form>
