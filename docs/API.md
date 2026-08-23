@@ -22,7 +22,7 @@ Billing happens in Square outside CritterOps. These APIs cover scheduling and fi
 `PATCH /api/clients/:id`
 
 `GET /api/jobs?status&technicianId&from&to`  
-`POST /api/jobs` `{ clientId, propertyId, title, type, technicianId, scheduledStart, scheduledEnd, durationMin, lineItems[] }` — `clientId`, `propertyId`, and `title` are required; a start time marks the job `SCHEDULED`  
+`POST /api/jobs` `{ clientId, propertyId, title, type, technicianId, scheduledStart, scheduledEnd, durationMin }` — `clientId`, `propertyId`, and `title` are required; a start time marks the job `SCHEDULED`  
 `GET /api/jobs/:id`  
 `PATCH /api/jobs/:id` `{ status, technicianId, scheduledStart, scheduledEnd }`  
 `POST /api/jobs/:id/check-in` — on site: job `ON_SITE`, open `TimeEntry` + `Visit`, auto day clock-in if needed  

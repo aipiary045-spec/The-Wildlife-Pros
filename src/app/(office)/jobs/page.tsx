@@ -71,7 +71,6 @@ export default async function JobsPage({
           title: job.title,
           type: job.type,
           status: job.status,
-          total: Number(job.total),
           scheduledStart: job.scheduledStart?.toISOString() ?? null,
           client: job.client,
           property: { address1: job.property.address1 },

@@ -17,7 +17,7 @@ import { getAppContext } from "@/lib/app-context";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { visitActionForStatus } from "@/lib/job-visit";
 import { jobNotifyProps } from "@/lib/messaging";
-import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
+import { clientName, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       client: true,
       property: true,
       technician: true,
-      lineItems: true,
       deployments: { include: { equipment: true, checks: true } },
       captures: { include: { species: true } },
       entryPoints: true,
@@ -156,25 +155,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         </Card>
       </section>
       <section className="grid gap-6 lg:grid-cols-2">
-        {techView ? null : (
-          <Card title="Line items">
-            {job.lineItems.length === 0 ? (
-              <p className="text-sm text-stone-500">No line items on this job.</p>
-            ) : (
-              job.lineItems.map((item) => (
-                <p key={item.id} className="flex justify-between py-1 text-sm">
-                  <span>
-                    {item.name} × {Number(item.quantity)}
-                  </span>
-                  <span>{formatMoney(Number(item.quantity) * Number(item.unitPrice))}</span>
-                </p>
-              ))
-            )}
-            <p className="mt-3 border-t border-line pt-3 text-sm font-semibold">
-              Total {formatMoney(job.total)}
-            </p>
-          </Card>
-        )}
         <JobTrapsCard
           jobId={job.id}
           stock={stock.map((item) => ({
