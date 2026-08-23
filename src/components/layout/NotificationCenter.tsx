@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Phone } from "lucide-react";
+import { playEmergencyAlert, playRegularAlert } from "@/lib/alert-sounds";
+import { notificationAlertTone, notificationIdSet } from "@/lib/notification-alerts";
 import type { NotificationItem } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
 
@@ -13,13 +15,21 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [newCalls, setNewCalls] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const bootstrappedRef = useRef(false);
 
   const load = useCallback(async () => {
     try {
       const response = await fetch("/api/notifications", { credentials: "include" });
       if (!response.ok) return;
       const data = (await response.json()) as { notifications?: NotificationItem[]; newCalls?: number };
-      setItems(data.notifications ?? []);
+      const next = data.notifications ?? [];
+      const tone = notificationAlertTone(seenIdsRef.current, next, !bootstrappedRef.current);
+      if (tone === "emergency") void playEmergencyAlert();
+      else if (tone === "regular") void playRegularAlert();
+      seenIdsRef.current = notificationIdSet(next);
+      bootstrappedRef.current = true;
+      setItems(next);
       setNewCalls(data.newCalls ?? 0);
     } catch {
       // Offline: keep the last list.
