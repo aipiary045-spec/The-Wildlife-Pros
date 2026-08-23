@@ -31,7 +31,7 @@ export default async function FieldPage({
   const { from, to, days } = scheduleRange(view, date);
   const technicianFilter = isTechnician(session.role) ? session.id : undefined;
   const myTime = await getMyTimesheet(session.id);
-  const [jobs, routeDays, technicians, activeEmergencies, myOpenCheckIn] = await Promise.all([
+  const [jobs, routeDays, technicians, activeEmergencies, myOpenCheckIn, species] = await Promise.all([
     prisma.job.findMany({
       where: {
         status: { notIn: ["CANCELLED"] },
@@ -78,6 +78,7 @@ export default async function FieldPage({
       take: 6,
     }),
     getMyOpenCheckIn(session.id),
+    prisma.species.findMany({ orderBy: { commonName: "asc" }, select: { id: true, commonName: true } }),
   ]);
 
   const pendingAssigned =
@@ -162,6 +163,7 @@ export default async function FieldPage({
         technicians={technicians}
         notifyByJobId={notifyByJobId}
         onSiteJobId={myOpenCheckIn?.jobId}
+        species={species}
       />
     </div>
   );

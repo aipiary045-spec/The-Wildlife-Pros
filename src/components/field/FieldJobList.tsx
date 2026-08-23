@@ -30,7 +30,7 @@ type FieldJob = {
     lat?: number | null;
     lng?: number | null;
   };
-  deployments: unknown[];
+  deployments: Array<{ id: string; equipment: { serialNumber: string } }>;
   emergencyDispatch?: { acknowledgedAt: Date | null } | null;
 };
 
@@ -60,6 +60,7 @@ export function FieldJobList({
   technicians = [],
   notifyByJobId = {},
   onSiteJobId,
+  species = [],
 }: {
   jobs: FieldJob[];
   days: Date[];
@@ -68,6 +69,7 @@ export function FieldJobList({
   technicians?: ScheduleTech[];
   notifyByJobId?: Record<string, FieldJobNotify>;
   onSiteJobId?: string | null;
+  species?: Array<{ id: string; commonName: string }>;
 }) {
   return (
     <div className="space-y-4">
@@ -185,6 +187,11 @@ export function FieldJobList({
                         checkedIn={onSite}
                         technicianId={job.technicianId}
                         technicians={technicians}
+                        species={species}
+                        deployments={job.deployments.map((item) => ({
+                          id: item.id,
+                          equipment: { serialNumber: item.equipment.serialNumber },
+                        }))}
                       />
                     </div>
                   </article>

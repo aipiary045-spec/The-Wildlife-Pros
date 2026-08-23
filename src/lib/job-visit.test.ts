@@ -30,6 +30,25 @@ test("visitActionForStatus hides buttons on closed jobs", () => {
   assert.equal(visitActionForStatus("ON_HOLD"), null);
 });
 
+test("parseCheckoutBody accepts captures and exclusion", () => {
+  const next = parseCheckoutBody({
+    outcome: "complete",
+    captures: [
+      { speciesName: "Raccoon", quantity: 1, disposition: "RELOCATED", locationNote: "Attic" },
+      { speciesId: "sp1", quantity: 2, disposition: "FOUND_DEAD" },
+    ],
+    exclusion: {
+      material: "Hardware cloth",
+      entryLabel: "Ridge vent",
+      entryArea: "South roof",
+    },
+  });
+  assert.equal(next.captures?.length, 2);
+  assert.equal(next.captures?.[0]?.speciesName, "Raccoon");
+  assert.equal(next.exclusion?.material, "Hardware cloth");
+  assert.equal(next.exclusion?.entryLabel, "Ridge vent");
+});
+
 test("parseCheckoutBody requires complete or follow_up", () => {
   assert.throws(() => parseCheckoutBody({}), /complete or needs a follow-up/);
   const complete = parseCheckoutBody({

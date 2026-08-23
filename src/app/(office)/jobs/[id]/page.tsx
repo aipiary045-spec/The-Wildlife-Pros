@@ -135,6 +135,11 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             checkedIn={checkedInHere}
             technicianId={job.technicianId}
             technicians={technicians}
+            species={species}
+            deployments={job.deployments.map((item) => ({
+              id: item.id,
+              equipment: { serialNumber: item.equipment.serialNumber },
+            }))}
           />
           {notify ? (
             <NotifyCustomerButton
@@ -228,35 +233,48 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             ))}
           </Card>
         )}
-        <JobTrapsCard
-          jobId={job.id}
-          stock={stock.map((item) => ({
-            id: item.id,
-            serialNumber: item.serialNumber,
-            name: item.name,
-            type: item.type,
-            status: item.status,
-          }))}
-          deployments={job.deployments}
-          serials={allGear.map((item) => item.serialNumber)}
-          species={species.map((item) => item.commonName)}
-        />
-        <JobSpeciesCard
-          jobId={job.id}
-          captures={job.captures}
-          species={species}
-          deployments={job.deployments.map((item) => ({
-            id: item.id,
-            equipment: { serialNumber: item.equipment.serialNumber },
-          }))}
-        />
-        <JobEntryPointsCard
-          jobId={job.id}
-          propertyId={job.propertyId}
-          entryPoints={job.entryPoints}
-          exclusions={job.exclusions}
-        />
-        {techView ? null : <JobEditor job={job} technicians={technicians} />}
+        {techView ? null : (
+          <>
+            <JobTrapsCard
+              jobId={job.id}
+              stock={stock.map((item) => ({
+                id: item.id,
+                serialNumber: item.serialNumber,
+                name: item.name,
+                type: item.type,
+                status: item.status,
+              }))}
+              deployments={job.deployments}
+              serials={allGear.map((item) => item.serialNumber)}
+              species={species.map((item) => item.commonName)}
+            />
+            <JobSpeciesCard
+              jobId={job.id}
+              captures={job.captures}
+              species={species}
+              deployments={job.deployments.map((item) => ({
+                id: item.id,
+                equipment: { serialNumber: item.equipment.serialNumber },
+              }))}
+            />
+            <JobEntryPointsCard
+              jobId={job.id}
+              propertyId={job.propertyId}
+              entryPoints={job.entryPoints}
+              exclusions={job.exclusions}
+            />
+            <JobEditor job={job} technicians={technicians} />
+          </>
+        )}
+        {techView && job.captures.length ? (
+          <Card title="Captures this job">
+            {job.captures.map((capture) => (
+              <p key={capture.id} className="py-1 text-sm">
+                {capture.quantity}× {capture.species.commonName} · {capture.disposition.replaceAll("_", " ").toLowerCase()}
+              </p>
+            ))}
+          </Card>
+        ) : null}
       </section>
       <JobPhotosCard
         jobId={job.id}
