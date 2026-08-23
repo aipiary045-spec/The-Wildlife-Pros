@@ -97,8 +97,21 @@ export function buildEmergencyTeamBroadcastSms(input: {
   return lines.join("\n");
 }
 
+export const ACTIVE_EMERGENCY_JOB_STATUSES = new Set(["UNSCHEDULED", "SCHEDULED", "EN_ROUTE", "ON_SITE", "IN_PROGRESS"]);
+
+export function isActiveEmergencyJobStatus(status: string) {
+  return ACTIVE_EMERGENCY_JOB_STATUSES.has(status);
+}
+
 export function isEmergencyJob(job: { type: string; emergencyDispatch?: { acknowledgedAt: Date | null } | null }) {
   return job.type === "EMERGENCY" || Boolean(job.emergencyDispatch);
+}
+
+export function canStealEmergencyDispatch(
+  dispatch: { assignedTechnicianId: string },
+  technicianId: string,
+) {
+  return dispatch.assignedTechnicianId !== technicianId;
 }
 
 export function emergencyNeedsAck(dispatch: { acknowledgedAt: Date | null } | null | undefined) {

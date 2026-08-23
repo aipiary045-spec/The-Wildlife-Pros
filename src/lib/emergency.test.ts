@@ -4,8 +4,10 @@ import {
   buildEmergencyInstructions,
   buildEmergencyTeamBroadcastSms,
   buildEmergencyTechSms,
+  canStealEmergencyDispatch,
   emergencyIsOverdue,
   gearHintsForTags,
+  isActiveEmergencyJobStatus,
   parseHazardTags,
   sortJobsEmergencyFirst,
 } from "./emergency";
@@ -58,6 +60,17 @@ test("buildEmergencyTechSms includes navigate link when provided", () => {
   });
   assert.match(body, /EMERGENCY dispatch/);
   assert.match(body, /Navigate:/);
+});
+
+test("canStealEmergencyDispatch is false when already assigned", () => {
+  assert.equal(canStealEmergencyDispatch({ assignedTechnicianId: "tech-1" }, "tech-1"), false);
+  assert.equal(canStealEmergencyDispatch({ assignedTechnicianId: "tech-1" }, "tech-2"), true);
+});
+
+test("isActiveEmergencyJobStatus excludes closed jobs", () => {
+  assert.equal(isActiveEmergencyJobStatus("EN_ROUTE"), true);
+  assert.equal(isActiveEmergencyJobStatus("COMPLETED"), false);
+  assert.equal(isActiveEmergencyJobStatus("CANCELLED"), false);
 });
 
 test("buildEmergencyTeamBroadcastSms names assigned tech and invites backup", () => {
