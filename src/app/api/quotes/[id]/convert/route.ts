@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api";
 import { getSession } from "@/lib/auth";
+import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
 import { QuoteError, convertQuoteToJob } from "@/lib/quote-convert";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -20,6 +21,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       scheduledStart: body.scheduledStart ? new Date(body.scheduledStart) : undefined,
       durationMin: body.durationMin ? Number(body.durationMin) : undefined,
     });
+    if (job.scheduledStart) {
+      queueJobGoogleCalendarSync(job.id);
+    }
     return NextResponse.json({ job }, { status: 201 });
   } catch (error) {
     if (error instanceof QuoteError) return jsonError(error.message, error.status);

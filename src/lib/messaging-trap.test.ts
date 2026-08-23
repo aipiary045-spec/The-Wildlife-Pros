@@ -89,7 +89,20 @@ test("jobNotifyProps builds sms link for active visits only", () => {
   );
   assert.ok(active);
   assert.equal(active?.jobId, "job-1");
+  assert.equal(active?.alreadyNotified, false);
   assert.match(active?.smsHref ?? "", /^sms:\+17045550142/);
+
+  const notified = jobNotifyProps(
+    {
+      id: "job-1b",
+      title: "Trap check",
+      status: "SCHEDULED",
+      customerNotifiedAt: new Date("2026-08-23T12:00:00.000Z"),
+      client: { firstName: "Riley", phone: "(704) 555-0142" },
+    },
+    "Alex",
+  );
+  assert.equal(notified?.alreadyNotified, true);
 
   assert.equal(
     jobNotifyProps(

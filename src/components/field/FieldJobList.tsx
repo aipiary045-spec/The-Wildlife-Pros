@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { format } from "date-fns";
+import { DayNotifyButton } from "@/components/field/DayNotifyButton";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -43,6 +44,7 @@ export type FieldJobNotify = {
   clientPhone: string | null;
   smsHref: string | null;
   autoSendSms: boolean;
+  alreadyNotified?: boolean;
 };
 
 export type RouteHint = {
@@ -101,15 +103,19 @@ export function FieldJobList({
               </h2>
             ) : null}
             {isSingleDay && dayJobs.length > 0 ? (
-              <NavigateLink
-                label="Navigate this route"
-                stops={dayJobs.map((job) => ({
-                  address: propertyAddress(job.property),
-                  lat: job.property.lat,
-                  lng: job.property.lng,
-                }))}
-                className="px-1"
-              />
+              <div className="space-y-2 px-1">
+                <NavigateLink
+                  label="Navigate this route"
+                  stops={dayJobs.map((job) => ({
+                    address: propertyAddress(job.property),
+                    lat: job.property.lat,
+                    lng: job.property.lng,
+                  }))}
+                />
+                <DayNotifyButton
+                  jobIds={dayJobs.filter((job) => notifyByJobId[job.id]?.clientPhone).map((job) => job.id)}
+                />
+              </div>
             ) : null}
             {dayJobs.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-center text-sm text-stone-500">
