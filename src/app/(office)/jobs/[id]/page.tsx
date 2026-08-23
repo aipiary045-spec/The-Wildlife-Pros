@@ -6,7 +6,6 @@ import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobEntryPointsCard } from "@/components/jobs/JobEntryPointsCard";
 import { JobPhotosCard } from "@/components/jobs/JobPhotosCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
-import { JobFieldBar } from "@/components/jobs/JobFieldBar";
 import { JobQuoteBillingBanner } from "@/components/jobs/JobQuoteBillingBanner";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
@@ -86,7 +85,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   ]);
 
   return (
-    <div className={`space-y-6 ${techView ? "pb-[calc(7.5rem+env(safe-area-inset-bottom))] md:pb-0" : ""}`}>
+    <div className="space-y-6">
       <Breadcrumbs
         items={[
           { label: techView ? "My work orders" : "Work orders", href: "/jobs" },
@@ -247,17 +246,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         photos={job.photos}
         entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
       />
-      {techView ? (
-        <JobFieldBar
-          jobId={job.id}
-          status={job.status}
-          address={propertyAddress(job.property)}
-          lat={job.property.lat}
-          lng={job.property.lng}
-          notify={notify}
-          notifyEmphasized={job.type === "EMERGENCY"}
-        />
-      ) : null}
     </div>
   );
 }
