@@ -52,6 +52,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         },
       },
       trips: { orderBy: { scheduledStart: "asc" } },
+      emergencyDispatch: true,
     },
   });
   if (!job) notFound();
