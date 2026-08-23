@@ -4,7 +4,7 @@ Use this document as the standing product and engineering brief when continuing 
 
 ## Product
 
-Build and extend a web + mobile-ready operations system that feels as complete as Jobber for office staff, while adding wildlife-specific field tools technicians actually use on a trapline.
+Build and extend a web + mobile-ready operations system focused on **scheduling and field data**. Billing happens in Square outside CritterOps.
 
 **Company:** The Wildlife Pros  
 **Product name:** CritterOps  
@@ -13,17 +13,14 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 ### Jobber-style core (must stay first-class)
 
 - Client & property CRM (one customer, many service addresses)
-- Incoming requests → quotes → jobs → invoices → payments
-- Home dashboard with pipeline cards (requests, quotes, jobs, invoices) and today’s technician timeline
+- Incoming calls → work orders on the schedule
+- Home dashboard with pipeline cards (calls, jobs, field activity) and today’s technician timeline
 - Drag-and-drop dispatch calendar: week grid (technician × day) and day timeline (technician × time, 15-minute snap). **New job** / **+ Job** opens a create dialog; unscheduled jobs drag onto a tech.
 - Check in / check out on the job, field route, and calendar. Check-out asks if the customer needs a follow-up visit or if the job is complete. Follow-up creates a new job for the same client.
 - Recurring service visits
-- Digital quotes: create, send, client hub approve/decline, convert to a job
-- Invoices generated from completed jobs; mark sent; balances and office Square collection
 - Recurring visits generated from a job (`RecurringSchedule`)
-- **Payments are Square-only and office-collected.** Clients do not log into CritterOps to pay. Technicians write quotes and add services; they do not create invoices or take payment. Office collects Terminal, POS, cash/check, or a staff-keyed Square card charge on the invoice.
-- Optional Client Hub for visit info / quote approval only — never billing
-- Technician field view (phone-first): route, jobs, quotes with services, timesheets — no invoicing
+- Optional Client Hub for upcoming visit info only — never billing
+- Technician field view (phone-first): route, jobs, timesheets
 - Route optimization for a day’s stops
 - Daily timesheets: technicians clock in/out (multiple punches per day), office reviews and approves hours
 - Team: owners/admins (and dispatch for techs) add logins and disable people instead of deleting them
@@ -56,7 +53,7 @@ src/app/(office)     staff + field UI (desktop sidebar, mobile app shell / PWA)
 src/app/field        technician route (same app, /field)
 src/app/portal       customer hub (token auth)
 src/app/api          REST used by UI, field app, future mobile
-src/lib              prisma, auth, routing, money helpers
+src/lib              prisma, auth, routing, helpers
 prisma/schema.prisma source of truth for the domain
 ```
 
@@ -67,9 +64,7 @@ Everything else requires a session (`src/proxy.ts`).
 ## Domain rules
 
 - A **Client** owns many **Properties**. Jobs always belong to one property.
-- Quotes and invoices are document records with line items; totals are stored denormalized.
-- Completing a job should make “create invoice” a one-click API (`POST /api/invoices` with `jobId`).
-- Do not add customer self-serve invoice payment. Square is the processor. `POST /api/payments/square` charges a staff-tokenized card; `POST /api/payments` records Terminal/POS/cash/check. Technician sessions cannot create invoices or record payments.
+- Quotes, invoices, and payments may remain in the database schema for legacy data, but the product UI and APIs do not expose them. Square is the billing system of record.
 - Equipment has a global serial number. A live **EquipmentDeployment** is the site-specific status. Add inventory on `/inventory`. Deploy and retrieve from the job screen so the trap is attached to the job they are on.
 - Capture events may point at a deployment. Logging a capture should flip that deployment to `ACTIVE_CAPTURE`.
 - Photos must be able to reference job, property, and entry point.
@@ -93,16 +88,7 @@ Everything else requires a session (`src/proxy.ts`).
 | GET/PATCH | `/api/jobs/[id]` | Job + wildlife docs |
 | POST | `/api/jobs/[id]/check-in` | Arrive on site |
 | POST | `/api/jobs/[id]/check-out` | Leave: complete or schedule follow-up |
-| GET/POST | `/api/quotes` | Estimates; techs add catalog services on create |
-| PATCH | `/api/quotes/[id]` | send / approve / decline |
-| POST | `/api/quotes/[id]/convert` | Quote → job |
-| GET | `/api/services` | Price list |
-| GET/POST | `/api/invoices` | Billing; pass `jobId` to copy line items |
-| PATCH | `/api/invoices/[id]` | Mark sent / void |
 | POST | `/api/recurring` | Generate upcoming visits from a job |
-| POST | `/api/payments` | Record Terminal / cash / check (staff only) |
-| GET | `/api/payments/square/config` | Public Square app/location flags |
-| POST | `/api/payments/square` | Charge a Square payment token (staff only) |
 | GET/PATCH/POST | `/api/schedule` | Day or Mon–Sun week board; drag to move, POST copies a multi-trip job |
 | GET/POST | `/api/routes/optimize` | Preview (`persist: false`) or apply a day’s routes; `mode=reorder|rebalance` |
 | GET/POST | `/api/traps` | Serialized inventory; POST adds shop stock |
@@ -111,8 +97,7 @@ Everything else requires a session (`src/proxy.ts`).
 | GET/POST | `/api/applications` | Pesticide / rodenticide log |
 | GET/POST | `/api/photos` | Tagged documentation |
 | GET/POST | `/api/compliance` | Forms + application rollup |
-| GET | `/api/portal/[token]` | Client hub payload |
-| POST | `/api/portal/[token]/actions` | approve / decline quote only |
+| GET | `/api/portal/[token]` | Client hub payload (upcoming visits) |
 | GET | `/api/timesheets` | Office/tech timesheet list |
 | GET | `/api/timesheets/me` | Current user today + recent |
 | POST | `/api/timesheets/clock` | `{ action: "in" \| "out" }` |
@@ -123,7 +108,6 @@ Everything else requires a session (`src/proxy.ts`).
 
 - Dark ink sidebar, orange active state, Wildlife Pros wordmark + hex logo
 - Status pills via `StatusBadge`
-- Money via `formatMoney`
 - Office pages are `force-dynamic` and read Prisma directly
 - Field app is a single-column phone layout
 - Optional client hub is unauthenticated except for the unguessable `portalToken` and must never collect cards
@@ -140,11 +124,10 @@ Client hub: /portal/demo-client-hub
 ## What to build next (in order)
 
 1. File uploads to object storage instead of public SVG placeholders
-2. Square Terminal / Mobile Payments SDK for office collection (cards already go through Square on the invoice page; techs do not take payment)
-3. In-app turn-by-turn (Navigate already opens Google/Apple Maps by address; Routes map preview + Mapbox Matrix/Directions are optional for road-aware optimize)
-4. Push notifications / SMS visit reminders
-5. React Native or PWA packaging of `/field`
-6. Multi-state compliance template library
+2. In-app turn-by-turn (Navigate already opens Google/Apple Maps by address; Routes map preview + Mapbox Matrix/Directions are optional for road-aware optimize)
+3. Push notifications / SMS visit reminders
+4. React Native or PWA packaging of `/field`
+5. Multi-state compliance template library
 
 ## Guardrails
 
@@ -152,4 +135,5 @@ Client hub: /portal/demo-client-hub
 - Do not weaken auth on office APIs.
 - Do not invent EPA numbers or legal text — keep products/forms data-driven.
 - Match existing naming (`Job`, `Visit`, `EquipmentDeployment`) instead of introducing synonyms.
+- Do not add quotes, invoices, or in-app payment collection — billing stays in Square.
 - When adding features, update this file and `docs/API.md`.

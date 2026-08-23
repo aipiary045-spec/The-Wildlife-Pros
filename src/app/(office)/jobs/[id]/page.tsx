@@ -9,17 +9,14 @@ import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
 import { JobEditor } from "@/components/jobs/JobEditor";
-import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { canAccessJobInFieldView } from "@/lib/paths";
 import { getAppContext } from "@/lib/app-context";
-import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { visitActionForStatus } from "@/lib/job-visit";
 import { jobNotifyProps } from "@/lib/messaging";
-import { quoteBillingAction } from "@/lib/quotes";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -38,18 +35,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       entryPoints: true,
       exclusions: { include: { entryPoint: true } },
       photos: { include: { entryPoint: true } },
-      invoices: true,
       sourceJob: true,
-      quote: {
-        select: {
-          id: true,
-          number: true,
-          title: true,
-          status: true,
-          total: true,
-          invoices: { orderBy: { createdAt: "desc" }, take: 1 },
-        },
-      },
       trips: { orderBy: { scheduledStart: "asc" } },
       emergencyDispatch: true,
     },
@@ -58,14 +44,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   const context = await getAppContext();
   const session = context?.session ?? null;
   const techView = Boolean(context?.fieldView);
-  const canBill = session ? canBillJob(session) : false;
-  const quoteInvoice = job.quote?.invoices[0] ?? null;
-  const quoteBilling = job.quote
-    ? quoteBillingAction(
-        job.quote,
-        quoteInvoice ? { balance: Number(quoteInvoice.balance) } : null,
-      )
-    : null;
   const notify = jobNotifyProps(job, session?.firstName);
   if (session && !canAccessJobInFieldView(session, job, techView)) notFound();
 
@@ -148,22 +126,9 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
               emphasized={job.type === "EMERGENCY"}
             />
           ) : null}
-          {canBill ? (
-            <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
-          ) : null}
-          {canBill && job.quote && !quoteInvoice && quoteBilling === "create" ? (
-            <CreateInvoiceButton quoteId={job.quote.id} label="Create invoice" />
-          ) : canBill && quoteInvoice ? (
-            <Link
-              href={`/invoices/${quoteInvoice.id}`}
-              className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center"
-            >
-              {Number(quoteInvoice.balance) > 0 ? "Collect payment" : "View invoice"}
-            </Link>
-          ) : null}
         </div>
       </div>
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2">
         <Card title="Visit">
           <p>{job.scheduledStart ? format(job.scheduledStart, "PPP p") : "Unscheduled"}</p>
           <p className="text-sm text-stone-600">
@@ -186,24 +151,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             </div>
           ) : null}
         </Card>
-        {canBill || (job.quote && !techView) ? (
-          <Card title="Value">
-            <p className="font-display text-2xl">{formatMoney(job.total)}</p>
-            <p className="text-sm text-stone-600">Tax {formatMoney(job.taxAmount)}</p>
-            {techView || !job.quote ? null : (
-              <Link href={`/quotes/${job.quote.id}`} className="mt-2 block text-sm font-medium text-orange">
-                Quote {job.quote.number}
-              </Link>
-            )}
-            {canBill
-              ? [...(quoteInvoice ? [quoteInvoice] : []), ...job.invoices.filter((item) => item.id !== quoteInvoice?.id)].map((invoice) => (
-                  <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
-                    Collect · {invoice.number ?? "Invoice"} · {formatMoney(invoice.balance)} due
-                  </Link>
-                ))
-              : null}
-          </Card>
-        ) : null}
         <Card title="Instructions">
           <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
         </Card>
@@ -211,58 +158,52 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       <section className="grid gap-6 lg:grid-cols-2">
         {techView ? null : (
           <Card title="Line items">
-            {job.lineItems.map((item) => (
-              <p key={item.id} className="flex justify-between py-1 text-sm">
-                <span>
-                  {item.name} × {Number(item.quantity)}
-                </span>
-                <span>{formatMoney(Number(item.quantity) * Number(item.unitPrice))}</span>
-              </p>
-            ))}
+            {job.lineItems.length === 0 ? (
+              <p className="text-sm text-stone-500">No line items on this job.</p>
+            ) : (
+              job.lineItems.map((item) => (
+                <p key={item.id} className="flex justify-between py-1 text-sm">
+                  <span>
+                    {item.name} × {Number(item.quantity)}
+                  </span>
+                  <span>{formatMoney(Number(item.quantity) * Number(item.unitPrice))}</span>
+                </p>
+              ))
+            )}
+            <p className="mt-3 border-t border-line pt-3 text-sm font-semibold">
+              Total {formatMoney(job.total)}
+            </p>
           </Card>
         )}
-        {techView ? null : (
-          <>
-            <JobTrapsCard
-              jobId={job.id}
-              stock={stock.map((item) => ({
-                id: item.id,
-                serialNumber: item.serialNumber,
-                name: item.name,
-                type: item.type,
-                status: item.status,
-              }))}
-              deployments={job.deployments}
-              serials={allGear.map((item) => item.serialNumber)}
-              species={species.map((item) => item.commonName)}
-            />
-            <JobSpeciesCard
-              jobId={job.id}
-              captures={job.captures}
-              species={species}
-              deployments={job.deployments.map((item) => ({
-                id: item.id,
-                equipment: { serialNumber: item.equipment.serialNumber },
-              }))}
-            />
-            <JobEntryPointsCard
-              jobId={job.id}
-              propertyId={job.propertyId}
-              entryPoints={job.entryPoints}
-              exclusions={job.exclusions}
-            />
-            <JobEditor job={job} technicians={technicians} />
-          </>
-        )}
-        {techView && job.captures.length ? (
-          <Card title="Captures this job">
-            {job.captures.map((capture) => (
-              <p key={capture.id} className="py-1 text-sm">
-                {capture.quantity}× {capture.species.commonName} · {capture.disposition.replaceAll("_", " ").toLowerCase()}
-              </p>
-            ))}
-          </Card>
-        ) : null}
+        <JobTrapsCard
+          jobId={job.id}
+          stock={stock.map((item) => ({
+            id: item.id,
+            serialNumber: item.serialNumber,
+            name: item.name,
+            type: item.type,
+            status: item.status,
+          }))}
+          deployments={job.deployments}
+          serials={allGear.map((item) => item.serialNumber)}
+          species={species.map((item) => item.commonName)}
+        />
+        <JobSpeciesCard
+          jobId={job.id}
+          captures={job.captures}
+          species={species}
+          deployments={job.deployments.map((item) => ({
+            id: item.id,
+            equipment: { serialNumber: item.equipment.serialNumber },
+          }))}
+        />
+        <JobEntryPointsCard
+          jobId={job.id}
+          propertyId={job.propertyId}
+          entryPoints={job.entryPoints}
+          exclusions={job.exclusions}
+        />
+        {techView ? null : <JobEditor job={job} technicians={technicians} />}
       </section>
       <JobPhotosCard
         jobId={job.id}

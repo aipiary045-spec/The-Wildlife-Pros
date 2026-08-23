@@ -31,28 +31,6 @@ export function portalHubUrl(portalToken: string) {
   return `${appBaseUrl()}/portal/${portalToken}`;
 }
 
-export function buildQuoteDeliveryMessage(input: {
-  clientFirstName: string;
-  quoteNumber: string;
-  quoteTitle: string;
-  total: string;
-  hubUrl: string;
-  companyName?: string;
-}) {
-  const who = input.companyName?.trim() || "The Wildlife Pros";
-  return [
-    `Hi ${input.clientFirstName},`,
-    "",
-    `${who} sent estimate ${input.quoteNumber}: ${input.quoteTitle}.`,
-    `Total: ${input.total}`,
-    "",
-    `Review and approve here:`,
-    input.hubUrl,
-    "",
-    "Payments are collected by our crew in the field — not through this link.",
-  ].join("\n");
-}
-
 export function buildEnRouteMessage(input: {
   clientFirstName: string;
   techName?: string;

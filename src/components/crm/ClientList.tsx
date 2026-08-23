@@ -16,7 +16,7 @@ export type ClientListRow = {
   altPhone: string | null;
   status: string;
   properties: Array<{ address1: string; city: string }>;
-  _count: { jobs: number; invoices: number };
+  _count: { jobs: number };
 };
 
 export function ClientList({ clients }: { clients: ClientListRow[] }) {

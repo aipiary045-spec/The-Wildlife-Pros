@@ -15,10 +15,8 @@ export const OFFICE_ONLY_PREFIXES = [
   "/dashboard",
   "/schedule",
   "/clients",
-  "/quotes",
   "/calls",
   "/requests",
-  "/invoices",
   "/reports",
   "/routes",
   "/team",
@@ -26,14 +24,6 @@ export const OFFICE_ONLY_PREFIXES = [
 ];
 
 export function isOfficeOnlyPath(pathname: string) {
-  // Quote list/detail stay on the phone so techs can write estimates.
-  // Invoice detail stays reachable for office field view; technicians are blocked on the page.
-  if (pathname.startsWith("/invoices/") && pathname !== "/invoices") {
-    return false;
-  }
-  if (pathname === "/quotes" || (pathname.startsWith("/quotes/") && !pathname.startsWith("/quotes/pricing"))) {
-    return false;
-  }
   return OFFICE_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 

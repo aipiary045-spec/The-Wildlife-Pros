@@ -5,15 +5,11 @@ import { prisma } from "@/lib/prisma";
 import {
   clientSearchResult,
   equipmentSearchResult,
-  invoiceSearchResult,
   jobSearchResult,
   normalizeSearchQuery,
   phoneSearchFilter,
-  quoteSearchResult,
   searchQueryReady,
 } from "@/lib/search";
-
-import { isOfficeRole } from "@/lib/roles";
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -26,7 +22,7 @@ export async function GET(request: Request) {
 
   const phone = phoneSearchFilter(query);
 
-  const [clients, jobs, quotes, invoices, equipment] = await Promise.all([
+  const [clients, jobs, equipment] = await Promise.all([
     prisma.client.findMany({
       where: phone
         ? {
@@ -66,41 +62,6 @@ export async function GET(request: Request) {
       orderBy: { scheduledStart: "desc" },
       take: 5,
     }),
-    prisma.quote.findMany({
-      where: {
-        OR: [
-          { number: { contains: query, mode: "insensitive" } },
-          { title: { contains: query, mode: "insensitive" } },
-          { client: { firstName: { contains: query, mode: "insensitive" } } },
-          { client: { lastName: { contains: query, mode: "insensitive" } } },
-        ],
-        ...(isOfficeRole(session.role)
-          ? {}
-          : {
-              OR: [
-                { createdById: session.id },
-                { status: { in: ["SENT", "VIEWED", "APPROVED", "CONVERTED"] } },
-              ],
-            }),
-      },
-      include: { client: true },
-      orderBy: { updatedAt: "desc" },
-      take: 5,
-    }),
-    isOfficeRole(session.role)
-      ? prisma.invoice.findMany({
-          where: {
-            OR: [
-              { number: { contains: query, mode: "insensitive" } },
-              { client: { firstName: { contains: query, mode: "insensitive" } } },
-              { client: { lastName: { contains: query, mode: "insensitive" } } },
-            ],
-          },
-          include: { client: true },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        })
-      : Promise.resolve([]),
     prisma.equipment.findMany({
       where: {
         OR: [
@@ -116,8 +77,6 @@ export async function GET(request: Request) {
   const results = [
     ...clients.map(clientSearchResult),
     ...jobs.map(jobSearchResult),
-    ...quotes.map(quoteSearchResult),
-    ...invoices.map(invoiceSearchResult),
     ...equipment.map(equipmentSearchResult),
   ];
 

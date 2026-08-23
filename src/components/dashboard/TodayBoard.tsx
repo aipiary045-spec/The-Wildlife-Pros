@@ -2,18 +2,13 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react";
 import { formatOnSiteDuration } from "@/lib/active-checkins";
-import { formatMoney } from "@/lib/utils";
 
 type TodayOverview = Awaited<ReturnType<typeof import("@/lib/today").getTodayOverview>>;
 
 export function TodayBoard({ data }: { data: TodayOverview }) {
   const { counts } = data;
-  const urgentCount = counts.lateJobs + counts.pastDueInvoices;
-  const followUpCount =
-    counts.quotesApproved +
-    counts.needsInvoice +
-    counts.quotesWaiting +
-    counts.staleTraps;
+  const urgentCount = counts.lateJobs;
+  const followUpCount = counts.staleTraps;
   const inboxCount = counts.newCalls + counts.unscheduled;
 
   return (
@@ -101,31 +96,24 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
             Needs a look ({urgentCount})
           </h2>
           <ul className="mt-3 space-y-2 text-sm">
-            {data.lateJobs.slice(0, 3).map((job) => (
+            {data.lateJobs.slice(0, 5).map((job) => (
               <li key={job.id}>
                 <Link href={`/jobs/${job.id}`} className="font-medium text-rose-900 hover:underline">
                   Late {job.minutesLate}m · {job.clientName}
                 </Link>
               </li>
             ))}
-            {data.pastDueInvoices.slice(0, 3).map((invoice) => (
-              <li key={invoice.id}>
-                <Link href={`/invoices/${invoice.id}`} className="font-medium text-rose-900 hover:underline">
-                  Past due · {invoice.clientName} · {formatMoney(invoice.balance)}
-                </Link>
-              </li>
-            ))}
           </ul>
-          {urgentCount > 3 ? (
+          {urgentCount > 5 ? (
             <p className="mt-3 text-sm text-rose-800/80">
               <Link href="/jobs?view=late" className="font-semibold hover:underline">
-                View all urgent items
+                View all late jobs
               </Link>
             </p>
           ) : null}
         </section>
       ) : (
-        <p className="text-center text-sm text-stone-500">No late check-ins or past-due invoices.</p>
+        <p className="text-center text-sm text-stone-500">No late check-ins right now.</p>
       )}
 
       {(followUpCount > 0 || inboxCount > 0) && (
@@ -152,35 +140,13 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
                         label: `${counts.unscheduled} job${counts.unscheduled === 1 ? "" : "s"} need a day`,
                       }
                     : null,
-                  counts.quotesWaiting > 0
-                    ? {
-                        href: "/quotes",
-                        label: `${counts.quotesWaiting} quote${counts.quotesWaiting === 1 ? "" : "s"} waiting`,
-                      }
-                    : null,
                 ]}
               />
             ) : null}
 
             {followUpCount > 0 ? (
               <div className="space-y-2">
-                {data.quotesApproved.slice(0, 2).map((quote) => (
-                  <QuietRow
-                    key={quote.id}
-                    href={`/quotes/${quote.id}`}
-                    label={`Approved · ${quote.clientName}`}
-                    detail={quote.title}
-                  />
-                ))}
-                {data.needsInvoiceJobs.slice(0, 2).map((job) => (
-                  <QuietRow
-                    key={job.id}
-                    href={`/jobs/${job.id}`}
-                    label={`Needs invoice · ${job.clientName}`}
-                    detail={job.title}
-                  />
-                ))}
-                {data.staleTraps.slice(0, 2).map((trap) => (
+                {data.staleTraps.slice(0, 4).map((trap) => (
                   <QuietRow
                     key={trap.id}
                     href={`/jobs/${trap.jobId}`}
@@ -188,11 +154,6 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
                     detail={`${trap.serial} since ${format(trap.deployedAt, "MMM d")}`}
                   />
                 ))}
-                {followUpCount > 6 ? (
-                  <Link href="/invoices" className="inline-block pt-1 font-semibold text-orange hover:underline">
-                    Open billing
-                  </Link>
-                ) : null}
               </div>
             ) : null}
           </div>

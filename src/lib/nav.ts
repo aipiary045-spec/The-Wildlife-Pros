@@ -6,13 +6,11 @@ import {
   ClipboardList,
   Clock,
   FileSpreadsheet,
-  FileText,
   HardHat,
   Home,
   MapPinned,
   Menu,
   Phone,
-  Receipt,
   Smartphone,
   Squirrel,
   Users,
@@ -30,10 +28,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/schedule", label: "Schedule", icon: CalendarDays, description: "Place jobs on a technician and a time." },
   { href: "/clients", label: "Clients", icon: Users, description: "Names, phones, and service addresses." },
   { href: "/jobs", label: "Work orders", icon: ClipboardList, description: "The file for every job." },
-  { href: "/calls", label: "Call log", icon: Phone, description: "Log a call, then start a quote or a first trip." },
-  { href: "/quotes", label: "Quotes", icon: FileText, description: "Estimates waiting on the client." },
-  { href: "/invoices", label: "Invoices", icon: Receipt, description: "What we billed and what is still unpaid." },
-  { href: "/reports", label: "Reports", icon: BarChart3, description: "Payments, open work, and labor hours." },
+  { href: "/calls", label: "Call log", icon: Phone, description: "Log a call, then schedule a first trip." },
+  { href: "/reports", label: "Reports", icon: BarChart3, description: "Field activity and labor hours." },
   { href: "/routes", label: "Routes", icon: MapPinned, description: "Driving order for the day." },
   { href: "/timesheets", label: "Timesheets", icon: Clock, description: "Hours by person." },
   { href: "/time-off", label: "Time off", icon: CalendarOff, description: "Requested and approved days off." },
@@ -46,16 +42,15 @@ export const NAV_ITEMS: NavItem[] = [
 
 const OFFICE_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
   { title: "Day to day", hrefs: ["/dashboard", "/schedule", "/clients", "/jobs", "/calls"] },
-  { title: "Money", hrefs: ["/quotes", "/invoices", "/reports"] },
+  { title: "Field ops", hrefs: ["/routes", "/inventory", "/activity", "/reports"] },
   { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
-  { title: "Field", hrefs: ["/routes", "/inventory", "/activity", "/exports"] },
+  { title: "Data", hrefs: ["/exports"] },
 ];
 
 const OFFICE_MORE_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Daily office", hrefs: ["/calls", "/clients", "/jobs", "/quotes", "/invoices", "/routes"] },
-  { title: "Business", hrefs: ["/reports", "/exports"] },
+  { title: "Daily office", hrefs: ["/calls", "/clients", "/jobs", "/routes"] },
+  { title: "Field records", hrefs: ["/reports", "/inventory", "/activity", "/exports"] },
   { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
-  { title: "Field records", hrefs: ["/inventory", "/activity"] },
 ];
 
 const TECH_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
@@ -64,7 +59,7 @@ const TECH_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
 ];
 
 const TECH_MORE_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Also on this phone", hrefs: ["/quotes", "/time-off", "/inventory", "/activity"] },
+  { title: "Also on this phone", hrefs: ["/time-off", "/inventory", "/activity"] },
 ];
 
 export function primaryTabs(role: string): NavItem[] {
@@ -89,7 +84,6 @@ export function navForRole(role: string): NavItem[] {
     return [
       { href: "/field", label: "My route", icon: Smartphone, description: "Today's stops in driving order." },
       { href: "/jobs", label: "My work orders", icon: ClipboardList, description: "Assigned work, including leftovers." },
-      { href: "/quotes", label: "Quotes", icon: FileText, description: "Write an estimate and add services. Office invoices later." },
       { href: "/timesheets", label: "Clock & hours", icon: Clock, description: "Clock in and see hours by day." },
       { href: "/time-off", label: "Time off", icon: CalendarOff, description: "Ask for a day off." },
       { href: "/inventory", label: "Traps & gear", icon: Warehouse, description: "What is in the shop and what is in the field." },
@@ -139,7 +133,6 @@ export function isMoreDestination(pathname: string, role: string) {
 export function pageLabel(pathname: string, role: string) {
   if (pathname === "/more") return "More";
   if (pathname === "/dashboard") return "Today";
-  if (pathMatches(pathname, "/quotes/pricing")) return "Price list";
   const catalog = [...navForRole(role), ...primaryTabs(role)];
   const match = catalog
     .filter((item) => pathMatches(pathname, item.href))
