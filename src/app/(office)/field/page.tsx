@@ -32,9 +32,16 @@ export default async function FieldPage({
   const [jobs, routeDays, technicians, activeEmergencies] = await Promise.all([
     prisma.job.findMany({
       where: {
-        technicianId: technicianFilter,
         status: { notIn: ["CANCELLED"] },
         scheduledStart: { gte: from, lte: to },
+        ...(technicianFilter
+          ? {
+              OR: [
+                { technicianId: technicianFilter },
+                { technicianId: null, emergencyDispatch: { isNot: null } },
+              ],
+            }
+          : {}),
       },
       include: {
         client: true,
@@ -74,7 +81,9 @@ export default async function FieldPage({
     activeEmergencies.find(
       (dispatch) => dispatch.assignedTechnicianId === session.id && !dispatch.acknowledgedAt,
     ) ?? null;
-  const teamAlerts = activeEmergencies.filter((dispatch) => dispatch.assignedTechnicianId !== session.id);
+  const teamAlerts = activeEmergencies.filter(
+    (dispatch) => !dispatch.assignedTechnicianId || dispatch.assignedTechnicianId !== session.id,
+  );
 
   const sortedJobs = sortJobsEmergencyFirst(jobs);
 
@@ -119,7 +128,11 @@ export default async function FieldPage({
           jobId={dispatch.jobId}
           title={dispatch.job.title}
           address={propertyAddress(dispatch.job.property)}
-          assignedTechName={`${dispatch.assignedTechnician.firstName} ${dispatch.assignedTechnician.lastName}`}
+          assignedTechName={
+            dispatch.assignedTechnician
+              ? `${dispatch.assignedTechnician.firstName} ${dispatch.assignedTechnician.lastName}`
+              : null
+          }
           lat={dispatch.job.property.lat}
           lng={dispatch.job.property.lng}
         />

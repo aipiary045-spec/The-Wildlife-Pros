@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   buildEmergencyInstructions,
+  buildEmergencyOpenDispatchSms,
   buildEmergencyTeamBroadcastSms,
   buildEmergencyTechSms,
   canStealEmergencyDispatch,
@@ -62,9 +63,21 @@ test("buildEmergencyTechSms includes navigate link when provided", () => {
   assert.match(body, /Navigate:/);
 });
 
-test("canStealEmergencyDispatch is false when already assigned", () => {
+test("canStealEmergencyDispatch allows steal when unassigned", () => {
+  assert.equal(canStealEmergencyDispatch({ assignedTechnicianId: null }, "tech-1"), true);
   assert.equal(canStealEmergencyDispatch({ assignedTechnicianId: "tech-1" }, "tech-1"), false);
   assert.equal(canStealEmergencyDispatch({ assignedTechnicianId: "tech-1" }, "tech-2"), true);
+});
+
+test("buildEmergencyOpenDispatchSms invites team to steal unassigned job", () => {
+  const body = buildEmergencyOpenDispatchSms({
+    situation: "Snake in kitchen",
+    address: "12 Main St",
+    jobId: "job-1",
+  });
+  assert.match(body, /EMERGENCY alert/);
+  assert.match(body, /Unassigned/i);
+  assert.match(body, /steal the job/i);
 });
 
 test("isActiveEmergencyJobStatus excludes closed jobs", () => {

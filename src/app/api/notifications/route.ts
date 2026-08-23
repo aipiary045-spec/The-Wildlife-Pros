@@ -40,6 +40,7 @@ export const GET = async () => {
     acknowledged: Boolean(dispatch.acknowledgedAt),
     overdue: emergencyIsOverdue(dispatch, now),
     assignedToMe: dispatch.assignedTechnicianId === session.id,
+    unassigned: !dispatch.assignedTechnicianId && !dispatch.job.technicianId,
   }));
 
   const cutoff = new Date(now.getTime() - 60 * 60 * 1000);

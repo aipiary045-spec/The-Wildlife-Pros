@@ -53,7 +53,7 @@ export const POST = withAuth(async (session, request) => {
       clientId: body.clientId,
       propertyId: body.propertyId,
       quoteId: body.quoteId,
-      technicianId: body.technicianId,
+      technicianId: body.technicianId || null,
       createdById: session.id,
       type: body.type ?? "INSPECTION",
       status: body.scheduledStart ? "SCHEDULED" : "UNSCHEDULED",

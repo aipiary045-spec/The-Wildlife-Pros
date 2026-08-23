@@ -7,7 +7,6 @@ import { Siren, X } from "lucide-react";
 import { hazardTagOptions, type EmergencyHazardTag } from "@/lib/emergency";
 import { clientName } from "@/lib/utils";
 
-type Technician = { id: string; firstName: string; lastName: string };
 type ClientOption = {
   id: string;
   firstName: string;
@@ -27,11 +26,10 @@ export type EmergencyPrefill = {
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 
 export function EmergencyDispatchButton({
-  technicians,
   clients,
   prefill,
 }: {
-  technicians: Technician[];
+  technicians?: Array<{ id: string; firstName: string; lastName: string }>;
   clients: ClientOption[];
   prefill?: EmergencyPrefill | null;
 }) {
@@ -40,8 +38,6 @@ export function EmergencyDispatchButton({
   const [mode, setMode] = useState<"existing" | "quick">("existing");
   const [clientId, setClientId] = useState(clients[0]?.id ?? "");
   const [propertyId, setPropertyId] = useState(clients[0]?.properties[0]?.id ?? "");
-  const [technicianId, setTechnicianId] = useState(technicians[0]?.id ?? "");
-  const [backupTechnicianId, setBackupTechnicianId] = useState("");
   const [situation, setSituation] = useState("");
   const [message, setMessage] = useState("");
   const [hazardTags, setHazardTags] = useState<EmergencyHazardTag[]>([]);
@@ -115,8 +111,6 @@ export function EmergencyDispatchButton({
       body: JSON.stringify({
         clientId: mode === "existing" ? clientId : undefined,
         propertyId: mode === "existing" ? propertyId : undefined,
-        technicianId,
-        backupTechnicianId: backupTechnicianId || undefined,
         situation,
         message,
         hazardTags,
@@ -173,7 +167,7 @@ export function EmergencyDispatchButton({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-widest text-rose-700">Emergency dispatch</p>
-                      <h2 className="mt-1 font-display text-2xl">Send a tech now</h2>
+                      <h2 className="mt-1 font-display text-2xl">Alert the team</h2>
                     </div>
                     <button
                       type="button"
@@ -185,7 +179,7 @@ export function EmergencyDispatchButton({
                     </button>
                   </div>
                   <p className="mt-2 text-sm text-stone-600">
-                    Creates an emergency work order, texts the assigned tech, and pins the stop at the top of their field route.
+                    Creates an unassigned emergency work order, texts every active tech, and pins it at the top of field routes until someone steals it.
                   </p>
                 </div>
 
@@ -268,41 +262,14 @@ export function EmergencyDispatchButton({
                       />
                     </label>
                     <label className="block text-sm sm:col-span-2">
-                      Note to tech
+                      Note to techs
                       <textarea
                         value={message}
                         onChange={(event) => setMessage(event.target.value)}
                         className={inputClass}
                         rows={2}
-                        placeholder="Drop your current stop and go. Customer says kids are home."
+                        placeholder="Drop non-urgent stops if needed. Customer says kids are home."
                       />
-                    </label>
-                    <label className="block text-sm">
-                      Assign to
-                      <select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className={inputClass}>
-                        {technicians.map((tech) => (
-                          <option key={tech.id} value={tech.id}>
-                            {tech.firstName} {tech.lastName}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block text-sm">
-                      Backup tech
-                      <select
-                        value={backupTechnicianId}
-                        onChange={(event) => setBackupTechnicianId(event.target.value)}
-                        className={inputClass}
-                      >
-                        <option value="">None</option>
-                        {technicians
-                          .filter((tech) => tech.id !== technicianId)
-                          .map((tech) => (
-                            <option key={tech.id} value={tech.id}>
-                              {tech.firstName} {tech.lastName}
-                            </option>
-                          ))}
-                      </select>
                     </label>
                   </div>
 
@@ -326,7 +293,7 @@ export function EmergencyDispatchButton({
 
                   <label className="mt-4 flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={notifyCustomer} onChange={(event) => setNotifyCustomer(event.target.checked)} />
-                    Text customer that a technician is on the way
+                    Text customer that help is on the way
                   </label>
 
                   {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}

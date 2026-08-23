@@ -11,7 +11,11 @@ export async function POST(_request: Request, context: { params: Promise<{ jobId
     where: { jobId },
   });
   if (!dispatch) return jsonError("Emergency dispatch not found", 404);
-  if (dispatch.assignedTechnicianId !== session.id && session.role !== "ADMIN") {
+  if (
+    dispatch.assignedTechnicianId &&
+    dispatch.assignedTechnicianId !== session.id &&
+    session.role !== "ADMIN"
+  ) {
     return jsonError("Only the assigned technician can acknowledge this dispatch.", 403);
   }
   if (dispatch.acknowledgedAt) {

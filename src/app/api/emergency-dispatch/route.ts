@@ -10,8 +10,7 @@ import {
   emergencyJobWindow,
   formatDispatchAddress,
   notifyEmergencyCustomer,
-  notifyEmergencyTeam,
-  notifyEmergencyTech,
+  notifyOpenEmergencyTeam,
   parseHazardTags,
 } from "@/lib/emergency";
 import { sendSms } from "@/lib/messaging";
@@ -44,7 +43,12 @@ async function loadActiveDispatches() {
 }
 
 async function maybeEscalate(dispatch: Awaited<ReturnType<typeof loadActiveDispatches>>[number], now = new Date()) {
-  if (!emergencyIsOverdue(dispatch, now) || dispatch.escalatedAt || !dispatch.backupTechnician?.phone) {
+  if (
+    !dispatch.assignedTechnician ||
+    !emergencyIsOverdue(dispatch, now) ||
+    dispatch.escalatedAt ||
+    !dispatch.backupTechnician?.phone
+  ) {
     return dispatch;
   }
   const address = formatDispatchAddress(dispatch.job.property);
@@ -89,8 +93,6 @@ export const POST = withAuth(async (session, request) => {
   const body = (await request.json()) as {
     clientId?: string;
     propertyId?: string;
-    technicianId?: string;
-    backupTechnicianId?: string;
     situation?: string;
     message?: string;
     hazardTags?: string[];
@@ -110,7 +112,6 @@ export const POST = withAuth(async (session, request) => {
 
   const situation = body.situation?.trim() || body.message?.trim();
   if (!situation) return jsonError("Describe the emergency.");
-  if (!body.technicianId) return jsonError("Pick a technician.");
 
   let clientId = body.clientId;
   let propertyId = body.propertyId;
@@ -152,15 +153,7 @@ export const POST = withAuth(async (session, request) => {
 
   if (!clientId || !propertyId) return jsonError("Pick a client and service address, or enter a quick address.");
 
-  const [technician, backupTechnician, property, teamMembers] = await Promise.all([
-    prisma.user.findFirst({
-      where: { id: body.technicianId, organizationId: session.organizationId, status: "ACTIVE" },
-    }),
-    body.backupTechnicianId
-      ? prisma.user.findFirst({
-          where: { id: body.backupTechnicianId, organizationId: session.organizationId, status: "ACTIVE" },
-        })
-      : Promise.resolve(null),
+  const [property, teamMembers] = await Promise.all([
     prisma.property.findFirst({ where: { id: propertyId, clientId } }),
     prisma.user.findMany({
       where: {
@@ -171,7 +164,6 @@ export const POST = withAuth(async (session, request) => {
       select: { id: true, phone: true },
     }),
   ]);
-  if (!technician) return jsonError("Technician not found.");
   if (!property) return jsonError("Property not found.");
 
   const hazardTags = parseHazardTags(body.hazardTags);
@@ -185,7 +177,7 @@ export const POST = withAuth(async (session, request) => {
       number: nextNumber("JOB", count),
       clientId,
       propertyId,
-      technicianId: technician.id,
+      technicianId: null,
       createdById: session.id,
       type: "EMERGENCY",
       status: "EN_ROUTE",
@@ -199,19 +191,8 @@ export const POST = withAuth(async (session, request) => {
   });
 
   const address = formatDispatchAddress(property);
-  const techSms = await notifyEmergencyTech({
-    phone: technician.phone,
-    situation,
-    address,
-    jobId: job.id,
-    lat: property.lat,
-    lng: property.lng,
-  });
-
-  await notifyEmergencyTeam({
+  const teamSms = await notifyOpenEmergencyTeam({
     members: teamMembers,
-    assignedTechnicianId: technician.id,
-    assignedTechName: `${technician.firstName} ${technician.lastName}`,
     situation,
     address,
     jobId: job.id,
@@ -225,7 +206,6 @@ export const POST = withAuth(async (session, request) => {
       phone: job.client.phone,
       clientFirstName: job.client.firstName,
       jobTitle: job.title,
-      techName: `${technician.firstName} ${technician.lastName}`,
     });
     if (customerSms.ok) customerSmsSentAt = new Date();
   }
@@ -234,11 +214,11 @@ export const POST = withAuth(async (session, request) => {
     data: {
       jobId: job.id,
       dispatchedById: session.id,
-      assignedTechnicianId: technician.id,
-      backupTechnicianId: backupTechnician?.id ?? null,
+      assignedTechnicianId: null,
+      backupTechnicianId: null,
       message: internalMessage,
       hazardTags: hazardTags.length ? hazardTags : undefined,
-      techSmsSentAt: techSms.ok ? new Date() : null,
+      techSmsSentAt: teamSms.sent > 0 ? new Date() : null,
       customerSmsSentAt: customerSmsSentAt ?? null,
     },
     include: dispatchInclude,
