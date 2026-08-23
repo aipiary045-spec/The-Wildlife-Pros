@@ -281,8 +281,8 @@ model EmergencyDispatch {
   job                  Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   dispatchedById       String
   dispatchedBy         User      @relation("EmergencyDispatchedBy", fields: [dispatchedById], references: [id])
-  assignedTechnicianId String
-  assignedTechnician   User      @relation("EmergencyAssignedTech", fields: [assignedTechnicianId], references: [id])
+  assignedTechnicianId String?
+  assignedTechnician   User?     @relation("EmergencyAssignedTech", fields: [assignedTechnicianId], references: [id])
   backupTechnicianId   String?
   backupTechnician     User?     @relation("EmergencyBackupTech", fields: [backupTechnicianId], references: [id])
   message              String

@@ -16,7 +16,7 @@ export function EmergencyTeamBanner({
   jobId: string;
   title: string;
   address: string;
-  assignedTechName: string;
+  assignedTechName?: string | null;
   lat?: number | null;
   lng?: number | null;
 }) {
@@ -51,7 +51,9 @@ export function EmergencyTeamBanner({
           <h2 className="mt-1 font-display text-xl font-semibold text-amber-950">{title}</h2>
           <p className="mt-1 text-sm text-amber-900">{address}</p>
           <p className="mt-2 text-sm text-amber-900">
-            {assignedTechName} is assigned. Steal the job if you can get there sooner — it moves to your route.
+            {assignedTechName
+              ? `${assignedTechName} is assigned. Steal the job if you can get there sooner — it moves to your route.`
+              : "Unassigned emergency. Steal the job if you can get there sooner — it moves to your route."}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <NavigateLink

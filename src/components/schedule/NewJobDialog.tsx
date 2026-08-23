@@ -172,6 +172,7 @@ export function NewJobDialog({
           <label className="block text-sm">
             Technician
             <select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className={inputClass}>
+              <option value="">Unassigned — assign later</option>
               {technicians.map((tech) => (
                 <option key={tech.id} value={tech.id}>
                   {tech.firstName} {tech.lastName}

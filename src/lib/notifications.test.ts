@@ -46,6 +46,28 @@ test("emergency dispatches outrank other alerts", () => {
   assert.match(items[0]?.title ?? "", /Emergency dispatched/);
 });
 
+test("technicians see unassigned emergency steal alert", () => {
+  const items = buildNotifications({
+    techView: true,
+    lateJobs: [],
+    emergencyDispatches: [
+      {
+        jobId: "em1",
+        title: "Bat in bedroom",
+        address: "9 Elm St",
+        techName: "Unassigned",
+        acknowledged: false,
+        overdue: false,
+        assignedToMe: false,
+        unassigned: true,
+      },
+    ],
+  });
+  assert.equal(items.length, 1);
+  assert.match(items[0]?.title ?? "", /unassigned/i);
+  assert.equal(items[0]?.stealJobId, "em1");
+});
+
 test("technicians see team emergency alert when not assigned", () => {
   const items = buildNotifications({
     techView: true,

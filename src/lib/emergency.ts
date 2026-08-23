@@ -79,6 +79,23 @@ export function buildEmergencyBackupSms(input: {
   ].join("\n");
 }
 
+export function buildEmergencyOpenDispatchSms(input: {
+  situation: string;
+  address: string;
+  jobId: string;
+  mapUrl?: string | null;
+}) {
+  const lines = [
+    "EMERGENCY alert — The Wildlife Pros",
+    input.situation,
+    input.address,
+    "Unassigned — open field route and steal the job if you can go now.",
+  ];
+  if (input.mapUrl) lines.push(`Map: ${input.mapUrl}`);
+  lines.push(`Job: ${appBaseUrl()}/jobs/${input.jobId}`);
+  return lines.join("\n");
+}
+
 export function buildEmergencyTeamBroadcastSms(input: {
   situation: string;
   address: string;
@@ -108,9 +125,10 @@ export function isEmergencyJob(job: { type: string; emergencyDispatch?: { acknow
 }
 
 export function canStealEmergencyDispatch(
-  dispatch: { assignedTechnicianId: string },
+  dispatch: { assignedTechnicianId: string | null },
   technicianId: string,
 ) {
+  if (!dispatch.assignedTechnicianId) return true;
   return dispatch.assignedTechnicianId !== technicianId;
 }
 
@@ -162,16 +180,47 @@ export async function notifyEmergencyTech(input: {
   return sendSms({ to: input.phone, body });
 }
 
-export async function notifyEmergencyTeam(input: {
+export async function notifyOpenEmergencyTeam(input: {
   members: Array<{ id: string; phone: string | null }>;
-  assignedTechnicianId: string;
-  assignedTechName: string;
   situation: string;
   address: string;
   jobId: string;
   lat?: number | null;
   lng?: number | null;
 }) {
+  const mapUrl = googleMapsDirUrl({ address: input.address, lat: input.lat, lng: input.lng });
+  const body = buildEmergencyOpenDispatchSms({
+    situation: input.situation,
+    address: input.address,
+    jobId: input.jobId,
+    mapUrl,
+  });
+  const seen = new Set<string>();
+  let sent = 0;
+  for (const member of input.members) {
+    if (!member.phone) continue;
+    const key = phoneDigits(member.phone);
+    if (key.length < 10 || seen.has(key)) continue;
+    seen.add(key);
+    const result = await sendSms({ to: member.phone, body });
+    if (result.ok) sent += 1;
+  }
+  return { sent };
+}
+
+export async function notifyEmergencyTeam(input: {
+  members: Array<{ id: string; phone: string | null }>;
+  assignedTechnicianId?: string | null;
+  assignedTechName?: string;
+  situation: string;
+  address: string;
+  jobId: string;
+  lat?: number | null;
+  lng?: number | null;
+}) {
+  if (!input.assignedTechnicianId || !input.assignedTechName) {
+    return notifyOpenEmergencyTeam(input);
+  }
   const mapUrl = googleMapsDirUrl({ address: input.address, lat: input.lat, lng: input.lng });
   const body = buildEmergencyTeamBroadcastSms({
     situation: input.situation,
