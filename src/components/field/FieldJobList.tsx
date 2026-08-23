@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { dateKey } from "@/lib/dates";
 import { nextFieldStop } from "@/lib/field-next-stop";
+import { portalHubUrl } from "@/lib/messaging";
 import { propertyAddress } from "@/lib/utils";
 import type { ScheduleTech } from "@/components/schedule/job-card";
 
@@ -23,6 +24,7 @@ type FieldJob = {
     firstName: string;
     phone: string | null;
     companyName?: string | null;
+    portalToken?: string | null;
   };
   property: {
     id?: string;
@@ -207,6 +209,15 @@ export function FieldJobList({
                         species={species}
                         propertyId={job.property.id}
                         clientPhone={job.client.phone}
+                        visitSummary={{
+                          clientFirstName: job.client.firstName,
+                          jobTitle: job.title,
+                          techName: job.technician
+                            ? `${job.technician.firstName} ${job.technician.lastName}`
+                            : undefined,
+                          companyName: job.client.companyName ?? null,
+                          portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : null,
+                        }}
                         deployments={job.deployments.map((item) => ({
                           id: item.id,
                           equipment: { serialNumber: item.equipment.serialNumber },

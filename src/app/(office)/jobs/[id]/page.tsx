@@ -19,7 +19,7 @@ import { getAppContext } from "@/lib/app-context";
 import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { visitActionForStatus } from "@/lib/job-visit";
-import { jobNotifyProps } from "@/lib/messaging";
+import { jobNotifyProps, portalHubUrl } from "@/lib/messaging";
 import { quoteBillingAction } from "@/lib/quotes";
 import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
 
@@ -138,6 +138,15 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             species={species}
             propertyId={job.propertyId}
             clientPhone={job.client.phone}
+            visitSummary={{
+              clientFirstName: job.client.firstName,
+              jobTitle: job.title,
+              techName: job.technician
+                ? `${job.technician.firstName} ${job.technician.lastName}`
+                : session?.firstName,
+              companyName: job.client.companyName,
+              portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : null,
+            }}
             deployments={job.deployments.map((item) => ({
               id: item.id,
               equipment: { serialNumber: item.equipment.serialNumber },

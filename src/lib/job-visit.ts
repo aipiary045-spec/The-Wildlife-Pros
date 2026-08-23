@@ -81,7 +81,6 @@ export type CheckoutInput = {
     dueOn: Date;
     notes?: string;
   };
-  notifyCustomerSummary?: boolean;
 };
 
 const CLOSED = ["COMPLETED", "INVOICED", "CANCELLED", "ON_HOLD"];
@@ -176,7 +175,6 @@ export function parseCheckoutBody(body: Record<string, unknown>): CheckoutInput 
     trapNote: trapPlaced && trapNote ? trapNote : undefined,
     captures: captures.length ? captures : undefined,
     exclusion,
-    notifyCustomerSummary: body.notifyCustomerSummary === true,
   };
 
   if (outcome === "complete") return base;

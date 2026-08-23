@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { GripVertical } from "lucide-react";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { JOB_TYPE_BAR, JOB_TYPE_LABEL } from "@/lib/constants";
+import { portalHubUrl } from "@/lib/messaging";
 import { cn } from "@/lib/utils";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
 
@@ -32,6 +33,7 @@ export function AppointmentChip({
 }) {
   const start = job.scheduledStart ? new Date(job.scheduledStart) : null;
   const typeLabel = JOB_TYPE_LABEL[job.type ?? ""] ?? job.title;
+  const tech = technicians.find((item) => item.id === job.technicianId);
   const timeline = layout === "timeline";
   const list = layout === "list";
   const stack = layout === "stack";
@@ -168,6 +170,13 @@ export function AppointmentChip({
           technicians={technicians}
           propertyId={job.propertyId}
           clientPhone={job.client.phone}
+          visitSummary={{
+            clientFirstName: job.client.firstName,
+            jobTitle: job.title,
+            techName: tech ? `${tech.firstName} ${tech.lastName}` : undefined,
+            companyName: job.client.companyName ?? null,
+            portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : null,
+          }}
           compact
         />
       ) : null}

@@ -7,8 +7,9 @@ import { NavigateLink } from "@/components/maps/NavigateLink";
 import { TrapQrScanner } from "@/components/jobs/TrapQrScanner";
 import { DISPOSITION_LABEL } from "@/lib/constants";
 import { readCaptureDefaults, writeCaptureDefaults } from "@/lib/capture-memory";
-import { CHECKOUT_WORK, visitActionForStatus } from "@/lib/job-visit";
+import { CHECKOUT_WORK, visitActionForStatus, type CheckoutInput } from "@/lib/job-visit";
 import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
+import { visitSummarySmsHref, type VisitSummaryContext } from "@/lib/visit-summary-sms";
 import type { ScheduleTech } from "@/components/schedule/job-card";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
@@ -60,6 +61,7 @@ export function JobVisitControls({
   nextStop = null,
   propertyId,
   clientPhone = null,
+  visitSummary = null,
 }: {
   jobId: string;
   status: string;
@@ -72,6 +74,7 @@ export function JobVisitControls({
   nextStop?: VisitNextStop | null;
   propertyId?: string;
   clientPhone?: string | null;
+  visitSummary?: VisitSummaryContext | null;
 }) {
   const router = useRouter();
   const photoRef = useRef<HTMLInputElement>(null);
@@ -114,7 +117,8 @@ export function JobVisitControls({
   const [checkoutDone, setCheckoutDone] = useState<{
     title: string;
     lines: string[];
-    tone: "success" | "warn" | "error";
+    tone: "success" | "warn";
+    smsHref?: string | null;
   } | null>(null);
 
   const buttonClass = compact
@@ -135,8 +139,67 @@ export function JobVisitControls({
   }, [open, trapOpen, trapPlaced, trapLat, trapLng]);
 
   useEffect(() => {
-    setNotifyCustomerSummary(Boolean(clientPhone));
-  }, [clientPhone]);
+    setNotifyCustomerSummary(Boolean(clientPhone && visitSummary));
+  }, [clientPhone, visitSummary]);
+
+  function buildCheckoutInput(needsReturn: boolean): CheckoutInput {
+    const capturePayload = captures
+      .map((item) => {
+        const speciesId = item.speciesId === "__new" ? undefined : item.speciesId || undefined;
+        const speciesName = item.speciesId === "__new" || !item.speciesId ? item.newSpecies.trim() : undefined;
+        if (!speciesId && !speciesName) return null;
+        return {
+          speciesId,
+          speciesName,
+          quantity: item.quantity,
+          disposition: item.disposition,
+          deploymentId: item.deploymentId || undefined,
+          locationNote: item.locationNote.trim() || undefined,
+        };
+      })
+      .filter(Boolean) as NonNullable<CheckoutInput["captures"]>;
+    const exclusion =
+      exclusionOpen && exclusionMaterial.trim()
+        ? {
+            material: exclusionMaterial.trim(),
+            quantity: exclusionQuantity.trim() || undefined,
+            notes: exclusionNotes.trim() || undefined,
+            entryLabel: exclusionEntryLabel.trim() || undefined,
+            entryArea: exclusionEntryArea.trim() || undefined,
+          }
+        : undefined;
+    return {
+      outcome: needsReturn ? "follow_up" : "complete",
+      notes: notes.trim() || undefined,
+      workDone,
+      trapPlaced,
+      trapNote: trapPlaced
+        ? [trapSerial.trim() ? `Serial ${trapSerial.trim()}` : "", trapNote.trim()].filter(Boolean).join(" · ") ||
+          undefined
+        : undefined,
+      captures: capturePayload.length ? capturePayload : undefined,
+      exclusion,
+      followUp: needsReturn
+        ? { returnInDays: Number(returnInDays), dueOn: new Date(), notes: notes.trim() || undefined }
+        : undefined,
+    };
+  }
+
+  function visitSummaryMessageLines(wantedSms: boolean, summaryHref: string | null, queued: boolean) {
+    if (!wantedSms) return [];
+    if (!summaryHref) return ["Could not open Messages — check the customer's phone number."];
+    if (queued) {
+      return [
+        "Messages opened with your visit summary draft.",
+        "Edit and send when you're ready. Check-out uploads when this phone has data.",
+      ];
+    }
+    return ["Messages opened with your visit summary — edit and send when you're ready."];
+  }
+
+  function openVisitSummaryMessages(href: string) {
+    window.location.href = href;
+  }
 
   function resetCheckoutForm() {
     setNotes("");
@@ -159,7 +222,7 @@ export function JobVisitControls({
     setExclusionEntryLabel("");
     setExclusionEntryArea("");
     setPhotoNote("");
-    setNotifyCustomerSummary(Boolean(clientPhone));
+    setNotifyCustomerSummary(Boolean(clientPhone && visitSummary));
     setError("");
   }
 
@@ -171,23 +234,6 @@ export function JobVisitControls({
   function dismissCheckoutDone() {
     setCheckoutDone(null);
     router.refresh();
-  }
-
-  function checkoutSmsLines(
-    data: { queued?: boolean; customerSummarySms?: { sent: boolean; error?: string } | null },
-    wantedSms: boolean,
-  ) {
-    if (!wantedSms) return [];
-    if (isQueuedResponse(data)) {
-      return ["Visit summary will text the customer when this phone uploads the check-out."];
-    }
-    if (data.customerSummarySms?.sent) {
-      return ["Visit summary texted to the customer."];
-    }
-    if (data.customerSummarySms) {
-      return ["Could not text the customer. Try Text customer from the job."];
-    }
-    return [];
   }
 
   if (!action && !doneNext && !checkoutDone) {
@@ -328,57 +374,31 @@ export function JobVisitControls({
     setQueuedNote("");
     setCheckoutDone(null);
     const needsReturn = !finishedHere;
-    const wantedSms = notifyCustomerSummary && Boolean(clientPhone);
-    const capturePayload = captures
-      .map((item) => {
-        const speciesId = item.speciesId === "__new" ? undefined : item.speciesId || undefined;
-        const speciesName = item.speciesId === "__new" || !item.speciesId ? item.newSpecies.trim() : undefined;
-        if (!speciesId && !speciesName) return null;
-        return {
-          speciesId,
-          speciesName,
-          quantity: item.quantity,
-          disposition: item.disposition,
-          deploymentId: item.deploymentId || undefined,
-          locationNote: item.locationNote.trim() || undefined,
-        };
-      })
-      .filter(Boolean);
-    const exclusion =
-      exclusionOpen && exclusionMaterial.trim()
-        ? {
-            material: exclusionMaterial.trim(),
-            quantity: exclusionQuantity.trim() || undefined,
-            notes: exclusionNotes.trim() || undefined,
-            entryLabel: exclusionEntryLabel.trim() || undefined,
-            entryArea: exclusionEntryArea.trim() || undefined,
-          }
-        : undefined;
+    const wantedSms = notifyCustomerSummary && Boolean(clientPhone && visitSummary);
+    const checkoutInput = buildCheckoutInput(needsReturn);
+    const summaryHref = wantedSms && visitSummary ? visitSummarySmsHref(clientPhone, visitSummary, checkoutInput) : null;
+    const capturePayload = checkoutInput.captures ?? [];
+    const exclusion = checkoutInput.exclusion;
     const response = await fieldFetch(`/api/jobs/${jobId}/check-out`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        outcome: needsReturn ? "follow_up" : "complete",
-        notes: notes.trim() || undefined,
-        workDone,
+        outcome: checkoutInput.outcome,
+        notes: checkoutInput.notes,
+        workDone: checkoutInput.workDone,
         siteLeft: needsReturn ? "needs_return" : "secure",
         returnInDays: needsReturn ? Number(returnInDays) : undefined,
-        trapPlaced,
+        trapPlaced: checkoutInput.trapPlaced,
         trapLat: trapPlaced && trapLat ? Number(trapLat) : undefined,
         trapLng: trapPlaced && trapLng ? Number(trapLng) : undefined,
-        trapNote: trapPlaced
-          ? [trapSerial.trim() ? `Serial ${trapSerial.trim()}` : "", trapNote.trim()].filter(Boolean).join(" · ") ||
-            undefined
-          : undefined,
+        trapNote: checkoutInput.trapNote,
         captures: capturePayload,
         exclusion,
-        notifyCustomerSummary: wantedSms,
       }),
     });
     const data = (await response.json()) as {
       error?: string;
       queued?: boolean;
-      customerSummarySms?: { sent: boolean; error?: string } | null;
     };
     setSaving(false);
     if (!response.ok) {
@@ -396,31 +416,29 @@ export function JobVisitControls({
     resetCheckoutForm();
     setLocalStatus("COMPLETED");
 
-    const smsLines = checkoutSmsLines(data, wantedSms);
     const queued = isQueuedResponse(data);
+    const smsLines = visitSummaryMessageLines(wantedSms, summaryHref, queued);
+    if (summaryHref) openVisitSummaryMessages(summaryHref);
+
+    const donePayload = {
+      title: queued ? "Checked out (saved on phone)" : "Checked out",
+      lines: queued
+        ? ["Check-out saved on this phone. It uploads when you have data.", ...smsLines]
+        : ["You're checked out.", ...smsLines],
+      tone: (queued ? "warn" : "success") as "success" | "warn",
+      smsHref: summaryHref,
+    };
+
     if (nextStop) {
       if (queued) {
         setQueuedNote("Check-out saved on this phone. It uploads when you have data.");
       }
       setDoneNext(nextStop);
-      if (smsLines.length) {
-        setCheckoutDone({
-          title: queued ? "Checked out (saved on phone)" : "Checked out",
-          lines: smsLines,
-          tone: queued ? "warn" : data.customerSummarySms?.sent ? "success" : "error",
-        });
-      }
+      if (smsLines.length || queued) setCheckoutDone(donePayload);
       return;
     }
 
-    const lines = queued
-      ? ["Check-out saved on this phone. It uploads when you have data.", ...smsLines]
-      : ["You're checked out.", ...smsLines];
-    setCheckoutDone({
-      title: queued ? "Checked out (saved on phone)" : "Checked out",
-      lines,
-      tone: queued ? "warn" : data.customerSummarySms?.sent || !wantedSms ? "success" : "error",
-    });
+    setCheckoutDone(donePayload);
   }
 
   const canSubmit = finishedHere !== null;
@@ -432,23 +450,15 @@ export function JobVisitControls({
         role="dialog"
         aria-labelledby="checkout-done-title"
         className={`relative z-10 w-full rounded-t-2xl border bg-panel p-5 shadow-xl sm:max-w-md sm:rounded-2xl ${
-          checkoutDone.tone === "success"
-            ? "border-emerald-200"
-            : checkoutDone.tone === "error"
-              ? "border-rose-200"
-              : "border-amber-200"
+          checkoutDone.tone === "success" ? "border-emerald-200" : "border-amber-200"
         }`}
       >
         <p
           className={`text-xs font-bold uppercase tracking-widest ${
-            checkoutDone.tone === "success"
-              ? "text-emerald-700"
-              : checkoutDone.tone === "error"
-                ? "text-rose-700"
-                : "text-amber-800"
+            checkoutDone.tone === "success" ? "text-emerald-700" : "text-amber-800"
           }`}
         >
-          {checkoutDone.tone === "success" ? "Done" : checkoutDone.tone === "error" ? "Check-out saved" : "Saved on phone"}
+          {checkoutDone.tone === "success" ? "Done" : "Saved on phone"}
         </p>
         <h2 id="checkout-done-title" className="mt-1 font-display text-2xl">
           {checkoutDone.title}
@@ -458,13 +468,24 @@ export function JobVisitControls({
             <p key={line}>{line}</p>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={dismissCheckoutDone}
-          className="mt-4 min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white"
-        >
-          OK
-        </button>
+        <div className="mt-4 flex flex-col gap-2">
+          {checkoutDone.smsHref ? (
+            <button
+              type="button"
+              onClick={() => openVisitSummaryMessages(checkoutDone.smsHref!)}
+              className="min-h-11 w-full rounded-lg bg-sky-600 px-4 text-sm font-semibold text-white"
+            >
+              Open Messages again
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={dismissCheckoutDone}
+            className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white"
+          >
+            OK
+          </button>
+        </div>
       </div>
     </div>
   ) : null;
@@ -641,7 +662,7 @@ export function JobVisitControls({
                 </div>
               ) : null}
 
-              {finishedHere !== null && clientPhone ? (
+              {finishedHere !== null && clientPhone && visitSummary ? (
                 <label className="mt-4 flex items-start gap-2 rounded-xl border border-line bg-orange/5 px-4 py-3 text-sm">
                   <input
                     type="checkbox"
@@ -650,9 +671,9 @@ export function JobVisitControls({
                     onChange={(event) => setNotifyCustomerSummary(event.target.checked)}
                   />
                   <span>
-                    Text customer a visit summary
+                    Open Messages with visit summary
                     <span className="mt-0.5 block text-xs font-normal text-stone-500">
-                      Sends what you logged today — work, captures, traps, and notes.
+                      Prefills a text from what you logged — you edit and send it yourself.
                     </span>
                   </span>
                 </label>

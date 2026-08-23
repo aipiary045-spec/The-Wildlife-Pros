@@ -1,5 +1,14 @@
 import { DISPOSITION_LABEL } from "@/lib/constants";
 import { CHECKOUT_WORK, type CheckoutInput } from "@/lib/job-visit";
+import { smsFallbackUrl } from "@/lib/messaging";
+
+export type VisitSummaryContext = {
+  clientFirstName: string;
+  jobTitle: string;
+  techName?: string;
+  companyName?: string | null;
+  portalUrl?: string | null;
+};
 
 export function buildVisitSummarySms(input: {
   clientFirstName: string;
@@ -64,4 +73,20 @@ export function buildVisitSummarySms(input: {
   }
 
   return lines.join("\n").trim();
+}
+
+export function visitSummarySmsHref(
+  phone: string | null | undefined,
+  context: VisitSummaryContext,
+  checkout: CheckoutInput,
+) {
+  const body = buildVisitSummarySms({
+    clientFirstName: context.clientFirstName,
+    techName: context.techName,
+    jobTitle: context.jobTitle,
+    companyName: context.companyName ?? undefined,
+    checkout,
+    portalUrl: context.portalUrl ?? undefined,
+  });
+  return smsFallbackUrl(phone, body);
 }

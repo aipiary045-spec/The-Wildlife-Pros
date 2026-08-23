@@ -3,9 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { hasOpenPunch } from "@/lib/time";
 import type { SessionUser } from "@/lib/auth";
 import { JobVisitError, checkoutSummary, visitActionForStatus, type CheckoutInput } from "@/lib/job-visit";
-import { portalHubUrl, sendSms } from "@/lib/messaging";
 import { resolveSpeciesId } from "@/lib/species";
-import { buildVisitSummarySms } from "@/lib/visit-summary-sms";
 
 export { JobVisitError };
 
@@ -297,35 +295,5 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     include: { client: true, property: true, technician: true },
   });
 
-  let customerSummarySms: { sent: boolean; error?: string } | null = null;
-  if (input.notifyCustomerSummary && job.client.phone) {
-    const techName = job.technician
-      ? `${job.technician.firstName} ${job.technician.lastName}`
-      : user.firstName;
-    const body = buildVisitSummarySms({
-      clientFirstName: job.client.firstName,
-      techName,
-      jobTitle: job.title,
-      companyName: job.client.companyName ?? undefined,
-      checkout: input,
-      portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : undefined,
-    });
-    const sms = await sendSms({ to: job.client.phone, body });
-    if (sms.ok) {
-      customerSummarySms = { sent: true };
-      if (closedVisitId) {
-        await prisma.visit.update({
-          where: { id: closedVisitId },
-          data: { summarySmsSentAt: occurredAt },
-        });
-      }
-    } else {
-      customerSummarySms = {
-        sent: false,
-        error: typeof sms.reason === "string" ? sms.reason : "SMS failed",
-      };
-    }
-  }
-
-  return { job: updated, followUp, customerSummarySms };
+  return { job: updated, followUp };
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildVisitSummarySms } from "./visit-summary-sms";
+import { buildVisitSummarySms, visitSummarySmsHref } from "./visit-summary-sms";
 
 test("buildVisitSummarySms formats customer-friendly visit bullets", () => {
   const body = buildVisitSummarySms({
@@ -19,6 +19,16 @@ test("buildVisitSummarySms formats customer-friendly visit bullets", () => {
   assert.match(body, /Checked existing traps/);
   assert.match(body, /gray squirrel relocated/i);
   assert.match(body, /Today's visit is complete/i);
+});
+
+test("visitSummarySmsHref builds an sms draft link", () => {
+  const href = visitSummarySmsHref(
+    "(704) 555-0142",
+    { clientFirstName: "Riley", jobTitle: "Squirrel trapping" },
+    { outcome: "complete", workDone: ["trap_check"], trapPlaced: false },
+  );
+  assert.match(href ?? "", /^sms:\+17045550142\?body=/);
+  assert.match(decodeURIComponent(href?.split("body=")[1] ?? ""), /Hi Riley/);
 });
 
 test("buildVisitSummarySms mentions return timing for follow-up visits", () => {
