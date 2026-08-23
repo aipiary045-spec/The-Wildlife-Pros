@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { NavigateLink } from "@/components/maps/NavigateLink";
+import { TrapQrScanner } from "@/components/jobs/TrapQrScanner";
 import { DISPOSITION_LABEL } from "@/lib/constants";
+import { readCaptureDefaults, writeCaptureDefaults } from "@/lib/capture-memory";
 import { CHECKOUT_WORK, visitActionForStatus } from "@/lib/job-visit";
 import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
 import type { ScheduleTech } from "@/components/schedule/job-card";
@@ -21,13 +24,27 @@ type CaptureDraft = {
   locationNote: string;
 };
 
-function blankCapture(speciesId: string): CaptureDraft {
+export type VisitNextStop = {
+  id: string;
+  number: string;
+  title: string;
+  address: string;
+  lat?: number | null;
+  lng?: number | null;
+};
+
+function blankCapture(speciesList: Array<{ id: string }>): CaptureDraft {
+  const defaults = readCaptureDefaults();
+  const speciesId =
+    (defaults.speciesId && speciesList.some((item) => item.id === defaults.speciesId)
+      ? defaults.speciesId
+      : speciesList[0]?.id) || "__new";
   return {
     key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    speciesId: speciesId || "__new",
+    speciesId,
     newSpecies: "",
     quantity: 1,
-    disposition: "RELOCATED",
+    disposition: defaults.disposition && defaults.disposition in DISPOSITION_LABEL ? defaults.disposition : "RELOCATED",
     deploymentId: "",
     locationNote: "",
   };
@@ -40,6 +57,8 @@ export function JobVisitControls({
   checkedIn = false,
   species = [],
   deployments = [],
+  nextStop = null,
+  propertyId,
 }: {
   jobId: string;
   status: string;
@@ -49,8 +68,11 @@ export function JobVisitControls({
   checkedIn?: boolean;
   species?: Array<{ id: string; commonName: string }>;
   deployments?: Array<{ id: string; equipment: { serialNumber: string } }>;
+  nextStop?: VisitNextStop | null;
+  propertyId?: string;
 }) {
   const router = useRouter();
+  const photoRef = useRef<HTMLInputElement>(null);
   const [localStatus, setLocalStatus] = useState(checkedIn && visitActionForStatus(status) !== "check-out" ? "ON_SITE" : status);
   const action = visitActionForStatus(localStatus);
   const [open, setOpen] = useState(false);
@@ -71,6 +93,8 @@ export function JobVisitControls({
   const [trapNote, setTrapNote] = useState("");
   const [trapLat, setTrapLat] = useState("");
   const [trapLng, setTrapLng] = useState("");
+  const [trapSerial, setTrapSerial] = useState("");
+  const [scanOpen, setScanOpen] = useState(false);
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoHint, setGeoHint] = useState("");
   const [capturesOpen, setCapturesOpen] = useState(false);
@@ -81,6 +105,9 @@ export function JobVisitControls({
   const [exclusionNotes, setExclusionNotes] = useState("");
   const [exclusionEntryLabel, setExclusionEntryLabel] = useState("");
   const [exclusionEntryArea, setExclusionEntryArea] = useState("");
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoNote, setPhotoNote] = useState("");
+  const [doneNext, setDoneNext] = useState<VisitNextStop | null>(null);
 
   const buttonClass = compact
     ? "mt-1 w-full rounded-lg bg-orange px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
@@ -109,6 +136,7 @@ export function JobVisitControls({
     setTrapNote("");
     setTrapLat("");
     setTrapLng("");
+    setTrapSerial("");
     setGeoHint("");
     setCapturesOpen(false);
     setCaptures([]);
@@ -118,6 +146,7 @@ export function JobVisitControls({
     setExclusionNotes("");
     setExclusionEntryLabel("");
     setExclusionEntryArea("");
+    setPhotoNote("");
     setError("");
   }
 
@@ -126,17 +155,77 @@ export function JobVisitControls({
     resetForm();
   }
 
-  if (!action) {
+  if (!action && !doneNext) {
     if (!queuedNote) return null;
     return <p className="mt-1 text-xs text-amber-800">{queuedNote}</p>;
   }
 
   function toggleWork(id: string) {
-    setWorkDone((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+    setWorkDone((current) => {
+      const removing = current.includes(id);
+      const next = removing ? current.filter((item) => item !== id) : [...current, id];
+      if (!removing) {
+        if (id === "capture") {
+          setCapturesOpen(true);
+          setCaptures((rows) => (rows.length ? rows : [blankCapture(species)]));
+        }
+        if (id === "trap_set" || id === "trap_check") {
+          setTrapOpen(true);
+          if (id === "trap_set") setTrapPlaced(true);
+        }
+        if (id === "exclusion") setExclusionOpen(true);
+      }
+      return next;
+    });
   }
 
   function updateCapture(key: string, patch: Partial<CaptureDraft>) {
-    setCaptures((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)));
+    setCaptures((current) =>
+      current.map((item) => {
+        if (item.key !== key) return item;
+        const next = { ...item, ...patch };
+        writeCaptureDefaults({
+          speciesId: next.speciesId !== "__new" ? next.speciesId : undefined,
+          disposition: next.disposition,
+        });
+        return next;
+      }),
+    );
+  }
+
+  async function quickPhoto(file: File | undefined) {
+    if (!file || !file.type.startsWith("image/")) return;
+    setPhotoBusy(true);
+    setPhotoNote("");
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("read failed"));
+        reader.readAsDataURL(file);
+      });
+      const response = await fetch("/api/photos", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobId,
+          propertyId,
+          kind: "DURING",
+          url: dataUrl,
+          caption: "Field visit photo",
+        }),
+      });
+      setPhotoBusy(false);
+      if (!response.ok) {
+        setPhotoNote("Could not save photo.");
+        return;
+      }
+      setPhotoNote("Photo saved on this job.");
+    } catch {
+      setPhotoBusy(false);
+      setPhotoNote("Could not save photo.");
+    }
   }
 
   async function openVisit() {
@@ -240,7 +329,10 @@ export function JobVisitControls({
         trapPlaced,
         trapLat: trapPlaced && trapLat ? Number(trapLat) : undefined,
         trapLng: trapPlaced && trapLng ? Number(trapLng) : undefined,
-        trapNote: trapPlaced ? trapNote.trim() || undefined : undefined,
+        trapNote: trapPlaced
+          ? [trapSerial.trim() ? `Serial ${trapSerial.trim()}` : "", trapNote.trim()].filter(Boolean).join(" · ") ||
+            undefined
+          : undefined,
         captures: capturePayload,
         exclusion,
       }),
@@ -251,21 +343,70 @@ export function JobVisitControls({
       setError(data.error ?? "Could not check out");
       return;
     }
-    closeCheckout();
-    if (isQueuedResponse(data)) {
-      setLocalStatus("COMPLETED");
-      setQueuedNote("Check-out saved on this phone. It uploads when you have data.");
-      return;
+    for (const item of captures) {
+      if (item.speciesId && item.speciesId !== "__new") {
+        writeCaptureDefaults({ speciesId: item.speciesId, disposition: item.disposition });
+      } else {
+        writeCaptureDefaults({ disposition: item.disposition });
+      }
     }
-    router.refresh();
+    closeCheckout();
+    setLocalStatus("COMPLETED");
+    if (isQueuedResponse(data)) {
+      setQueuedNote("Check-out saved on this phone. It uploads when you have data.");
+    }
+    if (nextStop) setDoneNext(nextStop);
+    else router.refresh();
   }
 
   const canSubmit = finishedHere !== null;
 
+  if (doneNext) {
+    return (
+      <div
+        className="mt-2 rounded-xl border border-orange/40 bg-orange/10 p-3"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        <p className="text-xs font-bold uppercase tracking-widest text-orange">Next stop</p>
+        <p className="mt-1 text-sm font-semibold">{doneNext.number} · {doneNext.title}</p>
+        <p className="text-xs text-stone-600">{doneNext.address}</p>
+        <div className="mt-3 flex gap-2">
+          <NavigateLink
+            destination={{ address: doneNext.address, lat: doneNext.lat, lng: doneNext.lng }}
+            label="Navigate"
+            className="flex-1 [&>a]:w-full [&>a]:justify-center"
+          />
+          <Link
+            href={`/jobs/${doneNext.id}`}
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg bg-orange px-3 text-sm font-semibold text-white"
+            onClick={() => {
+              setDoneNext(null);
+              router.refresh();
+            }}
+          >
+            Open & check in
+          </Link>
+        </div>
+        <button
+          type="button"
+          className="mt-2 w-full text-center text-xs font-semibold text-stone-500"
+          onClick={() => {
+            setDoneNext(null);
+            router.refresh();
+          }}
+        >
+          Dismiss
+        </button>
+        {queuedNote ? <p className="mt-2 text-xs text-amber-800">{queuedNote}</p> : null}
+      </div>
+    );
+  }
+
   return (
     <div onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
       <button id="check-in" type="button" disabled={saving} className={buttonClass} onClick={() => void openVisit()}>
-        {saving ? "Checking in…" : "Check in"}
+        {saving ? "Checking in…" : action === "check-out" ? "On site" : "Check in"}
       </button>
       {error && !open ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
       {queuedNote && !open ? <p className="mt-1 text-xs text-amber-800">{queuedNote}</p> : null}
@@ -418,6 +559,29 @@ export function JobVisitControls({
                 />
               </label>
 
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input
+                  ref={photoRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(event) => {
+                    void quickPhoto(event.target.files?.[0]);
+                    event.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={photoBusy}
+                  onClick={() => photoRef.current?.click()}
+                  className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold disabled:opacity-60"
+                >
+                  {photoBusy ? "Saving photo…" : "Quick photo"}
+                </button>
+                {photoNote ? <span className="text-xs text-stone-600">{photoNote}</span> : null}
+              </div>
+
               <div className="mt-4 rounded-xl border border-line bg-background/60">
                 <button
                   type="button"
@@ -425,7 +589,7 @@ export function JobVisitControls({
                     const next = !capturesOpen;
                     setCapturesOpen(next);
                     if (next && captures.length === 0) {
-                      setCaptures([blankCapture(species[0]?.id ?? "")]);
+                      setCaptures([blankCapture(species)]);
                       if (!workDone.includes("capture")) setWorkDone((current) => [...current, "capture"]);
                     }
                   }}
@@ -536,7 +700,7 @@ export function JobVisitControls({
                     ))}
                     <button
                       type="button"
-                      onClick={() => setCaptures((current) => [...current, blankCapture(species[0]?.id ?? "")])}
+                      onClick={() => setCaptures((current) => [...current, blankCapture(species)])}
                       className="text-sm font-semibold text-orange"
                     >
                       + Another capture
@@ -551,7 +715,16 @@ export function JobVisitControls({
                   onClick={() => {
                     const next = !trapOpen;
                     setTrapOpen(next);
-                    if (next) setTrapPlaced(true);
+                    if (next) {
+                      setTrapPlaced(true);
+                    } else {
+                      setTrapPlaced(false);
+                      setTrapNote("");
+                      setTrapLat("");
+                      setTrapLng("");
+                      setTrapSerial("");
+                      setGeoHint("");
+                    }
                   }}
                   className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold"
                 >
@@ -573,6 +746,24 @@ export function JobVisitControls({
                     </label>
                     {trapPlaced ? (
                       <>
+                        <div className="flex flex-wrap items-end gap-2">
+                          <label className="block min-w-0 flex-1 text-sm">
+                            Serial (optional)
+                            <input
+                              value={trapSerial}
+                              onChange={(event) => setTrapSerial(event.target.value)}
+                              className={inputClass}
+                              placeholder="T-014"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setScanOpen(true)}
+                            className="mb-0.5 rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold"
+                          >
+                            Scan
+                          </button>
+                        </div>
                         <label className="block text-sm">
                           Where (description)
                           <input
@@ -698,6 +889,17 @@ export function JobVisitControls({
           </form>
         </div>
       ) : null}
+      <TrapQrScanner
+        open={scanOpen}
+        serials={deployments.map((item) => item.equipment.serialNumber)}
+        allowUnknown
+        onClose={() => setScanOpen(false)}
+        onScan={(serial) => {
+          setTrapSerial(serial);
+          setTrapPlaced(true);
+          setTrapOpen(true);
+        }}
+      />
     </div>
   );
 }

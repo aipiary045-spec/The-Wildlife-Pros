@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { EmergencyFieldBanner } from "@/components/emergency/EmergencyFieldBanner";
 import { EmergencyTeamBanner } from "@/components/emergency/EmergencyTeamBanner";
 import { FieldJobList } from "@/components/field/FieldJobList";
+import { FieldModeToggle } from "@/components/field/FieldModeToggle";
 import { OnSiteNowBanner } from "@/components/field/OnSiteNowBanner";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 export default async function FieldPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; date?: string }>;
+  searchParams: Promise<{ view?: string; date?: string; mode?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -28,6 +29,7 @@ export default async function FieldPage({
   const params = await searchParams;
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
+  const trapCheckMode = params.mode === "traps";
   const { from, to, days } = scheduleRange(view, date);
   const technicianFilter = isTechnician(session.role) ? session.id : undefined;
   const myTime = await getMyTimesheet(session.id);
@@ -155,6 +157,7 @@ export default async function FieldPage({
       </div>
       <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
       <ScheduleToolbar view={view} date={date} basePath="/field" />
+      <FieldModeToggle view={view} date={date} trapCheckMode={trapCheckMode} />
       <FieldJobList
         jobs={sortedJobs}
         days={days}
@@ -164,6 +167,7 @@ export default async function FieldPage({
         notifyByJobId={notifyByJobId}
         onSiteJobId={myOpenCheckIn?.jobId}
         species={species}
+        trapCheckMode={trapCheckMode}
       />
     </div>
   );

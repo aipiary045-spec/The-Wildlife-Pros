@@ -18,11 +18,14 @@ export function TrapQrScanner({
   serials,
   onClose,
   onScan,
+  allowUnknown = false,
 }: {
   open: boolean;
   serials: string[];
   onClose: () => void;
   onScan: (serial: string) => void;
+  /** When true, accept any T-### / QR payload even if not in the inventory list. */
+  allowUnknown?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [manual, setManual] = useState("");
@@ -49,7 +52,9 @@ export function TrapQrScanner({
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setCameraReady(true);
-        const detector = new window.BarcodeDetector!({ formats: ["qr_code"] });
+        const detector = new window.BarcodeDetector!({
+          formats: ["qr_code", "code_128", "code_39", "codabar", "ean_13"],
+        });
         const tick = async () => {
           if (cancelled || !videoRef.current) return;
           try {
@@ -92,7 +97,7 @@ export function TrapQrScanner({
       setError("Enter a serial like T-014 or scan a trap QR.");
       return;
     }
-    if (!serials.some((item) => item.toUpperCase() === serial)) {
+    if (!allowUnknown && !serials.some((item) => item.toUpperCase() === serial)) {
       setError(`No trap ${serial} in inventory. Add it first or pick from the list.`);
       return;
     }
