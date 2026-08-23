@@ -4,6 +4,7 @@ import { ApproveButton } from "@/components/timesheets/ApproveButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PeriodToolbar } from "@/components/schedule/PeriodToolbar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getMyOpenCheckIn } from "@/lib/active-checkins.server";
 import { getAppContext } from "@/lib/app-context";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { hoursByDay } from "@/lib/hours";
@@ -25,7 +26,9 @@ export default async function TimesheetsPage({
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
   const { from, to } = scheduleRange(view, date);
-  const myTime = session ? await getMyTimesheet(session.id) : { current: null, recent: [] };
+  const [myTime, myOpenCheckIn] = session
+    ? await Promise.all([getMyTimesheet(session.id), getMyOpenCheckIn(session.id)])
+    : [{ current: null, recent: [] }, null];
   const techView = Boolean(context?.fieldView);
   const canApproveHours = Boolean(session && isOfficeRole(session.role));
 
@@ -61,7 +64,15 @@ export default async function TimesheetsPage({
         }
         related={techView ? undefined : [{ href: "/time-off", label: "Time off" }, { href: "/reports", label: "Reports" }]}
       />
-      <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
+      <ClockControls
+        initialCurrent={myTime.current}
+        initialRecent={myTime.recent}
+        openJob={
+          myOpenCheckIn
+            ? { id: myOpenCheckIn.jobId, number: myOpenCheckIn.jobNumber, title: myOpenCheckIn.jobTitle }
+            : null
+        }
+      />
       <PeriodToolbar view={view} date={date} basePath="/timesheets" dayLabel="Day hours" weekLabel="Week hours" />
       {techView ? (
         <article className="rounded-2xl border border-line bg-panel p-4">

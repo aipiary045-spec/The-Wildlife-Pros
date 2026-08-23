@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 type MyTime = {
   current: ComponentProps<typeof ClockControls>["initialCurrent"];
   recent: ComponentProps<typeof ClockControls>["initialRecent"];
+  openJob?: ComponentProps<typeof ClockControls>["openJob"];
 };
 
 type EmergencyData = {
@@ -103,7 +104,14 @@ export function OfficeShell({ role, name, fieldView, sidebarFooter, myTime, emer
             ) : null}
             <GlobalSearch />
             <NotificationCenter showIntake={!fieldView} />
-            {myTime ? <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} /> : null}
+            {myTime ? (
+              <ClockControls
+                compact
+                initialCurrent={myTime.current}
+                initialRecent={myTime.recent}
+                openJob={myTime.openJob ?? null}
+              />
+            ) : null}
           </div>
         </header>
         {!fieldView ? <EmergencyStatusStrip /> : null}

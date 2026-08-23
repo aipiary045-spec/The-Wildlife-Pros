@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -17,14 +18,23 @@ export type Sheet = {
   punches: Array<{ id: string; clockInAt: string; clockOutAt: string | null; note: string | null }>;
 };
 
+export type OpenJobHint = {
+  id: string;
+  number: string;
+  title: string;
+};
+
 export function ClockControls({
   compact = false,
   initialCurrent = null,
   initialRecent = [],
+  openJob = null,
 }: {
   compact?: boolean;
   initialCurrent?: Sheet | null;
   initialRecent?: Sheet[];
+  /** Soft hint when already on site — clock-out still confirms via API. */
+  openJob?: OpenJobHint | null;
 }) {
   const router = useRouter();
   const [sheet, setSheet] = useState<Sheet | null>(initialCurrent);
@@ -33,6 +43,7 @@ export function ClockControls({
   const [error, setError] = useState("");
   const [queuedNote, setQueuedNote] = useState("");
   const [now, setNow] = useState(() => Date.now());
+  const [openJobConflict, setOpenJobConflict] = useState<OpenJobHint | null>(null);
 
   useEffect(() => {
     if (!sheet?.open) return;
@@ -46,6 +57,8 @@ export function ClockControls({
         sheet.breakMin,
       )
     : 0;
+
+  const onSiteHint = openJobConflict ?? (sheet?.open ? openJob : null);
 
   function applyQueuedClock(action: "in" | "out") {
     const stamp = new Date().toISOString();
@@ -69,21 +82,32 @@ export function ClockControls({
     });
   }
 
-  async function clock(action: "in" | "out") {
+  async function clock(action: "in" | "out", force = false) {
     setBusy(true);
     setError("");
     setQueuedNote("");
+    if (action === "out" && !force) setOpenJobConflict(null);
     const response = await fieldFetch("/api/timesheets/clock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, force: force || undefined }),
     });
-    const data = (await response.json()) as { error?: string; timesheet?: Sheet; queued?: boolean };
+    const data = (await response.json()) as {
+      error?: string;
+      timesheet?: Sheet;
+      queued?: boolean;
+      openJob?: OpenJobHint | null;
+    };
     setBusy(false);
     if (!response.ok) {
+      if (action === "out" && response.status === 409 && data.openJob?.id) {
+        setOpenJobConflict(data.openJob);
+        return;
+      }
       setError(data.error ?? "Could not update clock");
       return;
     }
+    setOpenJobConflict(null);
     if (isQueuedResponse(data)) {
       applyQueuedClock(action);
       setQueuedNote("Saved on this phone. It uploads when you have data.");
@@ -103,6 +127,51 @@ export function ClockControls({
     router.refresh();
   }
 
+  const conflictModal = openJobConflict ? (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 sm:items-center sm:justify-center sm:p-3">
+      <button
+        type="button"
+        aria-label="Dismiss"
+        className="min-h-0 flex-1 sm:absolute sm:inset-0 sm:flex-none"
+        onClick={() => setOpenJobConflict(null)}
+      />
+      <div
+        role="dialog"
+        aria-labelledby="clock-out-open-job-title"
+        className="relative z-10 w-full rounded-t-2xl border border-line bg-panel p-5 shadow-xl sm:max-w-md sm:rounded-2xl"
+      >
+        <p className="text-xs font-bold uppercase tracking-widest text-orange">Still on a job</p>
+        <h2 id="clock-out-open-job-title" className="mt-1 font-display text-2xl">
+          Check out of the stop first?
+        </h2>
+        <p className="mt-2 text-sm text-stone-600">
+          Day clock and job visit are separate. You can finish the visit, or clock out of the day and leave the visit open.
+        </p>
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">{openJobConflict.number}</p>
+          <p className="mt-0.5 font-semibold text-emerald-950">{openJobConflict.title}</p>
+        </div>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Link
+            href={`/jobs/${openJobConflict.id}`}
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg bg-orange px-4 text-sm font-semibold text-white"
+            onClick={() => setOpenJobConflict(null)}
+          >
+            Open that job
+          </Link>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void clock("out", true)}
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold disabled:opacity-60"
+          >
+            {busy ? "Clocking out…" : "Clock out anyway"}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   if (compact) {
     return (
       <div className="flex max-w-[12rem] flex-col items-end gap-1">
@@ -119,8 +188,14 @@ export function ClockControls({
             {sheet?.open ? "Clock out" : "Clock in"}
           </button>
         </div>
+        {onSiteHint && sheet?.open ? (
+          <p className="max-w-[11rem] text-right text-[10px] text-amber-800">
+            On site · {onSiteHint.number}
+          </p>
+        ) : null}
         {error ? <p className="text-[10px] text-rose-700">{error}</p> : null}
         {queuedNote ? <p className="text-[10px] text-amber-800">Saved on phone</p> : null}
+        {conflictModal}
       </div>
     );
   }
@@ -137,11 +212,21 @@ export function ClockControls({
         </div>
         {sheet ? <StatusBadge status={sheet.status} /> : null}
       </div>
+      {onSiteHint && sheet?.open ? (
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          Still checked in on{" "}
+          <Link href={`/jobs/${onSiteHint.id}`} className="font-semibold text-orange underline-offset-2 hover:underline">
+            {onSiteHint.number}
+          </Link>
+          {" — "}
+          {onSiteHint.title}. Check out there when you leave the stop.
+        </p>
+      ) : null}
       <div className="mt-4 flex gap-2">
         <button
           type="button"
           disabled={busy || Boolean(sheet?.open)}
-          onClick={() => clock("in")}
+          onClick={() => void clock("in")}
           className="flex-1 rounded-lg bg-orange py-2.5 text-sm font-semibold text-white disabled:opacity-40"
         >
           Clock in
@@ -149,7 +234,7 @@ export function ClockControls({
         <button
           type="button"
           disabled={busy || !sheet?.open}
-          onClick={() => clock("out")}
+          onClick={() => void clock("out")}
           className="flex-1 rounded-lg bg-ink py-2.5 text-sm font-semibold text-white disabled:opacity-40"
         >
           Clock out
@@ -173,6 +258,7 @@ export function ClockControls({
           {formatDuration(recent.reduce((sum, item) => sum + (item.id === sheet?.id ? liveMin : item.workedMin), 0))}
         </p>
       ) : null}
+      {conflictModal}
     </section>
   );
 }

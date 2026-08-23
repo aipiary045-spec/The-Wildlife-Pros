@@ -153,7 +153,15 @@ export default async function FieldPage({
           {optimizedStops > 0 ? " Dispatch saved a driving order for these stops." : ""}
         </p>
       </div>
-      <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
+      <ClockControls
+        initialCurrent={myTime.current}
+        initialRecent={myTime.recent}
+        openJob={
+          myOpenCheckIn
+            ? { id: myOpenCheckIn.jobId, number: myOpenCheckIn.jobNumber, title: myOpenCheckIn.jobTitle }
+            : null
+        }
+      />
       <ScheduleToolbar view={view} date={date} basePath="/field" />
       <FieldJobList
         jobs={sortedJobs}
