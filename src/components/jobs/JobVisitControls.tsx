@@ -27,7 +27,11 @@ export function JobVisitControls({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [openJobHref, setOpenJobHref] = useState<string | null>(null);
+  const [openJobConflict, setOpenJobConflict] = useState<{
+    id: string;
+    number: string;
+    title: string;
+  } | null>(null);
   const [queuedNote, setQueuedNote] = useState("");
   const [notes, setNotes] = useState("");
   const [workDone, setWorkDone] = useState<string[]>([]);
@@ -85,7 +89,7 @@ export function JobVisitControls({
   async function checkIn() {
     setSaving(true);
     setError("");
-    setOpenJobHref(null);
+    setOpenJobConflict(null);
     setQueuedNote("");
     const response = await fieldFetch(`/api/jobs/${jobId}/check-in`, { method: "POST" });
     const data = (await response.json()) as {
@@ -95,8 +99,11 @@ export function JobVisitControls({
     };
     setSaving(false);
     if (!response.ok) {
+      if (data.openJob?.id) {
+        setOpenJobConflict(data.openJob);
+        return;
+      }
       setError(data.error ?? "Could not check in");
-      if (data.openJob?.id) setOpenJobHref(`/jobs/${data.openJob.id}`);
       return;
     }
     if (isQueuedResponse(data)) {
@@ -180,20 +187,53 @@ export function JobVisitControls({
           Check out
         </button>
       )}
-      {error && !open ? (
-        <p className="mt-1 text-xs text-rose-700">
-          {error}
-          {openJobHref ? (
-            <>
-              {" "}
-              <Link href={openJobHref} className="font-semibold underline">
+      {error && !open ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
+      {queuedNote && !open ? <p className="mt-1 text-xs text-amber-800">{queuedNote}</p> : null}
+
+      {openJobConflict ? (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 sm:items-center sm:justify-center sm:p-3">
+          <button
+            type="button"
+            aria-label="Dismiss"
+            className="min-h-0 flex-1 sm:absolute sm:inset-0 sm:flex-none"
+            onClick={() => setOpenJobConflict(null)}
+          />
+          <div
+            role="dialog"
+            aria-labelledby="open-job-conflict-title"
+            className="relative z-10 w-full rounded-t-2xl border border-line bg-panel p-5 shadow-xl sm:max-w-md sm:rounded-2xl"
+          >
+            <p className="text-xs font-bold uppercase tracking-widest text-orange">Still checked in</p>
+            <h2 id="open-job-conflict-title" className="mt-1 font-display text-2xl">
+              Finish the job you&apos;re on first
+            </h2>
+            <p className="mt-2 text-sm text-stone-600">
+              You&apos;re already checked in at another stop. Check out there before starting this one.
+            </p>
+            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                {openJobConflict.number}
+              </p>
+              <p className="mt-0.5 font-semibold text-emerald-950">{openJobConflict.title}</p>
+            </div>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <Link
+                href={`/jobs/${openJobConflict.id}`}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg bg-orange px-4 text-sm font-semibold text-white"
+              >
                 Open that job
               </Link>
-            </>
-          ) : null}
-        </p>
+              <button
+                type="button"
+                onClick={() => setOpenJobConflict(null)}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold"
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
-      {queuedNote && !open ? <p className="mt-1 text-xs text-amber-800">{queuedNote}</p> : null}
 
       {open ? (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 sm:justify-center sm:p-3">
