@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { jsonError, withAuth } from "@/lib/api";
 import { parseOccurredAt } from "@/lib/offline";
+import { resolveSpeciesId } from "@/lib/species";
 
 export const GET = withAuth(async () => {
   const captures = await prisma.captureEvent.findMany({
@@ -16,28 +17,15 @@ export const GET = withAuth(async () => {
   return NextResponse.json({ captures });
 });
 
-async function resolveSpecies(organizationId: string, body: Record<string, unknown>) {
-  if (typeof body.speciesId === "string" && body.speciesId) {
-    return body.speciesId;
-  }
-  const name = typeof body.speciesName === "string" ? body.speciesName.trim() : "";
-  if (!name) throw new Error("Pick a species or type a new one.");
-  const existing = await prisma.species.findFirst({
-    where: { organizationId, commonName: { equals: name, mode: "insensitive" } },
-  });
-  if (existing) return existing.id;
-  const created = await prisma.species.create({
-    data: { organizationId, commonName: name },
-  });
-  return created.id;
-}
-
 export const POST = withAuth(async (session, request) => {
   const body = (await request.json()) as Record<string, unknown>;
   if (!body.jobId) return jsonError("jobId is required");
   let speciesId: string;
   try {
-    speciesId = await resolveSpecies(session.organizationId, body);
+    speciesId = await resolveSpeciesId(session.organizationId, {
+      speciesId: typeof body.speciesId === "string" ? body.speciesId : undefined,
+      speciesName: typeof body.speciesName === "string" ? body.speciesName : undefined,
+    });
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Pick a species.");
   }

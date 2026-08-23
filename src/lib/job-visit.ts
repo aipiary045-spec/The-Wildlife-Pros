@@ -38,6 +38,33 @@ export const SITE_LEFT_OPTIONS = [
   { id: "customer_will_call", label: "Customer will call us" },
 ] as const;
 
+const DISPOSITION_SET = new Set([
+  "RELOCATED",
+  "RELEASED_ON_SITE",
+  "EUTHANIZED",
+  "TRANSFERRED",
+  "ESCAPED",
+  "FOUND_DEAD",
+  "OTHER",
+]);
+
+export type CheckoutCaptureInput = {
+  speciesId?: string;
+  speciesName?: string;
+  quantity: number;
+  disposition: string;
+  deploymentId?: string;
+  locationNote?: string;
+};
+
+export type CheckoutExclusionInput = {
+  material: string;
+  quantity?: string;
+  notes?: string;
+  entryLabel?: string;
+  entryArea?: string;
+};
+
 export type CheckoutInput = {
   outcome: CheckoutOutcome;
   notes?: string;
@@ -47,6 +74,8 @@ export type CheckoutInput = {
   trapLat?: number;
   trapLng?: number;
   trapNote?: string;
+  captures?: CheckoutCaptureInput[];
+  exclusion?: CheckoutExclusionInput;
   followUp?: {
     returnInDays: number;
     dueOn: Date;
@@ -94,6 +123,47 @@ export function parseCheckoutBody(body: Record<string, unknown>): CheckoutInput 
     throw new JobVisitError("Trap longitude must be between -180 and 180.");
   }
 
+  const captures: CheckoutCaptureInput[] = [];
+  if (Array.isArray(body.captures)) {
+    for (const raw of body.captures) {
+      if (!raw || typeof raw !== "object") continue;
+      const item = raw as Record<string, unknown>;
+      const speciesId = typeof item.speciesId === "string" ? item.speciesId.trim() : "";
+      const speciesName = typeof item.speciesName === "string" ? item.speciesName.trim() : "";
+      if (!speciesId && !speciesName) continue;
+      const disposition =
+        typeof item.disposition === "string" && item.disposition in DISPOSITION_SET
+          ? item.disposition
+          : "RELOCATED";
+      const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+      const deploymentId = typeof item.deploymentId === "string" ? item.deploymentId.trim() : "";
+      const locationNote = typeof item.locationNote === "string" ? item.locationNote.trim() : "";
+      captures.push({
+        speciesId: speciesId || undefined,
+        speciesName: speciesName || undefined,
+        quantity,
+        disposition,
+        deploymentId: deploymentId || undefined,
+        locationNote: locationNote || undefined,
+      });
+    }
+  }
+
+  let exclusion: CheckoutExclusionInput | undefined;
+  if (body.exclusion && typeof body.exclusion === "object") {
+    const raw = body.exclusion as Record<string, unknown>;
+    const material = typeof raw.material === "string" ? raw.material.trim() : "";
+    if (material) {
+      exclusion = {
+        material,
+        quantity: typeof raw.quantity === "string" ? raw.quantity.trim() || undefined : undefined,
+        notes: typeof raw.notes === "string" ? raw.notes.trim() || undefined : undefined,
+        entryLabel: typeof raw.entryLabel === "string" ? raw.entryLabel.trim() || undefined : undefined,
+        entryArea: typeof raw.entryArea === "string" ? raw.entryArea.trim() || undefined : undefined,
+      };
+    }
+  }
+
   const base: CheckoutInput = {
     outcome,
     notes: notes || undefined,
@@ -103,6 +173,8 @@ export function parseCheckoutBody(body: Record<string, unknown>): CheckoutInput 
     trapLat: trapPlaced ? trapLat : undefined,
     trapLng: trapPlaced ? trapLng : undefined,
     trapNote: trapPlaced && trapNote ? trapNote : undefined,
+    captures: captures.length ? captures : undefined,
+    exclusion,
   };
 
   if (outcome === "complete") return base;
@@ -132,6 +204,10 @@ export function checkoutSummary(input: CheckoutInput) {
     input.trapPlaced
       ? `Trap placed${input.trapLat != null && input.trapLng != null ? ` at ${input.trapLat.toFixed(5)}, ${input.trapLng.toFixed(5)}` : ""}${input.trapNote ? ` · ${input.trapNote}` : ""}`
       : "",
+    input.captures?.length
+      ? `Captures: ${input.captures.map((item) => `${item.quantity}× ${item.speciesName || item.speciesId || "species"} (${item.disposition})`).join("; ")}`
+      : "",
+    input.exclusion ? `Exclusion: ${input.exclusion.material}${input.exclusion.entryLabel ? ` · ${input.exclusion.entryLabel}` : ""}` : "",
     input.notes ?? "",
   ];
   return parts.filter(Boolean).join("\n");

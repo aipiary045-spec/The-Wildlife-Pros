@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { hasOpenPunch } from "@/lib/time";
 import type { SessionUser } from "@/lib/auth";
 import { JobVisitError, checkoutSummary, visitActionForStatus, type CheckoutInput } from "@/lib/job-visit";
+import { resolveSpeciesId } from "@/lib/species";
 
 export { JobVisitError };
 
@@ -202,6 +203,56 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
         });
       }
     }
+
+    for (const capture of input.captures ?? []) {
+      const speciesId = await resolveSpeciesId(user.organizationId, {
+        speciesId: capture.speciesId,
+        speciesName: capture.speciesName,
+      });
+      await tx.captureEvent.create({
+        data: {
+          jobId,
+          speciesId,
+          technicianId: user.id,
+          deploymentId: capture.deploymentId,
+          quantity: capture.quantity,
+          disposition: capture.disposition as never,
+          locationNote: capture.locationNote,
+          capturedAt: occurredAt,
+        },
+      });
+      if (capture.deploymentId) {
+        await tx.equipmentDeployment.update({
+          where: { id: capture.deploymentId },
+          data: { status: "ACTIVE_CAPTURE" },
+        });
+      }
+    }
+
+    if (input.exclusion) {
+      let entryPointId: string | undefined;
+      if (input.exclusion.entryLabel) {
+        const entry = await tx.entryPoint.create({
+          data: {
+            propertyId: job.propertyId,
+            jobId,
+            label: input.exclusion.entryLabel,
+            area: input.exclusion.entryArea,
+          },
+        });
+        entryPointId = entry.id;
+      }
+      await tx.exclusionWork.create({
+        data: {
+          jobId,
+          entryPointId,
+          material: input.exclusion.material,
+          quantity: input.exclusion.quantity,
+          notes: input.exclusion.notes,
+        },
+      });
+    }
+
     await tx.job.update({
       where: { id: jobId },
       data: {
