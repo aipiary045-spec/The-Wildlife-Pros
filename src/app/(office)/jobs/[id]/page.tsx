@@ -136,6 +136,8 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             technicianId={job.technicianId}
             technicians={technicians}
             species={species}
+            propertyId={job.propertyId}
+            clientPhone={job.client.phone}
             deployments={job.deployments.map((item) => ({
               id: item.id,
               equipment: { serialNumber: item.equipment.serialNumber },

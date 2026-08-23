@@ -59,6 +59,7 @@ export function JobVisitControls({
   deployments = [],
   nextStop = null,
   propertyId,
+  clientPhone = null,
 }: {
   jobId: string;
   status: string;
@@ -70,6 +71,7 @@ export function JobVisitControls({
   deployments?: Array<{ id: string; equipment: { serialNumber: string } }>;
   nextStop?: VisitNextStop | null;
   propertyId?: string;
+  clientPhone?: string | null;
 }) {
   const router = useRouter();
   const photoRef = useRef<HTMLInputElement>(null);
@@ -108,6 +110,8 @@ export function JobVisitControls({
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoNote, setPhotoNote] = useState("");
   const [doneNext, setDoneNext] = useState<VisitNextStop | null>(null);
+  const [notifyCustomerSummary, setNotifyCustomerSummary] = useState(Boolean(clientPhone));
+  const [summarySmsNote, setSummarySmsNote] = useState("");
 
   const buttonClass = compact
     ? "mt-1 w-full rounded-lg bg-orange px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
@@ -125,6 +129,10 @@ export function JobVisitControls({
     if (!open || !trapOpen || !trapPlaced || trapLat || trapLng) return;
     fillMyLocation(true);
   }, [open, trapOpen, trapPlaced, trapLat, trapLng]);
+
+  useEffect(() => {
+    setNotifyCustomerSummary(Boolean(clientPhone));
+  }, [clientPhone]);
 
   function resetForm() {
     setNotes("");
@@ -147,6 +155,8 @@ export function JobVisitControls({
     setExclusionEntryLabel("");
     setExclusionEntryArea("");
     setPhotoNote("");
+    setSummarySmsNote("");
+    setNotifyCustomerSummary(Boolean(clientPhone));
     setError("");
   }
 
@@ -156,8 +166,12 @@ export function JobVisitControls({
   }
 
   if (!action && !doneNext) {
-    if (!queuedNote) return null;
-    return <p className="mt-1 text-xs text-amber-800">{queuedNote}</p>;
+    if (!queuedNote && !summarySmsNote) return null;
+    return (
+      <p className="mt-1 text-xs text-amber-800">
+        {[queuedNote, summarySmsNote].filter(Boolean).join(" ")}
+      </p>
+    );
   }
 
   function toggleWork(id: string) {
@@ -291,6 +305,7 @@ export function JobVisitControls({
     setSaving(true);
     setError("");
     setQueuedNote("");
+    setSummarySmsNote("");
     const needsReturn = !finishedHere;
     const capturePayload = captures
       .map((item) => {
@@ -335,9 +350,14 @@ export function JobVisitControls({
           : undefined,
         captures: capturePayload,
         exclusion,
+        notifyCustomerSummary: notifyCustomerSummary && Boolean(clientPhone),
       }),
     });
-    const data = (await response.json()) as { error?: string; queued?: boolean };
+    const data = (await response.json()) as {
+      error?: string;
+      queued?: boolean;
+      customerSummarySms?: { sent: boolean; error?: string } | null;
+    };
     setSaving(false);
     if (!response.ok) {
       setError(data.error ?? "Could not check out");
@@ -354,6 +374,10 @@ export function JobVisitControls({
     setLocalStatus("COMPLETED");
     if (isQueuedResponse(data)) {
       setQueuedNote("Check-out saved on this phone. It uploads when you have data.");
+    } else if (data.customerSummarySms?.sent) {
+      setSummarySmsNote("Visit summary texted to the customer.");
+    } else if (data.customerSummarySms && !data.customerSummarySms.sent) {
+      setSummarySmsNote("Could not text the customer — try Text customer from the job.");
     }
     if (nextStop) setDoneNext(nextStop);
     else router.refresh();
@@ -399,6 +423,7 @@ export function JobVisitControls({
           Dismiss
         </button>
         {queuedNote ? <p className="mt-2 text-xs text-amber-800">{queuedNote}</p> : null}
+        {summarySmsNote ? <p className="mt-2 text-xs text-emerald-800">{summarySmsNote}</p> : null}
       </div>
     );
   }
@@ -410,6 +435,7 @@ export function JobVisitControls({
       </button>
       {error && !open ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
       {queuedNote && !open ? <p className="mt-1 text-xs text-amber-800">{queuedNote}</p> : null}
+      {summarySmsNote && !open ? <p className="mt-1 text-xs text-emerald-800">{summarySmsNote}</p> : null}
 
       {openJobConflict ? (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 sm:items-center sm:justify-center sm:p-3">
@@ -870,6 +896,23 @@ export function JobVisitControls({
                   </div>
                 ) : null}
               </div>
+
+              {clientPhone ? (
+                <label className="mt-4 flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={notifyCustomerSummary}
+                    onChange={(event) => setNotifyCustomerSummary(event.target.checked)}
+                  />
+                  <span>
+                    Text customer a visit summary
+                    <span className="mt-0.5 block text-xs font-normal text-stone-500">
+                      Sends what you logged today — work, captures, traps, and notes.
+                    </span>
+                  </span>
+                </label>
+              ) : null}
 
               {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}
             </div>

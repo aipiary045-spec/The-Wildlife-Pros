@@ -166,6 +166,8 @@ export function AppointmentChip({
           status={job.status}
           technicianId={job.technicianId}
           technicians={technicians}
+          propertyId={job.propertyId}
+          clientPhone={job.client.phone}
           compact
         />
       ) : null}

@@ -206,6 +206,7 @@ export function FieldJobList({
                         technicians={technicians}
                         species={species}
                         propertyId={job.property.id}
+                        clientPhone={job.client.phone}
                         deployments={job.deployments.map((item) => ({
                           id: item.id,
                           equipment: { serialNumber: item.equipment.serialNumber },
