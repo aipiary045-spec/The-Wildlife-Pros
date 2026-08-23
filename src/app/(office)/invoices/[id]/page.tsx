@@ -8,7 +8,6 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { canAccessInvoice } from "@/lib/billing-access";
-import { isTechnician } from "@/lib/paths";
 import { squarePublicConfig } from "@/lib/square";
 import { clientName, formatMoney } from "@/lib/utils";
 
@@ -29,14 +28,13 @@ export default async function InvoiceDetailPage({ params }: PageProps<"/invoices
     },
   });
   if (!invoice) notFound();
-  if (!session || !canAccessInvoice(session, invoice)) notFound();
-  const techView = isTechnician(session.role);
+  if (!session || !canAccessInvoice(session)) notFound();
 
   return (
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: techView ? "Work order" : "Invoices", href: techView && invoice.job ? `/jobs/${invoice.job.id}` : "/invoices" },
+          { label: "Invoices", href: "/invoices" },
           { label: clientName(invoice.client), href: `/clients/${invoice.clientId}` },
           { label: invoice.number },
         ]}
@@ -52,7 +50,7 @@ export default async function InvoiceDetailPage({ params }: PageProps<"/invoices
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={invoice.status} />
-          {techView ? null : <InvoiceActions invoiceId={invoice.id} status={invoice.status} />}
+          <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
         </div>
       </div>
       <section className="grid gap-6 lg:grid-cols-2">

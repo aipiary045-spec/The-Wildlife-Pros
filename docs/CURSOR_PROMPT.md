@@ -19,11 +19,11 @@ Build and extend a web + mobile-ready operations system that feels as complete a
 - Check in / check out on the job, field route, and calendar. Check-out asks if the customer needs a follow-up visit or if the job is complete. Follow-up creates a new job for the same client.
 - Recurring service visits
 - Digital quotes: create, send, client hub approve/decline, convert to a job
-- Invoices generated from completed jobs; mark sent; balances and staff Square collection
+- Invoices generated from completed jobs; mark sent; balances and office Square collection
 - Recurring visits generated from a job (`RecurringSchedule`)
-- **Payments are Square-only and staff-collected.** Clients do not log into CritterOps to pay. Techs/office take Terminal, POS, cash/check, or a staff-keyed Square card charge on the invoice.
+- **Payments are Square-only and office-collected.** Clients do not log into CritterOps to pay. Technicians write quotes and add services; they do not create invoices or take payment. Office collects Terminal, POS, cash/check, or a staff-keyed Square card charge on the invoice.
 - Optional Client Hub for visit info / quote approval only — never billing
-- Technician field view (phone-first)
+- Technician field view (phone-first): route, jobs, quotes with services, timesheets — no invoicing
 - Route optimization for a day’s stops
 - Daily timesheets: technicians clock in/out (multiple punches per day), office reviews and approves hours
 - Team: owners/admins (and dispatch for techs) add logins and disable people instead of deleting them
@@ -69,7 +69,7 @@ Everything else requires a session (`src/proxy.ts`).
 - A **Client** owns many **Properties**. Jobs always belong to one property.
 - Quotes and invoices are document records with line items; totals are stored denormalized.
 - Completing a job should make “create invoice” a one-click API (`POST /api/invoices` with `jobId`).
-- Do not add customer self-serve invoice payment. Square is the processor. `POST /api/payments/square` charges a staff-tokenized card; `POST /api/payments` records Terminal/POS/cash/check.
+- Do not add customer self-serve invoice payment. Square is the processor. `POST /api/payments/square` charges a staff-tokenized card; `POST /api/payments` records Terminal/POS/cash/check. Technician sessions cannot create invoices or record payments.
 - Equipment has a global serial number. A live **EquipmentDeployment** is the site-specific status. Add inventory on `/inventory`. Deploy and retrieve from the job screen so the trap is attached to the job they are on.
 - Capture events may point at a deployment. Logging a capture should flip that deployment to `ACTIVE_CAPTURE`.
 - Photos must be able to reference job, property, and entry point.
@@ -93,7 +93,7 @@ Everything else requires a session (`src/proxy.ts`).
 | GET/PATCH | `/api/jobs/[id]` | Job + wildlife docs |
 | POST | `/api/jobs/[id]/check-in` | Arrive on site |
 | POST | `/api/jobs/[id]/check-out` | Leave: complete or schedule follow-up |
-| GET/POST | `/api/quotes` | Estimates |
+| GET/POST | `/api/quotes` | Estimates; techs add catalog services on create |
 | PATCH | `/api/quotes/[id]` | send / approve / decline |
 | POST | `/api/quotes/[id]/convert` | Quote → job |
 | GET | `/api/services` | Price list |
@@ -140,7 +140,7 @@ Client hub: /portal/demo-client-hub
 ## What to build next (in order)
 
 1. File uploads to object storage instead of public SVG placeholders
-2. Square Terminal / Mobile Payments SDK for the field app (cards already go through Square on the invoice page)
+2. Square Terminal / Mobile Payments SDK for office collection (cards already go through Square on the invoice page; techs do not take payment)
 3. In-app turn-by-turn (Navigate already opens Google/Apple Maps by address; Routes map preview + Mapbox Matrix/Directions are optional for road-aware optimize)
 4. Push notifications / SMS visit reminders
 5. React Native or PWA packaging of `/field`

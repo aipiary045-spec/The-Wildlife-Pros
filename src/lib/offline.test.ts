@@ -45,12 +45,12 @@ test("pages and GETs the technician phone can reuse offline", () => {
   assert.equal(isCacheableFieldPath("/field"), true);
   assert.equal(isCacheableFieldPath("/jobs/abc"), true);
   assert.equal(isCacheableFieldPath("/quotes/abc"), true);
-  assert.equal(isCacheableFieldPath("/invoices/abc"), true);
+  assert.equal(isCacheableFieldPath("/invoices/abc"), false);
   assert.equal(isCacheableFieldPath("/dashboard"), false);
   assert.equal(isCacheableApiGet("/api/timesheets/me"), true);
   assert.equal(isCacheableApiGet("/api/jobs/late-checkin"), true);
   assert.equal(isCacheableApiGet("/api/quotes/q1"), true);
-  assert.equal(isCacheableApiGet("/api/invoices/i1"), true);
+  assert.equal(isCacheableApiGet("/api/invoices/i1"), false);
   assert.equal(isCacheableApiGet("/api/clients"), false);
 });
 

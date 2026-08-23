@@ -20,7 +20,7 @@ export const POST = withAuth(async (session, request) => {
     include: { job: { select: { technicianId: true } } },
   });
   if (!invoice) return jsonError("Invoice not found", 404);
-  if (!canAccessInvoice(session, invoice)) return jsonError("You cannot collect on this invoice.", 403);
+  if (!canAccessInvoice(session)) return jsonError("Office collects payment. Technicians do not take invoices.", 403);
   try {
     const result = await recordPayment({
       invoiceId: body.invoiceId,

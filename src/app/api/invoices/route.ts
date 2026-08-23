@@ -6,7 +6,8 @@ import { canBillJob, canBillQuote } from "@/lib/billing-access";
 import { QuoteInvoiceError, convertQuoteToInvoice } from "@/lib/quote-invoice";
 import { nextNumber } from "@/lib/utils";
 
-export const GET = withAuth(async () => {
+export const GET = withAuth(async (session) => {
+  if (!canBillJob(session)) return jsonError("Office invoices only.", 403);
   const invoices = await prisma.invoice.findMany({
     include: { client: true, property: true, job: true, payments: true },
     orderBy: { createdAt: "desc" },
@@ -27,7 +28,7 @@ export const POST = withAuth(async (session, request) => {
   }>;
 
   if (body.quoteId) {
-    if (!canBillQuote(session)) return jsonError("You cannot invoice quotes.", 403);
+    if (!canBillQuote(session)) return jsonError("Office invoices quotes. Technicians do not bill from the field.", 403);
     try {
       const invoice = await convertQuoteToInvoice({ quoteId: body.quoteId, createdById: session.id });
       return NextResponse.json({ invoice }, { status: 201 });
@@ -43,7 +44,7 @@ export const POST = withAuth(async (session, request) => {
       include: { lineItems: true, invoices: { select: { id: true } } },
     });
     if (!job) return jsonError("Job not found", 404);
-    if (!canBillJob(session, job)) return jsonError("You cannot invoice from a work order in the field. Bill from the quote instead.", 403);
+    if (!canBillJob(session)) return jsonError("Office invoices completed work. Technicians do not bill from the field.", 403);
     if (job.invoices.length > 0) return jsonError("This job already has an invoice.");
     clientId = clientId ?? job.clientId;
     propertyId = propertyId ?? job.propertyId;

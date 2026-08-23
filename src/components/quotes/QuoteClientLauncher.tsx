@@ -8,11 +8,13 @@ export function QuoteClientLauncher({
   clientId,
   clients,
   services,
+  techView = false,
 }: {
   clientId?: string;
   clients: ScheduleClient[];
   services: ServiceOption[];
+  techView?: boolean;
 }) {
   if (!clientId) return null;
-  return <NewQuoteButton clients={clients} services={services} initialClientId={clientId} />;
+  return <NewQuoteButton clients={clients} services={services} initialClientId={clientId} techView={techView} />;
 }

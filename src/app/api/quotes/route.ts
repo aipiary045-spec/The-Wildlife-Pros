@@ -24,6 +24,9 @@ export const POST = withAuth(async (session, request) => {
     taxable?: boolean;
     serviceId?: string;
   }>;
+  if (items.length === 0 || items.some((item) => !String(item.name ?? "").trim())) {
+    return jsonError("Add at least one named service.");
+  }
   const totals = lineTotals(items);
   const quote = await prisma.quote.create({
     data: {

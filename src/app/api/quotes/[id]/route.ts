@@ -36,6 +36,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         serviceId?: string;
       }>)
     : null;
+  if (items && (items.length === 0 || items.some((item) => !String(item.name ?? "").trim()))) {
+    return jsonError("Add at least one named service.");
+  }
   const totals = items ? lineTotals(items) : null;
 
   const quote = await prisma.$transaction(async (tx) => {

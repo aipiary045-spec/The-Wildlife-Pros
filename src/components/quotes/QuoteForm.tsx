@@ -14,11 +14,13 @@ export function NewQuoteButton({
   clients,
   services,
   initialClientId,
+  techView = false,
   onClose,
 }: {
   clients: ScheduleClient[];
   services: ServiceOption[];
   initialClientId?: string;
+  techView?: boolean;
   onClose?: () => void;
 }) {
   const [open, setOpen] = useState(Boolean(initialClientId));
@@ -34,7 +36,13 @@ export function NewQuoteButton({
         </button>
       )}
       {open ? (
-        <QuoteForm clients={clients} services={services} initialClientId={initialClientId} onClose={close} />
+        <QuoteForm
+          clients={clients}
+          services={services}
+          initialClientId={initialClientId}
+          techView={techView}
+          onClose={close}
+        />
       ) : null}
     </>
   );
@@ -44,9 +52,15 @@ export function EditQuoteButton({
   clients,
   services,
   quote,
+  techView = false,
+  label = "Edit quote",
+  initialOpen = false,
 }: {
   clients: ScheduleClient[];
   services: ServiceOption[];
+  techView?: boolean;
+  label?: string;
+  initialOpen?: boolean;
   quote: {
     id: string;
     title: string;
@@ -57,14 +71,14 @@ export function EditQuoteButton({
     lineItems: LineDraft[];
   };
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold">
-        Edit quote
+        {label}
       </button>
       {open ? (
-        <QuoteForm clients={clients} services={services} quote={quote} onClose={() => setOpen(false)} />
+        <QuoteForm clients={clients} services={services} quote={quote} techView={techView} onClose={() => setOpen(false)} />
       ) : null}
     </>
   );
@@ -76,11 +90,13 @@ export function QuoteForm({
   onClose,
   quote,
   initialClientId,
+  techView = false,
 }: {
   clients: ScheduleClient[];
   services: ServiceOption[];
   onClose: () => void;
   initialClientId?: string;
+  techView?: boolean;
   quote?: {
     id: string;
     title: string;
@@ -116,7 +132,7 @@ export function QuoteForm({
       return;
     }
     if (items.length === 0 || items.some((item) => !item.name.trim())) {
-      setError("Add at least one named line item.");
+      setError("Add at least one service from the price list.");
       return;
     }
     setSaving(true);
@@ -185,8 +201,16 @@ export function QuoteForm({
           </label>
         </div>
         <div className="mt-4">
-          <p className="mb-2 text-sm font-medium">Line items</p>
-          <LineItemsEditor items={items} services={services} onChange={setItems} />
+          <p className="mb-1 text-sm font-medium">Services</p>
+          <p className="mb-2 text-sm text-stone-600">
+            Add the work from the price list here. Quantity and price can still be adjusted.
+          </p>
+          <LineItemsEditor
+            items={items}
+            services={services}
+            onChange={setItems}
+            allowPriceListEdit={!techView}
+          />
         </div>
         {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
         <div className="mt-4 flex gap-2">

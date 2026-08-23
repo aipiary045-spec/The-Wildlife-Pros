@@ -74,7 +74,14 @@ export async function GET(request: Request) {
           { client: { firstName: { contains: query, mode: "insensitive" } } },
           { client: { lastName: { contains: query, mode: "insensitive" } } },
         ],
-        ...(isOfficeRole(session.role) ? {} : { status: { in: ["SENT", "VIEWED", "APPROVED"] } }),
+        ...(isOfficeRole(session.role)
+          ? {}
+          : {
+              OR: [
+                { createdById: session.id },
+                { status: { in: ["SENT", "VIEWED", "APPROVED", "CONVERTED"] } },
+              ],
+            }),
       },
       include: { client: true },
       orderBy: { updatedAt: "desc" },

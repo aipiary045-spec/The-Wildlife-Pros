@@ -26,7 +26,7 @@ export const POST = withAuth(async (session, request) => {
     include: { client: true, job: { select: { technicianId: true } } },
   });
   if (!invoice) return jsonError("Invoice not found", 404);
-  if (!canAccessInvoice(session, invoice)) return jsonError("You cannot collect on this invoice.", 403);
+  if (!canAccessInvoice(session)) return jsonError("Office collects payment. Technicians do not take invoices.", 403);
 
   const client = getSquareClient();
   if (!client) return jsonError("Square is not configured", 503);

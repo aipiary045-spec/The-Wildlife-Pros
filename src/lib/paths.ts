@@ -26,7 +26,8 @@ export const OFFICE_ONLY_PREFIXES = [
 ];
 
 export function isOfficeOnlyPath(pathname: string) {
-  // Technicians can open invoice and quote detail for field billing (guarded on the page).
+  // Quote list/detail stay on the phone so techs can write estimates.
+  // Invoice detail stays reachable for office field view; technicians are blocked on the page.
   if (pathname.startsWith("/invoices/") && pathname !== "/invoices") {
     return false;
   }

@@ -22,11 +22,11 @@ export default async function QuotesPage({
   const techView = Boolean(session && isTechnician(session.role));
   const [quotes, clients, services] = await Promise.all([
     prisma.quote.findMany({
-      where: techView
+      where: techView && session
         ? {
             OR: [
-              { status: { in: ["SENT", "VIEWED", "APPROVED"] }, invoices: { none: {} } },
-              { invoices: { some: { balance: { gt: 0 } } } },
+              { createdById: session.id },
+              { status: { in: ["SENT", "VIEWED", "APPROVED", "CONVERTED"] } },
             ],
           }
         : undefined,
@@ -50,22 +50,21 @@ export default async function QuotesPage({
         title="Quotes"
         description={
           techView
-            ? "Approved estimates you can turn into an invoice and collect on site."
+            ? "Write an estimate and add services from the price list. Office sends the invoice later."
             : "Send estimates clients can approve in the hub, then convert to a job or invoice."
         }
         related={techView ? undefined : [{ href: "/jobs", label: "Work orders" }]}
         actions={
-          techView ? undefined : (
-            <NewQuoteButton
-              clients={clients}
-              services={services.map((item) => ({
-                id: item.id,
-                name: item.name,
-                unitPrice: Number(item.unitPrice),
-                taxable: item.taxable,
-              }))}
-            />
-          )
+          <NewQuoteButton
+            clients={clients}
+            services={services.map((item) => ({
+              id: item.id,
+              name: item.name,
+              unitPrice: Number(item.unitPrice),
+              taxable: item.taxable,
+            }))}
+            techView={techView}
+          />
         }
       />
       {techView ? null : <QuotesSubnav current="quotes" />}
@@ -78,6 +77,7 @@ export default async function QuotesPage({
           unitPrice: Number(item.unitPrice),
           taxable: item.taxable,
         }))}
+        techView={techView}
       />
       <div className="space-y-2 md:hidden">
         {quotes.map((quote) => (

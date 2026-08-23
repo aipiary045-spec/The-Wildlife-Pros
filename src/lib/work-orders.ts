@@ -53,7 +53,7 @@ export const TECH_WORK_ORDER_VIEWS: WorkOrderView[] = [
   { key: "today", label: "Today", hint: "Your stops for today.", buckets: ["today"] },
   { key: "late", label: "Late", hint: "Older assigned stops that are still open.", buckets: ["late"] },
   { key: "upcoming", label: "Upcoming", hint: "Assigned to you on a later day.", buckets: ["upcoming"] },
-  { key: "done", label: "Done", hint: "Finished and invoiced jobs assigned to you.", buckets: ["needs_invoice", "closed"] },
+  { key: "done", label: "Done", hint: "Finished jobs assigned to you.", buckets: ["needs_invoice", "closed"] },
   { key: "all", label: "All", hint: "Everything assigned to you.", buckets: null },
 ];
 
@@ -136,6 +136,7 @@ export function groupWorkOrders<T extends { status: string; scheduledStart: Date
   jobs: T[],
   view: WorkOrderView,
   now = new Date(),
+  techView = false,
 ) {
   const visible = view.buckets ? jobs.filter((job) => view.buckets?.includes(workOrderBucket(job, now))) : jobs;
   const byBucket = new Map<WorkOrderBucket, T[]>();
@@ -150,7 +151,7 @@ export function groupWorkOrders<T extends { status: string; scheduledStart: Date
     .filter((bucket) => (byBucket.get(bucket)?.length ?? 0) > 0)
     .map((bucket) => ({
       key: bucket,
-      title: BUCKET_TITLE[bucket],
+      title: techView && bucket === "needs_invoice" ? "Finished" : BUCKET_TITLE[bucket],
       items: byBucket.get(bucket) ?? [],
     }));
 }

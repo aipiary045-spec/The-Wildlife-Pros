@@ -89,7 +89,7 @@ export function navForRole(role: string): NavItem[] {
     return [
       { href: "/field", label: "My route", icon: Smartphone, description: "Today's stops in driving order." },
       { href: "/jobs", label: "My work orders", icon: ClipboardList, description: "Assigned work, including leftovers." },
-      { href: "/quotes", label: "Quotes", icon: FileText, description: "Turn an approved quote into an invoice and collect payment." },
+      { href: "/quotes", label: "Quotes", icon: FileText, description: "Write an estimate and add services. Office invoices later." },
       { href: "/timesheets", label: "Clock & hours", icon: Clock, description: "Clock in and see hours by day." },
       { href: "/time-off", label: "Time off", icon: CalendarOff, description: "Ask for a day off." },
       { href: "/inventory", label: "Traps & gear", icon: Warehouse, description: "What is in the shop and what is in the field." },

@@ -32,13 +32,13 @@ All office endpoints require the `critterops_session` cookie unless noted.
 `GET|PATCH /api/quotes/:id` — PATCH `{ status: "SENT"|"APPROVED"|"DECLINED" }`  
 `POST /api/quotes/:id/convert` `{ technicianId?, scheduledStart?, durationMin? }` — copies line items onto a job and marks the quote `CONVERTED`  
 `GET /api/services` — active price-list catalog  
-`GET|POST /api/invoices` — `POST` with `jobId` copies job line items and marks the job `INVOICED`  
-`GET|PATCH /api/invoices/:id` — PATCH `{ status: "SENT"|"VOID" }`  
-`POST /api/payments` `{ invoiceId, amount, method: "SQUARE"|"CASH"|"CHECK", reference }` — staff record of a Terminal/POS/cash/check payment  
+`GET|POST /api/invoices` — office only. `POST` with `jobId` copies job line items and marks the job `INVOICED`  
+`GET|PATCH /api/invoices/:id` — office only. PATCH `{ status: "SENT"|"VOID" }`  
+`POST /api/payments` `{ invoiceId, amount, method: "SQUARE"|"CASH"|"CHECK", reference }` — office record of a Terminal/POS/cash/check payment  
 `GET /api/payments/square/config` — application id, location, sandbox, configured  
-`POST /api/payments/square` `{ invoiceId, sourceId, amount, idempotencyKey }` — staff-keyed Square charge
+`POST /api/payments/square` `{ invoiceId, sourceId, amount, idempotencyKey }` — office-keyed Square charge
 
-Clients never pay through CritterOps. Square is the processor.
+Clients never pay through CritterOps. Square is the processor. Technicians cannot invoice or collect.
 
 ## Dispatch & routing
 

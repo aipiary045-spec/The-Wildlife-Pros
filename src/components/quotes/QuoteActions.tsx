@@ -38,13 +38,14 @@ export function QuoteActions({
   const router = useRouter();
   const [convertOpen, setConvertOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
-  const canInvoice = quoteCanInvoice(status) && !invoice;
+  const canInvoice = !techView && quoteCanInvoice(status) && !invoice;
 
-  if (status === "CONVERTED" && !invoice && !techView) return null;
+  if (techView && status !== "DRAFT" && status !== "DECLINED") return null;
+  if (status === "CONVERTED" && !invoice) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {techView ? null : status === "DRAFT" || status === "DECLINED" ? (
+      {status === "DRAFT" || status === "DECLINED" ? (
         <button
           type="button"
           disabled={false}
@@ -63,20 +64,15 @@ export function QuoteActions({
           Convert to job
         </button>
       ) : null}
-      {canInvoice ? (
-        <CreateInvoiceButton
-          quoteId={quoteId}
-          label={techView ? "Turn into invoice" : "Create invoice"}
-        />
-      ) : null}
-      {invoice ? (
+      {canInvoice ? <CreateInvoiceButton quoteId={quoteId} label="Create invoice" /> : null}
+      {techView || !invoice ? null : (
         <Link
           href={`/invoices/${invoice.id}`}
           className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center"
         >
-          {Number(invoice.balance) > 0 ? "Take payment" : "View invoice"}
+          {Number(invoice.balance) > 0 ? "Collect payment" : "View invoice"}
         </Link>
-      ) : null}
+      )}
       {techView || !portalToken || (status !== "SENT" && status !== "VIEWED") ? null : (
         <p className="text-xs text-stone-500">Customer hub: /portal/{portalToken}</p>
       )}

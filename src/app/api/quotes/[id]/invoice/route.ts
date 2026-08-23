@@ -7,7 +7,7 @@ import { QuoteInvoiceError, convertQuoteToInvoice } from "@/lib/quote-invoice";
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return jsonError("Sign in required", 401);
-  if (!canBillQuote(session)) return jsonError("You cannot invoice quotes.", 403);
+  if (!canBillQuote(session)) return jsonError("Office invoices quotes. Technicians do not bill from the field.", 403);
   const { id } = await context.params;
   try {
     const invoice = await convertQuoteToInvoice({ quoteId: id, createdById: session.id });

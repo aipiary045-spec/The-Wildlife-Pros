@@ -5,7 +5,6 @@ export const CACHEABLE_FIELD_PREFIXES = [
   "/field",
   "/jobs",
   "/quotes",
-  "/invoices",
   "/timesheets",
   "/more",
   "/time-off",
@@ -60,7 +59,6 @@ export function isCacheableApiGet(pathname: string) {
   if (pathname === "/api/jobs/late-checkin") return true;
   if (pathname === "/api/jobs") return true;
   if (/^\/api\/quotes\/[^/]+$/.test(pathname)) return true;
-  if (/^\/api\/invoices\/[^/]+$/.test(pathname)) return true;
   return /^\/api\/jobs\/[^/]+$/.test(pathname);
 }
 

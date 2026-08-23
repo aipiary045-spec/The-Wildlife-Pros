@@ -82,7 +82,7 @@ export function WorkOrderBoard({
     [prepared, query],
   );
 
-  const sections = useMemo(() => groupWorkOrders(visible, active, now), [visible, active, now]);
+  const sections = useMemo(() => groupWorkOrders(visible, active, now, techView), [visible, active, now, techView]);
 
   return (
     <div className="space-y-4">

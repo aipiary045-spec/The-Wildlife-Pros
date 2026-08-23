@@ -37,13 +37,17 @@ export function LineItemsEditor({
   items,
   services,
   onChange,
+  allowPriceListEdit = true,
 }: {
   items: LineDraft[];
   services: ServiceOption[];
   onChange: (items: LineDraft[]) => void;
+  allowPriceListEdit?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const totals = lineTotals(items);
+  const addedIds = new Set(items.map((item) => item.serviceId).filter((id): id is string => Boolean(id)));
+  const unusedServices = services.filter((service) => !addedIds.has(service.id));
 
   function addServices(serviceIds: string[]) {
     const next = serviceIds
@@ -120,13 +124,34 @@ export function LineItemsEditor({
         </div>
       ))}
 
+      {unusedServices.length > 0 ? (
+        <div className="rounded-xl border border-line bg-white p-3">
+          <p className="text-xs font-bold uppercase tracking-widest text-orange">Add services</p>
+          <p className="mt-1 text-sm text-stone-600">Tap a catalog line to put it on this quote.</p>
+          <ul className="mt-3 max-h-56 space-y-2 overflow-y-auto">
+            {unusedServices.map((service) => (
+              <li key={service.id}>
+                <button
+                  type="button"
+                  onClick={() => onChange([...items, serviceToLineDraft(service)])}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-line px-3 py-2 text-left hover:border-orange"
+                >
+                  <span className="font-semibold">{service.name}</span>
+                  <span className="shrink-0 text-sm text-stone-600">{formatMoney(service.unitPrice)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
           className={`${inputClass} text-left font-semibold`}
         >
-          Add from price list…
+          Search price list…
         </button>
         {QUOTE_PACKAGES.map((pkg) => {
           const { available } = packageAvailability(pkg, services);
@@ -150,9 +175,11 @@ export function LineItemsEditor({
         >
           Blank line
         </button>
-        <a href="/quotes/pricing" className="self-center text-sm font-semibold text-orange">
-          Edit price list
-        </a>
+        {allowPriceListEdit ? (
+          <a href="/quotes/pricing" className="self-center text-sm font-semibold text-orange">
+            Edit price list
+          </a>
+        ) : null}
       </div>
 
       <PriceListPicker

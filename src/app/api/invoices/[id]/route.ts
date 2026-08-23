@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { canAccessInvoice } from "@/lib/billing-access";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  if (!canAccessInvoice(session)) return NextResponse.json({ error: "Office invoices only." }, { status: 403 });
   const { id } = await context.params;
   const invoice = await prisma.invoice.findUnique({
     where: { id },
@@ -23,6 +25,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  if (!canAccessInvoice(session)) return NextResponse.json({ error: "Office invoices only." }, { status: 403 });
   const { id } = await context.params;
   const body = await request.json();
   const now = new Date();

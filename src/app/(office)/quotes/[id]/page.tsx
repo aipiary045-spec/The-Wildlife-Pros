@@ -76,7 +76,7 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
         </div>
         <div className="space-y-2">
           <StatusBadge status={quote.status} />
-          {techView || quote.status === "CONVERTED" ? null : (
+          {quote.status === "CONVERTED" ? null : (
             <EditQuoteButton
               clients={clients}
               services={services.map((item) => ({
@@ -85,6 +85,9 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
                 unitPrice: Number(item.unitPrice),
                 taxable: item.taxable,
               }))}
+              techView={techView}
+              label={quote.lineItems.length === 0 ? "Add services" : "Edit quote"}
+              initialOpen={quote.lineItems.length === 0}
               quote={{
                 id: quote.id,
                 title: quote.title,
@@ -123,7 +126,10 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
         </article>
       ) : null}
       <article className="rounded-2xl border border-line bg-panel p-5">
-        <h2 className="mb-3 font-semibold">Line items</h2>
+        <h2 className="mb-3 font-semibold">Services</h2>
+        {quote.lineItems.length === 0 ? (
+          <p className="text-sm text-stone-600">No services yet. Add them from the price list on this quote.</p>
+        ) : null}
         {quote.lineItems.map((item) => (
           <p key={item.id} className="flex justify-between py-1 text-sm">
             <span>

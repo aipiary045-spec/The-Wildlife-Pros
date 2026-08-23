@@ -54,6 +54,15 @@ test("action needed is late + today + needs a day", () => {
   );
 });
 
+test("technician done view labels finished work without invoicing", () => {
+  const jobs = [{ id: "d", status: "COMPLETED", scheduledStart: new Date(2026, 7, 15, 9, 0, 0) }];
+  const done = workOrderViews(true).find((view) => view.key === "done");
+  assert.ok(done);
+  assert.match(done.hint, /Finished jobs/);
+  const sections = groupWorkOrders(jobs, done, now, true);
+  assert.equal(sections[0]?.title, "Finished");
+});
+
 test("search matches job number, client, and address", () => {
   const job = {
     number: "JOB-0004",

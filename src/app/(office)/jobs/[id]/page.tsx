@@ -6,7 +6,6 @@ import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobEntryPointsCard } from "@/components/jobs/JobEntryPointsCard";
 import { JobPhotosCard } from "@/components/jobs/JobPhotosCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
-import { JobQuoteBillingBanner } from "@/components/jobs/JobQuoteBillingBanner";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
 import { JobEditor } from "@/components/jobs/JobEditor";
@@ -59,7 +58,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   const context = await getAppContext();
   const session = context?.session ?? null;
   const techView = Boolean(context?.fieldView);
-  const canBill = session ? canBillJob(session, job) : false;
+  const canBill = session ? canBillJob(session) : false;
   const quoteInvoice = job.quote?.invoices[0] ?? null;
   const quoteBilling = job.quote
     ? quoteBillingAction(
@@ -67,7 +66,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         quoteInvoice ? { balance: Number(quoteInvoice.balance) } : null,
       )
     : null;
-  const showQuoteBanner = Boolean(techView && job.quote && quoteBilling);
   const notify = jobNotifyProps(job, session?.firstName);
   if (session && !canAccessJobInFieldView(session, job, techView)) notFound();
 
@@ -153,30 +151,18 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           {canBill ? (
             <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
           ) : null}
-          {techView || !job.quote || showQuoteBanner ? null : quoteInvoice ? (
+          {canBill && job.quote && !quoteInvoice && quoteBilling === "create" ? (
+            <CreateInvoiceButton quoteId={job.quote.id} label="Create invoice" />
+          ) : canBill && quoteInvoice ? (
             <Link
               href={`/invoices/${quoteInvoice.id}`}
               className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center"
             >
               {Number(quoteInvoice.balance) > 0 ? "Collect payment" : "View invoice"}
             </Link>
-          ) : quoteBilling === "create" ? (
-            <CreateInvoiceButton quoteId={job.quote.id} label="Create invoice" />
           ) : null}
         </div>
       </div>
-      {showQuoteBanner && job.quote ? (
-        <JobQuoteBillingBanner
-          quote={{
-            id: job.quote.id,
-            number: job.quote.number,
-            title: job.quote.title,
-            total: Number(job.quote.total),
-          }}
-          invoice={quoteInvoice ? { id: quoteInvoice.id, balance: Number(quoteInvoice.balance) } : null}
-          action={quoteBilling}
-        />
-      ) : null}
       <section className="grid gap-4 md:grid-cols-3">
         <Card title="Visit">
           <p>{job.scheduledStart ? format(job.scheduledStart, "PPP p") : "Unscheduled"}</p>
@@ -209,11 +195,13 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
                 Quote {job.quote.number}
               </Link>
             )}
-            {[...(quoteInvoice ? [quoteInvoice] : []), ...job.invoices.filter((item) => item.id !== quoteInvoice?.id)].map((invoice) => (
-              <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
-                {techView ? "Take payment" : "Collect"} · {invoice.number ?? "Invoice"} · {formatMoney(invoice.balance)} due
-              </Link>
-            ))}
+            {canBill
+              ? [...(quoteInvoice ? [quoteInvoice] : []), ...job.invoices.filter((item) => item.id !== quoteInvoice?.id)].map((invoice) => (
+                  <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
+                    Collect · {invoice.number ?? "Invoice"} · {formatMoney(invoice.balance)} due
+                  </Link>
+                ))
+              : null}
           </Card>
         ) : null}
         <Card title="Instructions">
