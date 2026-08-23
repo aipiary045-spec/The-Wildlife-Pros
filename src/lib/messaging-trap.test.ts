@@ -49,7 +49,8 @@ test("buildEmergencyCustomerMessage acknowledges urgency and asap arrival", () =
   assert.match(body, /emergency wildlife call/i);
   assert.match(body, /Snake in kitchen/);
   assert.match(body, /as soon as possible/i);
-  assert.match(body, /Jordan Lee/);
+  assert.match(body, /Jordan Lee from The Wildlife Pros/);
+  assert.doesNotMatch(body, /Riverbend/);
 });
 
 test("jobNotifyProps uses emergency copy for emergency jobs", () => {
