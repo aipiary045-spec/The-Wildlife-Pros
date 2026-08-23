@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { EmergencyFieldBanner } from "@/components/emergency/EmergencyFieldBanner";
 import { EmergencyTeamBanner } from "@/components/emergency/EmergencyTeamBanner";
 import { FieldJobList } from "@/components/field/FieldJobList";
+import { OnSiteNowBanner } from "@/components/field/OnSiteNowBanner";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ClockControls } from "@/components/timesheets/ClockControls";
+import { getMyOpenCheckIn } from "@/lib/active-checkins.server";
 import { getSession } from "@/lib/auth";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { sortJobsEmergencyFirst } from "@/lib/emergency";
@@ -29,7 +31,7 @@ export default async function FieldPage({
   const { from, to, days } = scheduleRange(view, date);
   const technicianFilter = isTechnician(session.role) ? session.id : undefined;
   const myTime = await getMyTimesheet(session.id);
-  const [jobs, routeDays, technicians, activeEmergencies] = await Promise.all([
+  const [jobs, routeDays, technicians, activeEmergencies, myOpenCheckIn] = await Promise.all([
     prisma.job.findMany({
       where: {
         status: { notIn: ["CANCELLED"] },
@@ -75,6 +77,7 @@ export default async function FieldPage({
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
+    getMyOpenCheckIn(session.id),
   ]);
 
   const pendingAssigned =
@@ -112,6 +115,7 @@ export default async function FieldPage({
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
+      {myOpenCheckIn ? <OnSiteNowBanner checkIn={myOpenCheckIn} /> : null}
       {pendingAssigned ? (
         <EmergencyFieldBanner
           jobId={pendingAssigned.jobId}
@@ -157,6 +161,7 @@ export default async function FieldPage({
         routeByJobId={routeByJobId}
         technicians={technicians}
         notifyByJobId={notifyByJobId}
+        onSiteJobId={myOpenCheckIn?.jobId}
       />
     </div>
   );

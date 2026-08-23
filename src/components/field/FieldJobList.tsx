@@ -59,6 +59,7 @@ export function FieldJobList({
   routeByJobId = {},
   technicians = [],
   notifyByJobId = {},
+  onSiteJobId,
 }: {
   jobs: FieldJob[];
   days: Date[];
@@ -66,6 +67,7 @@ export function FieldJobList({
   routeByJobId?: Record<string, RouteHint>;
   technicians?: ScheduleTech[];
   notifyByJobId?: Record<string, FieldJobNotify>;
+  onSiteJobId?: string | null;
 }) {
   return (
     <div className="space-y-4">
@@ -117,6 +119,7 @@ export function FieldJobList({
                 const stopNumber = hint?.sequence ?? index + 1;
                 const eta = hint?.eta ?? job.scheduledStart;
                 const emergency = isEmergencyJob(job);
+                const onSite = onSiteJobId === job.id;
                 const place = {
                   address: propertyAddress(job.property),
                   lat: job.property.lat,
@@ -126,14 +129,23 @@ export function FieldJobList({
                   <article
                     key={job.id}
                     className={`rounded-2xl border bg-panel p-4 shadow-sm ${
-                      emergency ? "border-rose-400 bg-rose-50/80" : "border-line"
+                      onSite
+                        ? "border-emerald-400 bg-emerald-50/80"
+                        : emergency
+                          ? "border-rose-400 bg-rose-50/80"
+                          : "border-line"
                     }`}
                   >
                     <Link href={`/jobs/${job.id}`} className="block">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className={`text-xs font-semibold ${emergency ? "text-rose-700" : "text-orange"}`}>
-                            {emergency ? "Emergency" : `Stop ${stopNumber}`} · {eta ? format(eta, "h:mm a") : "Flex"}
+                          <p
+                            className={`text-xs font-semibold ${
+                              onSite ? "text-emerald-800" : emergency ? "text-rose-700" : "text-orange"
+                            }`}
+                          >
+                            {onSite ? "Checked in now" : emergency ? "Emergency" : `Stop ${stopNumber}`} ·{" "}
+                            {eta ? format(eta, "h:mm a") : "Flex"}
                           </p>
                           <p className="text-xs text-stone-500">{job.number}</p>
                           <h2 className="font-semibold">{job.title}</h2>

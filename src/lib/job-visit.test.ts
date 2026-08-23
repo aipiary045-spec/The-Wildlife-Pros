@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseCheckoutBody, visitActionForStatus } from "./job-visit";
+import { JobVisitError, parseCheckoutBody, visitActionForStatus } from "./job-visit";
+
+test("JobVisitError can name the open job conflict", () => {
+  const error = new JobVisitError("Still checked in", 409, {
+    id: "job-1",
+    number: "JOB-0001",
+    title: "Bat in attic",
+  });
+  assert.equal(error.status, 409);
+  assert.equal(error.openJob?.number, "JOB-0001");
+});
 
 test("visitActionForStatus is check-in until the tech is on site", () => {
   assert.equal(visitActionForStatus("SCHEDULED"), "check-in");

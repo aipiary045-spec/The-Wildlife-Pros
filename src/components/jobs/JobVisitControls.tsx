@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CHECKOUT_WORK, visitActionForStatus } from "@/lib/job-visit";
@@ -26,6 +27,7 @@ export function JobVisitControls({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [openJobHref, setOpenJobHref] = useState<string | null>(null);
   const [queuedNote, setQueuedNote] = useState("");
   const [notes, setNotes] = useState("");
   const [workDone, setWorkDone] = useState<string[]>([]);
@@ -83,12 +85,18 @@ export function JobVisitControls({
   async function checkIn() {
     setSaving(true);
     setError("");
+    setOpenJobHref(null);
     setQueuedNote("");
     const response = await fieldFetch(`/api/jobs/${jobId}/check-in`, { method: "POST" });
-    const data = (await response.json()) as { error?: string; queued?: boolean };
+    const data = (await response.json()) as {
+      error?: string;
+      queued?: boolean;
+      openJob?: { id: string; number: string; title: string } | null;
+    };
     setSaving(false);
     if (!response.ok) {
       setError(data.error ?? "Could not check in");
+      if (data.openJob?.id) setOpenJobHref(`/jobs/${data.openJob.id}`);
       return;
     }
     if (isQueuedResponse(data)) {
@@ -172,7 +180,19 @@ export function JobVisitControls({
           Check out
         </button>
       )}
-      {error && !open ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
+      {error && !open ? (
+        <p className="mt-1 text-xs text-rose-700">
+          {error}
+          {openJobHref ? (
+            <>
+              {" "}
+              <Link href={openJobHref} className="font-semibold underline">
+                Open that job
+              </Link>
+            </>
+          ) : null}
+        </p>
+      ) : null}
       {queuedNote && !open ? <p className="mt-1 text-xs text-amber-800">{queuedNote}</p> : null}
 
       {open ? (
