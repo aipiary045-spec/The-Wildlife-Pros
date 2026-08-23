@@ -69,9 +69,6 @@ export default async function SchedulePage({
           <Link href="/jobs" className="hover:underline">
             Work orders
           </Link>
-          <Link href="/calls" className="hover:underline">
-            Call log
-          </Link>
         </p>
       </div>
       <ScheduleToolbar

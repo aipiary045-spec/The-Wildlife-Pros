@@ -1,4 +1,4 @@
-import { phoneDigits } from "@/lib/intake";
+import { phoneDigits } from "@/lib/phone";
 import { clientName, propertyAddress } from "@/lib/utils";
 
 export type SearchResultKind = "client" | "job" | "equipment";

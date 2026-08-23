@@ -28,12 +28,6 @@ Billing happens in Square outside CritterOps. These APIs cover scheduling and fi
 `POST /api/jobs/:id/check-in` — on site: job `ON_SITE`, open `TimeEntry` + `Visit`, auto day clock-in if needed  
 `POST /api/jobs/:id/check-out` `{ outcome: "complete"|"follow_up", notes?, followUp?: { scheduledStart, scheduledEnd, technicianId, durationMin, instructions } }` — closes the visit. `complete` marks the job `COMPLETED`. `follow_up` does the same and creates a new scheduled job for the same client/address
 
-## Intake
-
-`GET|POST /api/requests` — call log  
-`PATCH /api/requests/:id` — mark looked at, close, or spam  
-`POST /api/requests/:id/convert` — create a first-trip work order from an open call
-
 ## Dispatch & routing
 
 `GET /api/schedule?view=day|week&date=YYYY-MM-DD` — day board or Monday–Sunday week payload, plus `unscheduled` jobs and `clients` for the new-job dialog  

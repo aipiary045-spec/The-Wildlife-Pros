@@ -1,6 +1,5 @@
 import { endOfDay, startOfDay } from "date-fns";
 import { getActiveCheckIns } from "@/lib/active-checkins.server";
-import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
 import { isLateForCheckIn, minutesLate } from "@/lib/late-checkin";
 import { prisma } from "@/lib/prisma";
 import { STALE_TRAP_DAYS } from "@/lib/trap-qr";
@@ -12,7 +11,7 @@ export async function getTodayOverview(now = new Date()) {
   const lateCutoff = new Date(now.getTime() - 60 * 60 * 1000);
   const staleCutoff = new Date(now.getTime() - STALE_TRAP_DAYS * 24 * 60 * 60 * 1000);
 
-  const [todayJobs, lateRows, activeCheckIns, unscheduledCount, newCalls, staleTraps] = await Promise.all([
+  const [todayJobs, lateRows, activeCheckIns, unscheduledCount, staleTraps] = await Promise.all([
     prisma.job.findMany({
       where: {
         scheduledStart: { gte: dayStart, lte: dayEnd },
@@ -33,7 +32,6 @@ export async function getTodayOverview(now = new Date()) {
     }),
     getActiveCheckIns(now),
     prisma.job.count({ where: { status: "UNSCHEDULED" } }),
-    prisma.serviceRequest.count({ where: { status: { in: [...OPEN_REQUEST_STATUSES] } } }),
     prisma.equipmentDeployment.findMany({
       where: { retrievedAt: null, deployedAt: { lte: staleCutoff } },
       include: {
@@ -84,7 +82,6 @@ export async function getTodayOverview(now = new Date()) {
       lateJobs: lateJobs.length,
       staleTraps: staleTraps.length,
       unscheduled: unscheduledCount,
-      newCalls,
     },
     activeCheckIns,
   };

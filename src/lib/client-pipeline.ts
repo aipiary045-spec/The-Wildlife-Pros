@@ -6,20 +6,17 @@ export type PipelineStage = {
 };
 
 export function buildClientPipeline(input: {
-  openCalls: number;
   jobs: Array<{ id: string; status: string }>;
 }): PipelineStage[] {
   const activeJob = input.jobs.some((job) => !["COMPLETED", "INVOICED", "CANCELLED"].includes(job.status));
   const completedJob = input.jobs.some((job) => ["COMPLETED", "INVOICED"].includes(job.status));
 
   const stages: Array<Omit<PipelineStage, "state">> = [
-    { id: "call", label: "Call / intake" },
     { id: "job", label: "Work order" },
     { id: "done", label: "Done" },
   ];
 
   const flags = {
-    call: input.openCalls > 0 || activeJob || completedJob,
     job: activeJob || completedJob,
     done: completedJob,
   };
@@ -37,17 +34,10 @@ export function buildClientPipeline(input: {
       return { ...stage, state: "done" as const };
     }
     if (!currentSet) {
-      if (
-        (id === "call" && input.openCalls > 0) ||
-        (id === "job" && activeJob) ||
-        (id === "done" && false)
-      ) {
+      if ((id === "job" && activeJob) || (id === "done" && false)) {
         currentSet = true;
         return { ...stage, state: "current" as const };
       }
-    }
-    if (id === "call" && !input.openCalls && (activeJob || completedJob)) {
-      return { ...stage, state: "done" as const };
     }
     if (!currentSet && flags[id]) {
       currentSet = true;

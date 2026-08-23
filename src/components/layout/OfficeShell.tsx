@@ -102,7 +102,7 @@ export function OfficeShell({ role, name, fieldView, sidebarFooter, myTime, emer
               <EmergencyDispatchButton technicians={emergency.technicians} clients={emergency.clients} />
             ) : null}
             <GlobalSearch />
-            <NotificationCenter showIntake={!fieldView} />
+            <NotificationCenter />
             {myTime ? <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} /> : null}
           </div>
         </header>

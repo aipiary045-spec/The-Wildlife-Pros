@@ -1,4 +1,4 @@
-import { phoneDigits } from "@/lib/intake";
+import { phoneDigits } from "@/lib/phone";
 
 export type ClientSearchRecord = {
   firstName: string;

@@ -97,7 +97,6 @@ export const POST = withAuth(async (session, request) => {
     message?: string;
     hazardTags?: string[];
     notifyCustomer?: boolean;
-    serviceRequestId?: string;
     quickClient?: {
       firstName?: string;
       lastName?: string;
@@ -223,13 +222,6 @@ export const POST = withAuth(async (session, request) => {
     },
     include: dispatchInclude,
   });
-
-  if (body.serviceRequestId) {
-    await prisma.serviceRequest.updateMany({
-      where: { id: body.serviceRequestId, clientId },
-      data: { status: "CONVERTED_JOB" },
-    });
-  }
 
   queueJobGoogleCalendarSync(job.id);
   return NextResponse.json({ job, dispatch }, { status: 201 });

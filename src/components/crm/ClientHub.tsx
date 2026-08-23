@@ -2,18 +2,12 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { buildClientPipeline } from "@/lib/client-pipeline";
 
-export function ClientPipeline({
-  openCalls,
-  jobs,
-}: {
-  openCalls: number;
-  jobs: Array<{ id: string; status: string }>;
-}) {
-  const stages = buildClientPipeline({ openCalls, jobs });
+export function ClientPipeline({ jobs }: { jobs: Array<{ id: string; status: string }> }) {
+  const stages = buildClientPipeline({ jobs });
   return (
     <section className="rounded-2xl border border-line bg-panel p-5">
       <h2 className="font-semibold">Pipeline</h2>
-      <p className="mt-1 text-sm text-stone-600">Call → work order → done</p>
+      <p className="mt-1 text-sm text-stone-600">Work order → done</p>
       <ol className="mt-4 flex flex-wrap gap-2">
         {stages.map((stage) => (
           <li
@@ -36,22 +30,12 @@ export function ClientPipeline({
   );
 }
 
-export function ClientQuickActions({
-  clientId,
-  phone,
-}: {
-  clientId: string;
-  phone?: string | null;
-}) {
-  const callHref = phone ? `/calls?phone=${encodeURIComponent(phone.replace(/\D/g, ""))}` : "/calls";
+export function ClientQuickActions({ clientId }: { clientId: string }) {
   return (
     <section className="flex flex-wrap gap-2">
-      <Link href={callHref} className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center">
-        Log call
-      </Link>
       <Link
         href={`/schedule?clientId=${clientId}`}
-        className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold inline-flex items-center"
+        className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center"
       >
         Schedule work
       </Link>

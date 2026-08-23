@@ -10,7 +10,6 @@ import {
   Home,
   MapPinned,
   Menu,
-  Phone,
   Smartphone,
   Squirrel,
   Users,
@@ -28,7 +27,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/schedule", label: "Schedule", icon: CalendarDays, description: "Place jobs on a technician and a time." },
   { href: "/clients", label: "Clients", icon: Users, description: "Names, phones, and service addresses." },
   { href: "/jobs", label: "Work orders", icon: ClipboardList, description: "The file for every job." },
-  { href: "/calls", label: "Call log", icon: Phone, description: "Log a call, then schedule a first trip." },
   { href: "/reports", label: "Reports", icon: BarChart3, description: "Field activity and labor hours." },
   { href: "/routes", label: "Routes", icon: MapPinned, description: "Driving order for the day." },
   { href: "/timesheets", label: "Timesheets", icon: Clock, description: "Hours by person." },
@@ -41,14 +39,14 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 const OFFICE_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Day to day", hrefs: ["/dashboard", "/schedule", "/clients", "/jobs", "/calls"] },
+  { title: "Day to day", hrefs: ["/dashboard", "/schedule", "/clients", "/jobs"] },
   { title: "Field ops", hrefs: ["/routes", "/inventory", "/activity", "/reports"] },
   { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
   { title: "Data", hrefs: ["/exports"] },
 ];
 
 const OFFICE_MORE_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Daily office", hrefs: ["/calls", "/clients", "/jobs", "/routes"] },
+  { title: "Daily office", hrefs: ["/jobs", "/routes"] },
   { title: "Field records", hrefs: ["/reports", "/inventory", "/activity", "/exports"] },
   { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
 ];

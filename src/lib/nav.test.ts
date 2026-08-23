@@ -15,10 +15,9 @@ test("admin mobile tabs prioritize today, schedule, and clients", () => {
   assert.deepEqual(tabs, ["/dashboard", "/schedule", "/clients", "/more"]);
 });
 
-test("office more still holds work orders, calls, and reports for admin", () => {
+test("office more still holds work orders and reports for admin", () => {
   const more = moreItems("ADMIN").map((item) => item.href);
   assert.ok(more.includes("/jobs"));
-  assert.ok(more.includes("/calls"));
   assert.ok(more.includes("/reports"));
   assert.ok(!more.includes("/clients"));
   assert.ok(!more.includes("/quotes"));
@@ -44,10 +43,9 @@ test("page labels and destinations follow the current screen", () => {
   assert.equal(pageLabel("/dashboard", "ADMIN"), "Today");
   assert.equal(pageLabel("/jobs", "ADMIN"), "Work orders");
   assert.equal(pageLabel("/jobs", "TECHNICIAN"), "My work orders");
-  assert.equal(isPrimaryDestination("/calls", "ADMIN"), false);
-  assert.equal(isMoreDestination("/calls", "ADMIN"), true);
   assert.equal(isPrimaryDestination("/clients", "ADMIN"), true);
   assert.equal(isMoreDestination("/schedule", "ADMIN"), false);
+  assert.equal(isMoreDestination("/jobs", "ADMIN"), true);
 });
 
 test("office More is grouped for daily office and field records", () => {
@@ -58,6 +56,6 @@ test("office More is grouped for daily office and field records", () => {
   );
   assert.deepEqual(
     groups[0]?.items.map((item) => item.href),
-    ["/calls", "/jobs", "/routes"],
+    ["/jobs", "/routes"],
   );
 });

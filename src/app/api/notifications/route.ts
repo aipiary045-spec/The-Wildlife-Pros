@@ -6,7 +6,6 @@ import { canReviewDayOff } from "@/lib/day-off";
 import { emergencyIsOverdue, formatDispatchAddress } from "@/lib/emergency";
 import { isLateForCheckIn, minutesLate, type LateCheckInJob } from "@/lib/late-checkin";
 import { buildNotifications } from "@/lib/notifications";
-import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
 import { isTechnician } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { clientName, propertyAddress } from "@/lib/utils";
@@ -69,12 +68,11 @@ export const GET = async () => {
   if (techView) {
     return NextResponse.json({
       notifications: buildNotifications({ techView: true, lateJobs, emergencyDispatches }),
-      newCalls: 0,
     });
   }
 
   const todayEnd = endOfDay(now);
-  const [followUps, timeOff, needsADay, newCalls] = await Promise.all([
+  const [followUps, timeOff, needsADay] = await Promise.all([
     prisma.scheduleNeed.findMany({
       where: { status: "OPEN", dueOn: { lte: todayEnd } },
       include: { client: true, property: true },
@@ -88,7 +86,6 @@ export const GET = async () => {
         })
       : Promise.resolve([]),
     prisma.job.count({ where: { status: "UNSCHEDULED" } }),
-    prisma.serviceRequest.count({ where: { status: { in: [...OPEN_REQUEST_STATUSES] } } }),
   ]);
 
   return NextResponse.json({
@@ -110,8 +107,6 @@ export const GET = async () => {
         reason: block.reason,
       })),
       needsADay,
-      newCalls,
     }),
-    newCalls,
   });
 };

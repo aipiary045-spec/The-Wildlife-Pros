@@ -691,16 +691,6 @@ async function main() {
     },
   });
 
-  await prisma.serviceRequest.create({
-    data: {
-      clientId: langford.id,
-      propertyId: langford.properties[0].id,
-      title: "Rats in crawlspace",
-      details: "Saw droppings near HVAC. Wants quote for exclusion + stations.",
-      source: "web",
-    },
-  });
-
   await prisma.timesheet.create({
     data: {
       userId: jordan.id,

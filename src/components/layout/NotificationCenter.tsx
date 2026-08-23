@@ -1,20 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell, Phone } from "lucide-react";
+import { Bell } from "lucide-react";
 import { playEmergencyAlert, playRegularAlert } from "@/lib/alert-sounds";
 import { notificationAlertTone, notificationIdSet } from "@/lib/notification-alerts";
 import type { NotificationItem } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
 
-export function NotificationCenter({ showIntake = false }: { showIntake?: boolean }) {
-  const pathname = usePathname();
+export function NotificationCenter() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const [newCalls, setNewCalls] = useState(0);
   const [stealingJobId, setStealingJobId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const seenIdsRef = useRef<Set<string>>(new Set());
@@ -24,7 +22,7 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
     try {
       const response = await fetch("/api/notifications", { credentials: "include" });
       if (!response.ok) return;
-      const data = (await response.json()) as { notifications?: NotificationItem[]; newCalls?: number };
+      const data = (await response.json()) as { notifications?: NotificationItem[] };
       const next = data.notifications ?? [];
       const tone = notificationAlertTone(seenIdsRef.current, next, !bootstrappedRef.current);
       if (tone === "emergency") void playEmergencyAlert();
@@ -32,7 +30,6 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
       seenIdsRef.current = notificationIdSet(next);
       bootstrappedRef.current = true;
       setItems(next);
-      setNewCalls(data.newCalls ?? 0);
     } catch {
       // Offline: keep the last list.
     }
@@ -91,29 +88,9 @@ export function NotificationCenter({ showIntake = false }: { showIntake?: boolea
   }, [open]);
 
   const count = items.length;
-  const onCallLog = pathname === "/calls" || pathname.startsWith("/calls/");
 
   return (
     <div ref={rootRef} className="relative flex items-center gap-2">
-      {showIntake ? (
-        <Link
-          href="/calls"
-          aria-label={newCalls ? `${newCalls} calls still need a next step` : "Call log"}
-          title="Call log"
-          className={cn(
-            "relative flex h-10 items-center justify-center gap-2 rounded-full border border-line bg-white px-2.5 sm:px-3",
-            onCallLog ? "text-orange" : "text-ink",
-          )}
-        >
-          <Phone size={18} />
-          <span className="hidden text-sm font-semibold sm:inline">Call log</span>
-          {newCalls > 0 ? (
-            <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-orange px-1 text-center text-[10px] font-bold leading-4 text-white">
-              {newCalls > 9 ? "9+" : newCalls}
-            </span>
-          ) : null}
-        </Link>
-      ) : null}
       <button
         type="button"
         aria-label={count ? `${count} alerts` : "Alerts"}

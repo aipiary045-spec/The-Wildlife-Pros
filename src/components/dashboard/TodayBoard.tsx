@@ -9,7 +9,7 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
   const { counts } = data;
   const urgentCount = counts.lateJobs;
   const followUpCount = counts.staleTraps;
-  const inboxCount = counts.newCalls + counts.unscheduled;
+  const inboxCount = counts.unscheduled;
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -131,9 +131,6 @@ export function TodayBoard({ data }: { data: TodayOverview }) {
             {inboxCount > 0 ? (
               <QuietLinks
                 items={[
-                  counts.newCalls > 0
-                    ? { href: "/calls", label: `${counts.newCalls} call${counts.newCalls === 1 ? "" : "s"} to handle` }
-                    : null,
                   counts.unscheduled > 0
                     ? {
                         href: "/jobs?view=needs_day",
