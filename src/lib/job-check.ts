@@ -59,7 +59,32 @@ export async function checkInToJob(jobId: string, user: SessionUser, occurredAt 
   });
   if (openEntry) {
     if (openEntry.jobId === jobId) {
-      return { job, already: true as const };
+      // Time entry exists but job status may still be SCHEDULED — repair so UI shows Check out.
+      if (visitActionForStatus(job.status) !== "check-out") {
+        const technicianId = job.technicianId ?? user.id;
+        const repaired = await prisma.job.update({
+          where: { id: jobId },
+          data: { status: "ON_SITE", technicianId },
+          include: { client: true, property: true, technician: true },
+        });
+        const openVisit = await prisma.visit.findFirst({
+          where: { jobId, departedAt: null },
+          orderBy: { createdAt: "desc" },
+        });
+        if (!openVisit) {
+          await prisma.visit.create({
+            data: {
+              jobId,
+              technicianId,
+              status: "ON_SITE",
+              scheduledStart: job.scheduledStart ?? occurredAt,
+              arrivedAt: openEntry.startedAt ?? occurredAt,
+            },
+          });
+        }
+        return { job: repaired, already: true as const, repaired: true as const };
+      }
+      return { job, already: true as const, repaired: false as const };
     }
     // Stale open punch on a finished job — close it so the tech is not stuck.
     if (!openEntry.job || CLOSED_JOB_STATUSES.has(openEntry.job.status)) {
@@ -117,7 +142,12 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) throw new JobVisitError("Job not found", 404);
 
-  if (visitActionForStatus(job.status) !== "check-out") {
+  const openEntry = await prisma.timeEntry.findFirst({
+    where: { jobId, userId: user.id, endedAt: null },
+  });
+
+  const statusAllowsCheckout = visitActionForStatus(job.status) === "check-out";
+  if (!statusAllowsCheckout && !openEntry) {
     throw new JobVisitError("Check in before you check out.");
   }
 
@@ -125,9 +155,6 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     throw new JobVisitError("Enter about how many days until they need a return trip.");
   }
 
-  const openEntry = await prisma.timeEntry.findFirst({
-    where: { jobId, userId: user.id, endedAt: null },
-  });
   const openVisit = await prisma.visit.findFirst({
     where: { jobId, departedAt: null },
     orderBy: { createdAt: "desc" },

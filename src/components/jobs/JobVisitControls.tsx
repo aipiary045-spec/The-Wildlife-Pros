@@ -14,15 +14,18 @@ export function JobVisitControls({
   jobId,
   status,
   compact = false,
+  checkedIn = false,
 }: {
   jobId: string;
   status: string;
   technicianId?: string | null;
   technicians?: ScheduleTech[];
   compact?: boolean;
+  /** True when this user has an open time entry on this job (even if status lagged). */
+  checkedIn?: boolean;
 }) {
   const router = useRouter();
-  const [localStatus, setLocalStatus] = useState(status);
+  const [localStatus, setLocalStatus] = useState(checkedIn && visitActionForStatus(status) !== "check-out" ? "ON_SITE" : status);
   const action = visitActionForStatus(localStatus);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,8 +53,12 @@ export function JobVisitControls({
     : "min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto";
 
   useEffect(() => {
+    if (checkedIn && visitActionForStatus(status) !== "check-out") {
+      setLocalStatus("ON_SITE");
+      return;
+    }
     setLocalStatus(status);
-  }, [status]);
+  }, [status, checkedIn]);
 
   useEffect(() => {
     if (!open || !trapOpen || !trapPlaced || trapLat || trapLng) return;
@@ -95,6 +102,8 @@ export function JobVisitControls({
     const data = (await response.json()) as {
       error?: string;
       queued?: boolean;
+      already?: boolean;
+      repaired?: boolean;
       openJob?: { id: string; number: string; title: string } | null;
     };
     setSaving(false);
@@ -111,6 +120,7 @@ export function JobVisitControls({
       setQueuedNote("Check-in saved on this phone. It uploads when you have data.");
       return;
     }
+    setLocalStatus("ON_SITE");
     router.refresh();
   }
 
