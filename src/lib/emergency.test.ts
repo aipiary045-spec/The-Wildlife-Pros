@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   buildEmergencyInstructions,
+  buildEmergencyTeamBroadcastSms,
   buildEmergencyTechSms,
   emergencyIsOverdue,
   gearHintsForTags,
@@ -57,4 +58,16 @@ test("buildEmergencyTechSms includes navigate link when provided", () => {
   });
   assert.match(body, /EMERGENCY dispatch/);
   assert.match(body, /Navigate:/);
+});
+
+test("buildEmergencyTeamBroadcastSms names assigned tech and invites backup", () => {
+  const body = buildEmergencyTeamBroadcastSms({
+    situation: "Snake in kitchen",
+    address: "12 Main St",
+    assignedTechName: "Alex Nguyen",
+    jobId: "job-1",
+  });
+  assert.match(body, /EMERGENCY alert/);
+  assert.match(body, /Alex Nguyen is assigned/);
+  assert.match(body, /get there sooner/i);
 });

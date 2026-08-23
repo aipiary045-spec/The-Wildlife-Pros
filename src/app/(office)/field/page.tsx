@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { EmergencyFieldBanner } from "@/components/emergency/EmergencyFieldBanner";
+import { EmergencyTeamBanner } from "@/components/emergency/EmergencyTeamBanner";
 import { FieldJobList } from "@/components/field/FieldJobList";
 import { RecentPanel } from "@/components/layout/RecentPanel";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
@@ -29,7 +30,7 @@ export default async function FieldPage({
   const { from, to, days } = scheduleRange(view, date);
   const technicianFilter = isTechnician(session.role) ? session.id : undefined;
   const myTime = await getMyTimesheet(session.id);
-  const [jobs, routeDays, technicians, pendingEmergency] = await Promise.all([
+  const [jobs, routeDays, technicians, activeEmergencies] = await Promise.all([
     prisma.job.findMany({
       where: {
         technicianId: technicianFilter,
@@ -57,18 +58,24 @@ export default async function FieldPage({
       orderBy: { firstName: "asc" },
       select: { id: true, firstName: true, lastName: true, color: true },
     }),
-    technicianFilter
-      ? prisma.emergencyDispatch.findFirst({
-          where: {
-            assignedTechnicianId: technicianFilter,
-            acknowledgedAt: null,
-            job: { status: { notIn: ["COMPLETED", "CANCELLED", "INVOICED"] } },
-          },
-          include: { job: { include: { property: true } } },
-          orderBy: { createdAt: "desc" },
-        })
-      : Promise.resolve(null),
+    prisma.emergencyDispatch.findMany({
+      where: {
+        job: { status: { notIn: ["COMPLETED", "CANCELLED", "INVOICED"] } },
+      },
+      include: {
+        job: { include: { property: true, technician: true } },
+        assignedTechnician: { select: { firstName: true, lastName: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
   ]);
+
+  const pendingAssigned =
+    activeEmergencies.find(
+      (dispatch) => dispatch.assignedTechnicianId === session.id && !dispatch.acknowledgedAt,
+    ) ?? null;
+  const teamAlerts = activeEmergencies.filter((dispatch) => dispatch.assignedTechnicianId !== session.id);
 
   const sortedJobs = sortJobsEmergencyFirst(jobs);
 
@@ -97,16 +104,27 @@ export default async function FieldPage({
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
-      {pendingEmergency ? (
+      {pendingAssigned ? (
         <EmergencyFieldBanner
-          jobId={pendingEmergency.jobId}
-          title={pendingEmergency.job.title}
-          address={propertyAddress(pendingEmergency.job.property)}
-          message={pendingEmergency.message}
-          lat={pendingEmergency.job.property.lat}
-          lng={pendingEmergency.job.property.lng}
+          jobId={pendingAssigned.jobId}
+          title={pendingAssigned.job.title}
+          address={propertyAddress(pendingAssigned.job.property)}
+          message={pendingAssigned.message}
+          lat={pendingAssigned.job.property.lat}
+          lng={pendingAssigned.job.property.lng}
         />
       ) : null}
+      {teamAlerts.map((dispatch) => (
+        <EmergencyTeamBanner
+          key={dispatch.id}
+          jobId={dispatch.jobId}
+          title={dispatch.job.title}
+          address={propertyAddress(dispatch.job.property)}
+          assignedTechName={`${dispatch.assignedTechnician.firstName} ${dispatch.assignedTechnician.lastName}`}
+          lat={dispatch.job.property.lat}
+          lng={dispatch.job.property.lng}
+        />
+      ))}
       <div className="sunset-panel rounded-2xl px-5 py-6 text-ink">
         <p className="text-xs font-bold uppercase tracking-[0.25em]">Field route</p>
         <h1 className="mt-1 font-display text-3xl">

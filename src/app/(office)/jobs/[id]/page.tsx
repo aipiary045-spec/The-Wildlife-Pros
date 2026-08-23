@@ -124,6 +124,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
               clientPhone={notify.clientPhone}
               smsHref={notify.smsHref}
               autoSendSms={notify.autoSendSms}
+              emphasized={job.type === "EMERGENCY"}
             />
           ) : null}
           {canBill ? (
@@ -253,6 +254,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           lat={job.property.lat}
           lng={job.property.lng}
           notify={notify}
+          notifyEmphasized={job.type === "EMERGENCY"}
         />
       ) : null}
     </div>

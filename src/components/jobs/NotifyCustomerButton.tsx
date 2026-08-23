@@ -10,6 +10,7 @@ export function NotifyCustomerButton({
   smsHref,
   autoSendSms = false,
   compact = false,
+  emphasized = false,
   className,
 }: {
   jobId: string;
@@ -17,17 +18,20 @@ export function NotifyCustomerButton({
   smsHref?: string | null;
   autoSendSms?: boolean;
   compact?: boolean;
+  emphasized?: boolean;
   className?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const buttonClass = cn(
-    compact
-      ? "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border border-line px-2 text-xs font-semibold transition hover:border-orange/35 hover:text-orange disabled:opacity-50 sm:text-sm"
-      : "inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 text-sm font-semibold transition hover:border-orange/35 hover:text-orange disabled:opacity-50",
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border-2 font-semibold shadow-sm transition disabled:opacity-50",
+    emphasized
+      ? "border-sky-500 bg-sky-100 text-sky-950 hover:bg-sky-200"
+      : "border-sky-300 bg-sky-50 text-sky-950 hover:bg-sky-100",
+    compact ? "flex-1 px-2 text-xs sm:text-sm" : "px-4 text-sm",
     className,
   );
-  const label = compact ? "Text" : "Text customer";
+  const label = "Text customer";
 
   async function sendFromApp() {
     setBusy(true);
@@ -69,7 +73,7 @@ export function NotifyCustomerButton({
     return (
       <div className={compact ? "contents" : "space-y-2"}>
         <a href={smsHref} className={buttonClass}>
-          <MessageCircle size={compact ? 14 : 16} />
+          <MessageCircle size={compact ? 16 : 18} />
           {label}
         </a>
         {notice && !compact ? <p className="text-sm text-stone-600">{notice}</p> : null}
@@ -80,7 +84,7 @@ export function NotifyCustomerButton({
   return (
     <div className={compact ? "contents" : "space-y-2"}>
       <button type="button" disabled={busy} onClick={() => void handleClick()} className={buttonClass}>
-        <MessageCircle size={compact ? 14 : 16} />
+        <MessageCircle size={compact ? 16 : 18} />
         {busy ? "Sending…" : label}
       </button>
       {notice && !compact ? <p className="text-sm text-stone-600">{notice}</p> : null}

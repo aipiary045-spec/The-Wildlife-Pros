@@ -22,13 +22,12 @@ export const GET = async () => {
   const emergencyRows = await prisma.emergencyDispatch.findMany({
     where: {
       job: { status: { notIn: ["COMPLETED", "CANCELLED", "INVOICED"] } },
-      ...(techView ? { assignedTechnicianId: session.id } : {}),
     },
     include: {
       job: { include: { property: true, technician: true } },
     },
     orderBy: { createdAt: "desc" },
-    take: techView ? 3 : 8,
+    take: techView ? 6 : 8,
   });
 
   const emergencyDispatches = emergencyRows.map((dispatch) => ({
@@ -40,6 +39,7 @@ export const GET = async () => {
       : "Unassigned",
     acknowledged: Boolean(dispatch.acknowledgedAt),
     overdue: emergencyIsOverdue(dispatch, now),
+    assignedToMe: dispatch.assignedTechnicianId === session.id,
   }));
 
   const cutoff = new Date(now.getTime() - 60 * 60 * 1000);

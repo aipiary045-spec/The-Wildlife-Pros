@@ -9,12 +9,14 @@ export function JobFieldBar({
   status,
   address,
   notify,
+  notifyEmphasized = false,
 }: {
   jobId: string;
   status: string;
   address: string;
   lat?: number | null;
   lng?: number | null;
+  notifyEmphasized?: boolean;
   notify?: {
     jobId: string;
     clientPhone: string | null;
@@ -43,6 +45,7 @@ export function JobFieldBar({
             smsHref={notify.smsHref}
             autoSendSms={notify.autoSendSms}
             compact
+            emphasized={notifyEmphasized}
           />
         ) : null}
         <Link

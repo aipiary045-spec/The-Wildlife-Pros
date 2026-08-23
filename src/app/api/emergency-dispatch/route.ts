@@ -10,6 +10,7 @@ import {
   emergencyJobWindow,
   formatDispatchAddress,
   notifyEmergencyCustomer,
+  notifyEmergencyTeam,
   notifyEmergencyTech,
   parseHazardTags,
 } from "@/lib/emergency";
@@ -151,7 +152,7 @@ export const POST = withAuth(async (session, request) => {
 
   if (!clientId || !propertyId) return jsonError("Pick a client and service address, or enter a quick address.");
 
-  const [technician, backupTechnician, property] = await Promise.all([
+  const [technician, backupTechnician, property, teamMembers] = await Promise.all([
     prisma.user.findFirst({
       where: { id: body.technicianId, organizationId: session.organizationId, status: "ACTIVE" },
     }),
@@ -161,6 +162,14 @@ export const POST = withAuth(async (session, request) => {
         })
       : Promise.resolve(null),
     prisma.property.findFirst({ where: { id: propertyId, clientId } }),
+    prisma.user.findMany({
+      where: {
+        organizationId: session.organizationId,
+        status: "ACTIVE",
+        role: { in: ["TECHNICIAN", "ADMIN"] },
+      },
+      select: { id: true, phone: true },
+    }),
   ]);
   if (!technician) return jsonError("Technician not found.");
   if (!property) return jsonError("Property not found.");
@@ -192,6 +201,17 @@ export const POST = withAuth(async (session, request) => {
   const address = formatDispatchAddress(property);
   const techSms = await notifyEmergencyTech({
     phone: technician.phone,
+    situation,
+    address,
+    jobId: job.id,
+    lat: property.lat,
+    lng: property.lng,
+  });
+
+  await notifyEmergencyTeam({
+    members: teamMembers,
+    assignedTechnicianId: technician.id,
+    assignedTechName: `${technician.firstName} ${technician.lastName}`,
     situation,
     address,
     jobId: job.id,

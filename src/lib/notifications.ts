@@ -37,6 +37,7 @@ export function emergencyDispatchItems(
     techName: string;
     acknowledged: boolean;
     overdue: boolean;
+    assignedToMe?: boolean;
   }>,
   techView: boolean,
 ): NotificationItem[] {
@@ -45,9 +46,11 @@ export function emergencyDispatchItems(
     kind: "emergency_dispatch" as const,
     urgency: "high" as const,
     title: techView
-      ? dispatch.acknowledged
-        ? "Emergency acknowledged"
-        : "Emergency — go now"
+      ? dispatch.assignedToMe
+        ? dispatch.acknowledged
+          ? "Emergency acknowledged"
+          : "Emergency — go now"
+        : "Emergency — can you get there sooner?"
       : dispatch.overdue
         ? "Emergency not acknowledged yet"
         : "Emergency dispatched",
@@ -140,6 +143,7 @@ export function buildNotifications(input: {
     techName: string;
     acknowledged: boolean;
     overdue: boolean;
+    assignedToMe?: boolean;
   }>;
   lateJobs: LateCheckInJob[];
   followUps?: Array<{ id: string; title: string; dueOn: Date | string; clientName: string; address: string }>;

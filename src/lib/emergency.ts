@@ -1,4 +1,5 @@
 import { addMinutes } from "date-fns";
+import { phoneDigits } from "@/lib/intake";
 import { googleMapsDirUrl } from "@/lib/maps";
 import { appBaseUrl, buildEmergencyCustomerMessage, sendSms } from "@/lib/messaging";
 import { propertyAddress } from "@/lib/utils";
@@ -78,6 +79,24 @@ export function buildEmergencyBackupSms(input: {
   ].join("\n");
 }
 
+export function buildEmergencyTeamBroadcastSms(input: {
+  situation: string;
+  address: string;
+  assignedTechName: string;
+  jobId: string;
+  mapUrl?: string | null;
+}) {
+  const lines = [
+    "EMERGENCY alert — The Wildlife Pros",
+    input.situation,
+    input.address,
+    `${input.assignedTechName} is assigned. Open field route or the job if you can get there sooner.`,
+  ];
+  if (input.mapUrl) lines.push(`Map: ${input.mapUrl}`);
+  lines.push(`Job: ${appBaseUrl()}/jobs/${input.jobId}`);
+  return lines.join("\n");
+}
+
 export function isEmergencyJob(job: { type: string; emergencyDispatch?: { acknowledgedAt: Date | null } | null }) {
   return job.type === "EMERGENCY" || Boolean(job.emergencyDispatch);
 }
@@ -128,6 +147,38 @@ export async function notifyEmergencyTech(input: {
   });
   if (!input.phone) return { ok: false as const, reason: "no_phone" as const };
   return sendSms({ to: input.phone, body });
+}
+
+export async function notifyEmergencyTeam(input: {
+  members: Array<{ id: string; phone: string | null }>;
+  assignedTechnicianId: string;
+  assignedTechName: string;
+  situation: string;
+  address: string;
+  jobId: string;
+  lat?: number | null;
+  lng?: number | null;
+}) {
+  const mapUrl = googleMapsDirUrl({ address: input.address, lat: input.lat, lng: input.lng });
+  const body = buildEmergencyTeamBroadcastSms({
+    situation: input.situation,
+    address: input.address,
+    assignedTechName: input.assignedTechName,
+    jobId: input.jobId,
+    mapUrl,
+  });
+  const seen = new Set<string>();
+  let sent = 0;
+  for (const member of input.members) {
+    if (member.id === input.assignedTechnicianId) continue;
+    if (!member.phone) continue;
+    const key = phoneDigits(member.phone);
+    if (key.length < 10 || seen.has(key)) continue;
+    seen.add(key);
+    const result = await sendSms({ to: member.phone, body });
+    if (result.ok) sent += 1;
+  }
+  return { sent };
 }
 
 export async function notifyEmergencyCustomer(input: {
