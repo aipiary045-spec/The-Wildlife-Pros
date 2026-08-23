@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  buildEmergencyCustomerMessage,
   buildEnRouteMessage,
   buildQuoteDeliveryMessage,
   jobNotifyProps,
@@ -37,6 +38,34 @@ test("buildEnRouteMessage names the technician", () => {
   });
   assert.match(body, /Jordan Lee/);
   assert.match(body, /Trap check/);
+});
+
+test("buildEmergencyCustomerMessage acknowledges urgency and asap arrival", () => {
+  const body = buildEmergencyCustomerMessage({
+    clientFirstName: "Riley",
+    techName: "Jordan Lee",
+    jobTitle: "Snake in kitchen",
+  });
+  assert.match(body, /emergency wildlife call/i);
+  assert.match(body, /Snake in kitchen/);
+  assert.match(body, /as soon as possible/i);
+  assert.match(body, /Jordan Lee/);
+});
+
+test("jobNotifyProps uses emergency copy for emergency jobs", () => {
+  const active = jobNotifyProps(
+    {
+      id: "job-em",
+      title: "Bat in bedroom",
+      type: "EMERGENCY",
+      status: "EN_ROUTE",
+      client: { firstName: "Riley", phone: "(704) 555-0142" },
+      technician: { firstName: "Jordan", lastName: "Lee" },
+    },
+    "Alex",
+  );
+  assert.ok(active);
+  assert.match(decodeURIComponent(active?.smsHref?.split("body=")[1] ?? ""), /emergency wildlife call/i);
 });
 
 test("smsFallbackUrl normalizes US numbers", () => {

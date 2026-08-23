@@ -1,6 +1,6 @@
 import { addMinutes } from "date-fns";
 import { googleMapsDirUrl } from "@/lib/maps";
-import { appBaseUrl, buildEnRouteMessage, sendSms } from "@/lib/messaging";
+import { appBaseUrl, buildEmergencyCustomerMessage, sendSms } from "@/lib/messaging";
 import { propertyAddress } from "@/lib/utils";
 
 export const EMERGENCY_ESCALATION_MINUTES = 5;
@@ -137,7 +137,7 @@ export async function notifyEmergencyCustomer(input: {
   techName?: string;
 }) {
   if (!input.phone) return { ok: false as const, reason: "no_phone" as const };
-  const body = buildEnRouteMessage({
+  const body = buildEmergencyCustomerMessage({
     clientFirstName: input.clientFirstName,
     techName: input.techName,
     jobTitle: input.jobTitle,

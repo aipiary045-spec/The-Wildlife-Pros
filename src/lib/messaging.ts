@@ -64,12 +64,44 @@ export function buildEnRouteMessage(input: {
   return `${tech} is on the way for ${input.jobTitle}. Reply to this number if you need to reschedule.`;
 }
 
+export function buildEmergencyCustomerMessage(input: {
+  clientFirstName: string;
+  techName?: string;
+  jobTitle: string;
+  companyName?: string;
+}) {
+  const who = input.companyName?.trim() || "The Wildlife Pros";
+  const tech = input.techName ? `${input.techName} from ${who}` : `A ${who} technician`;
+  return [
+    `Hi ${input.clientFirstName},`,
+    "",
+    `We received your emergency wildlife call: ${input.jobTitle}.`,
+    `${tech} is heading to you as soon as possible.`,
+    "",
+    "Reply to this number if anything changes.",
+  ].join("\n");
+}
+
+export function buildJobNotifyMessage(input: {
+  type?: string;
+  clientFirstName: string;
+  techName?: string;
+  jobTitle: string;
+  companyName?: string;
+}) {
+  if (input.type === "EMERGENCY") {
+    return buildEmergencyCustomerMessage(input);
+  }
+  return buildEnRouteMessage(input);
+}
+
 export const JOB_NOTIFY_STATUSES = ["SCHEDULED", "EN_ROUTE", "ON_SITE"] as const;
 
 export function jobNotifyProps(
   job: {
     id: string;
     title: string;
+    type?: string;
     status: string;
     client: { firstName: string; phone: string | null; companyName?: string | null };
     technician?: { firstName: string; lastName: string } | null;
@@ -79,7 +111,8 @@ export function jobNotifyProps(
   if (!JOB_NOTIFY_STATUSES.includes(job.status as (typeof JOB_NOTIFY_STATUSES)[number])) {
     return null;
   }
-  const message = buildEnRouteMessage({
+  const message = buildJobNotifyMessage({
+    type: job.type,
     clientFirstName: job.client.firstName,
     techName: job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : techFallbackName,
     jobTitle: job.title,
