@@ -61,6 +61,7 @@ export async function convertQuoteToJob(input: {
         subtotal: quote.subtotal,
         taxAmount: quote.taxAmount,
         total: quote.total,
+        includedTrips: quote.includedTrips,
         lineItems: {
           create: quote.lineItems.map((item) => ({
             name: item.name,

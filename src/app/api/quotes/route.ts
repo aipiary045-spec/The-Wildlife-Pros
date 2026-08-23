@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { jsonError, lineTotals, withAuth } from "@/lib/api";
+import { parseIncludedTrips } from "@/lib/job-trips";
 import { nextNumber } from "@/lib/utils";
 
 export const GET = withAuth(async () => {
@@ -35,6 +36,7 @@ export const POST = withAuth(async (session, request) => {
       title: body.title,
       message: body.message,
       validUntil: body.validUntil ? new Date(body.validUntil) : null,
+      includedTrips: body.includedTrips === undefined ? undefined : parseIncludedTrips(body.includedTrips),
       ...totals,
       lineItems: {
         create: items.map((item, index) => ({

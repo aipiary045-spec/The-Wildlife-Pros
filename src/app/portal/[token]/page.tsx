@@ -2,8 +2,10 @@
 
 import { use, useEffect, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
+import { TripVisitBadge } from "@/components/jobs/TripVisitBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatMoney } from "@/lib/utils";
+import type { TripVisitInfo } from "@/lib/job-trips";
 
 type PortalLineItem = {
   name: string;
@@ -22,6 +24,7 @@ type PortalData = {
       scheduledStart: string | null;
       property: { address1: string };
       technician: { firstName: string; lastName: string } | null;
+      tripVisit?: TripVisitInfo | null;
     }>;
     quotes: Array<{
       id: string;
@@ -32,6 +35,7 @@ type PortalData = {
       subtotal: string;
       taxAmount: string;
       message: string | null;
+      includedTrips?: number | null;
       lineItems: PortalLineItem[];
     }>;
   };
@@ -100,7 +104,14 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
           {data.jobs.map((job) => (
             <div key={job.id} className="border-t border-line py-4 first:mt-3 first:border-0 first:pt-0">
               <div className="flex justify-between gap-3">
-                <p className="font-semibold">{job.title}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold">{job.title}</p>
+                  {job.tripVisit ? (
+                    <div className="mt-1">
+                      <TripVisitBadge info={job.tripVisit} />
+                    </div>
+                  ) : null}
+                </div>
                 <StatusBadge status={job.status} />
               </div>
               <p className="mt-1 text-sm text-muted">
@@ -121,6 +132,9 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
                 <StatusBadge status={quote.status} />
               </div>
               {quote.message ? <p className="mt-1 text-sm text-muted">{quote.message}</p> : null}
+              {quote.includedTrips && quote.includedTrips >= 2 ? (
+                <p className="mt-1 text-sm font-medium text-orange">{quote.includedTrips} visits included in this package</p>
+              ) : null}
               {quote.lineItems.length > 0 ? (
                 <ul className="mt-3 space-y-1 rounded-xl border border-line bg-panel-muted px-3 py-2 text-sm">
                   {quote.lineItems.map((item, index) => (

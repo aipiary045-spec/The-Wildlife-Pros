@@ -2,10 +2,12 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
+import { TripVisitBadge } from "@/components/jobs/TripVisitBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { dateKey } from "@/lib/dates";
 import { propertyAddress } from "@/lib/utils";
+import type { TripVisitInfo } from "@/lib/job-trips";
 import type { ScheduleTech } from "@/components/schedule/job-card";
 
 type FieldJob = {
@@ -57,6 +59,7 @@ export function FieldJobList({
   days,
   showTech,
   routeByJobId = {},
+  tripVisitByJobId = {},
   technicians = [],
   notifyByJobId = {},
   onSiteJobId,
@@ -66,6 +69,7 @@ export function FieldJobList({
   days: Date[];
   showTech: boolean;
   routeByJobId?: Record<string, RouteHint>;
+  tripVisitByJobId?: Record<string, TripVisitInfo>;
   technicians?: ScheduleTech[];
   notifyByJobId?: Record<string, FieldJobNotify>;
   onSiteJobId?: string | null;
@@ -127,6 +131,7 @@ export function FieldJobList({
                   lat: job.property.lat,
                   lng: job.property.lng,
                 };
+                const tripVisit = tripVisitByJobId[job.id];
                 return (
                   <article
                     key={job.id}
@@ -150,7 +155,10 @@ export function FieldJobList({
                             {eta ? format(eta, "h:mm a") : "Flex"}
                           </p>
                           <p className="text-xs text-stone-500">{job.number}</p>
-                          <h2 className="font-semibold">{job.title}</h2>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="font-semibold">{job.title}</h2>
+                            <TripVisitBadge info={tripVisit} compact />
+                          </div>
                         </div>
                         <StatusBadge status={job.status} />
                       </div>

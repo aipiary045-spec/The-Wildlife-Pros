@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { GripVertical } from "lucide-react";
+import { TripVisitBadge } from "@/components/jobs/TripVisitBadge";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { JOB_TYPE_BAR, JOB_TYPE_LABEL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -116,6 +117,11 @@ export function AppointmentChip({
           >
             {typeLabel}
           </Link>
+          {job.tripVisit ? (
+            <div className="mt-0.5">
+              <TripVisitBadge info={job.tripVisit} compact />
+            </div>
+          ) : null}
           <p className={cn("text-xs text-stone-500", list ? "leading-snug" : "truncate")}>
             {job.client.lastName}
             {job.property.address1 ? ` · ${job.property.address1}` : ""}

@@ -67,6 +67,7 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
           <p className="text-sm text-stone-500">
             Valid {quote.validUntil ? format(quote.validUntil, "PPP") : "—"}
             {quote.sentAt ? ` · sent ${format(quote.sentAt, "MMM d")}` : ""}
+            {quote.includedTrips && quote.includedTrips >= 2 ? ` · ${quote.includedTrips} visits included` : ""}
           </p>
           {techView ? null : (
             <Link href="/quotes/pricing" className="mt-2 inline-block text-sm font-semibold text-orange">
@@ -92,6 +93,7 @@ export default async function QuoteDetailPage({ params }: PageProps<"/quotes/[id
                 validUntil: quote.validUntil,
                 clientId: quote.clientId,
                 propertyId: quote.propertyId,
+                includedTrips: quote.includedTrips,
                 lineItems: quote.lineItems.map((item) => ({
                   name: item.name,
                   quantity: Number(item.quantity),

@@ -43,6 +43,7 @@ export async function duplicateJobTrip(input: {
         subtotal: source.subtotal,
         taxAmount: source.taxAmount,
         total: source.total,
+        includedTrips: source.includedTrips,
         sourceJobId: source.sourceJobId ?? source.id,
         lineItems: {
           create: source.lineItems.map((item) => ({

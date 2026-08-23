@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { jsonError, lineTotals } from "@/lib/api";
+import { parseIncludedTrips } from "@/lib/job-trips";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -52,6 +53,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         title: typeof body.title === "string" ? body.title.trim() : undefined,
         message: body.message === undefined ? undefined : String(body.message || "").trim() || null,
         validUntil: body.validUntil ? new Date(body.validUntil) : undefined,
+        includedTrips:
+          body.includedTrips === undefined ? undefined : parseIncludedTrips(body.includedTrips),
         ...(totals ?? {}),
         lineItems: items
           ? {

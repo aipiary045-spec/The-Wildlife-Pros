@@ -54,6 +54,7 @@ export function EditQuoteButton({
     validUntil: Date | string | null;
     clientId: string;
     propertyId: string | null;
+    includedTrips?: number | null;
     lineItems: LineDraft[];
   };
 }) {
@@ -88,6 +89,7 @@ export function QuoteForm({
     validUntil: Date | string | null;
     clientId: string;
     propertyId: string | null;
+    includedTrips?: number | null;
     lineItems: LineDraft[];
   };
 }) {
@@ -98,6 +100,9 @@ export function QuoteForm({
   const [title, setTitle] = useState(quote?.title ?? "");
   const [message, setMessage] = useState(quote?.message ?? "");
   const [validUntil, setValidUntil] = useState(quote?.validUntil ? dateKey(new Date(quote.validUntil)) : dateKey(addDays(new Date(), 14)));
+  const [includedTrips, setIncludedTrips] = useState(
+    quote?.includedTrips ? String(quote.includedTrips) : "",
+  );
   const [items, setItems] = useState<LineDraft[]>(quote?.lineItems ?? []);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -131,6 +136,7 @@ export function QuoteForm({
         title: title.trim() || "Service estimate",
         message: message.trim() || undefined,
         validUntil,
+        includedTrips: includedTrips.trim() ? Number(includedTrips) : null,
         lineItems: items,
       }),
     });
@@ -182,6 +188,21 @@ export function QuoteForm({
           <label className="block text-sm">
             Valid until
             <input type="date" value={validUntil} onChange={(event) => setValidUntil(event.target.value)} className={inputClass} />
+          </label>
+          <label className="block text-sm">
+            Included visits
+            <input
+              type="number"
+              min={2}
+              max={99}
+              value={includedTrips}
+              onChange={(event) => setIncludedTrips(event.target.value)}
+              placeholder="Optional"
+              className={inputClass}
+            />
+            <span className="mt-1 block text-xs font-normal text-stone-500">
+              For multi-trip packages — shows “Visit 2 of 4” on jobs and the customer hub.
+            </span>
           </label>
         </div>
         <div className="mt-4">
