@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api";
 import { getSession } from "@/lib/auth";
-import { buildEnRouteMessage, messagingCapabilities, sendSms, smsFallbackUrl } from "@/lib/messaging";
+import { buildJobNotifyMessage, messagingCapabilities, sendSms, smsFallbackUrl } from "@/lib/messaging";
 import { prisma } from "@/lib/prisma";
 import { clientName } from "@/lib/utils";
 
@@ -16,7 +16,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   });
   if (!job) return jsonError("Work order not found", 404);
 
-  const body = buildEnRouteMessage({
+  const body = buildJobNotifyMessage({
+    type: job.type,
     clientFirstName: job.client.firstName,
     techName: job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : session.firstName,
     jobTitle: job.title,
