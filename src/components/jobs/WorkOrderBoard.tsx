@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
+import { JobFieldStats } from "@/components/jobs/JobFieldStats";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
+import { telHref } from "@/lib/intake";
 import {
   groupWorkOrders,
   jobIsLateOnToday,
@@ -12,7 +14,7 @@ import {
   workOrderCounts,
   type WorkOrderView,
 } from "@/lib/work-orders";
-import { clientName } from "@/lib/utils";
+import { clientName, formatPhone, propertyAddress } from "@/lib/utils";
 
 export type WorkOrderRow = {
   id: string;
@@ -21,9 +23,30 @@ export type WorkOrderRow = {
   type: string;
   status: string;
   scheduledStart: string | null;
-  client: { firstName: string; lastName: string; companyName: string | null };
-  property: { address1: string };
+  durationMin: number;
+  instructions: string | null;
+  client: {
+    firstName: string;
+    lastName: string;
+    companyName: string | null;
+    phone: string | null;
+  };
+  property: {
+    address1: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    accessNotes: string | null;
+    gateCode: string | null;
+    petsOnSite: boolean;
+  };
   technician: { firstName: string; lastName: string } | null;
+  counts: {
+    deployments: number;
+    captures: number;
+    entryPoints: number;
+    photos: number;
+  };
 };
 
 type PreparedJob = {
@@ -34,9 +57,17 @@ type PreparedJob = {
   typeLabel: string;
   status: string;
   scheduledStart: Date | null;
+  durationMin: number;
   clientName: string;
+  clientPhone: string | null;
   address: string;
+  fullAddress: string;
   technicianName: string | null;
+  instructions: string | null;
+  accessNotes: string | null;
+  gateCode: string | null;
+  petsOnSite: boolean;
+  counts: WorkOrderRow["counts"];
 };
 
 export function WorkOrderBoard({
@@ -67,9 +98,17 @@ export function WorkOrderBoard({
         typeLabel: JOB_TYPE_LABEL[job.type] ?? job.type,
         status: job.status,
         scheduledStart: job.scheduledStart ? new Date(job.scheduledStart) : null,
+        durationMin: job.durationMin,
         clientName: clientName(job.client),
+        clientPhone: job.client.phone,
         address: job.property.address1,
+        fullAddress: propertyAddress(job.property),
         technicianName: job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : null,
+        instructions: job.instructions,
+        accessNotes: job.property.accessNotes,
+        gateCode: job.property.gateCode,
+        petsOnSite: job.property.petsOnSite,
+        counts: job.counts,
       })),
     [jobs],
   );
@@ -146,20 +185,50 @@ export function WorkOrderBoard({
 
 function JobCard({ job, showOfficeMeta, now }: { job: PreparedJob; showOfficeMeta: boolean; now: Date }) {
   const lateToday = jobIsLateOnToday(job, now);
+  const callHref = telHref(job.clientPhone);
+  const accessHint = [
+    job.gateCode ? `Gate ${job.gateCode}` : null,
+    job.petsOnSite ? "Pets" : null,
+    job.accessNotes,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <Link href={`/jobs/${job.id}`} className="block rounded-2xl border border-line bg-panel p-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs text-orange">{job.number}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold text-orange">{job.number}</p>
+            <span className="text-xs text-stone-500">{job.typeLabel}</span>
+          </div>
           <p className="font-semibold">{job.title}</p>
-          <p className="text-sm text-stone-600">
-            {job.clientName} · {job.address}
-          </p>
-          <p className="text-xs text-stone-500">
-            {job.scheduledStart ? format(job.scheduledStart, "MMM d, h:mm a") : "No day yet"}
+          <p className="text-sm text-stone-600">{job.clientName}</p>
+          <p className="text-sm text-stone-600">{job.fullAddress}</p>
+          <p className="mt-1 text-xs text-stone-500">
+            {job.scheduledStart ? format(job.scheduledStart, "EEE, MMM d · h:mm a") : "No day yet"}
+            {` · ${job.durationMin} min`}
             {showOfficeMeta ? ` · ${job.technicianName ?? "Unassigned"}` : null}
           </p>
-          {lateToday ? <p className="mt-1 text-xs font-semibold text-orange">Late for check-in</p> : null}
+          {callHref ? (
+            <p className="mt-1 text-xs">
+              <a
+                href={callHref}
+                className="font-medium text-orange hover:underline"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {formatPhone(job.clientPhone)}
+              </a>
+            </p>
+          ) : null}
+          {job.instructions ? (
+            <p className="mt-2 line-clamp-2 text-sm text-stone-700">{job.instructions}</p>
+          ) : null}
+          {accessHint ? <p className="mt-1 line-clamp-1 text-xs text-stone-500">{accessHint}</p> : null}
+          <div className="mt-2">
+            <JobFieldStats counts={job.counts} compact />
+          </div>
+          {lateToday ? <p className="mt-2 text-xs font-semibold text-orange">Late for check-in</p> : null}
         </div>
         <StatusBadge status={job.status} />
       </div>
@@ -176,14 +245,16 @@ function JobTable({ jobs, showOfficeMeta, now }: { jobs: PreparedJob[]; showOffi
           <th className="px-4 py-3">Client / property</th>
           <th className="px-4 py-3">When</th>
           {showOfficeMeta ? <th className="px-4 py-3">Tech</th> : null}
+          <th className="px-4 py-3">Field</th>
           <th className="px-4 py-3">Status</th>
         </tr>
       </thead>
       <tbody>
         {jobs.map((job) => {
           const lateToday = jobIsLateOnToday(job, now);
+          const callHref = telHref(job.clientPhone);
           return (
-            <tr key={job.id} className="border-t border-line">
+            <tr key={job.id} className="border-t border-line align-top">
               <td className="px-4 py-3">
                 <Link href={`/jobs/${job.id}`} className="font-medium hover:text-orange">
                   {job.number}
@@ -191,14 +262,37 @@ function JobTable({ jobs, showOfficeMeta, now }: { jobs: PreparedJob[]; showOffi
                 <p className="text-xs text-stone-500">
                   {job.typeLabel} · {job.title}
                 </p>
-                {lateToday ? <p className="text-xs font-semibold text-orange">Late for check-in</p> : null}
+                {job.instructions ? (
+                  <p className="mt-1 line-clamp-2 text-xs text-stone-600">{job.instructions}</p>
+                ) : null}
+                {lateToday ? <p className="mt-1 text-xs font-semibold text-orange">Late for check-in</p> : null}
               </td>
               <td className="px-4 py-3">
                 {job.clientName}
-                <p className="text-xs text-stone-500">{job.address}</p>
+                {callHref ? (
+                  <p className="text-xs">
+                    <a href={callHref} className="font-medium text-orange hover:underline">
+                      {formatPhone(job.clientPhone)}
+                    </a>
+                  </p>
+                ) : null}
+                <p className="text-xs text-stone-500">{job.fullAddress}</p>
+                {job.gateCode || job.petsOnSite || job.accessNotes ? (
+                  <p className="mt-1 line-clamp-2 text-xs text-stone-500">
+                    {[job.gateCode ? `Gate ${job.gateCode}` : null, job.petsOnSite ? "Pets" : null, job.accessNotes]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                ) : null}
               </td>
-              <td className="px-4 py-3">{job.scheduledStart ? format(job.scheduledStart, "MMM d, h:mm a") : "No day yet"}</td>
+              <td className="px-4 py-3">
+                {job.scheduledStart ? format(job.scheduledStart, "EEE, MMM d · h:mm a") : "No day yet"}
+                <p className="text-xs text-stone-500">{job.durationMin} min</p>
+              </td>
               {showOfficeMeta ? <td className="px-4 py-3">{job.technicianName ?? "—"}</td> : null}
+              <td className="px-4 py-3">
+                <JobFieldStats counts={job.counts} compact />
+              </td>
               <td className="px-4 py-3">
                 <StatusBadge status={job.status} />
               </td>

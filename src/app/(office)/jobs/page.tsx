@@ -21,7 +21,19 @@ export default async function JobsPage({
   const [jobs, technicians, clients] = await Promise.all([
     prisma.job.findMany({
       where: techView && session ? { technicianId: session.id } : undefined,
-      include: { client: true, property: true, technician: true },
+      include: {
+        client: true,
+        property: true,
+        technician: true,
+        _count: {
+          select: {
+            deployments: true,
+            captures: true,
+            entryPoints: true,
+            photos: true,
+          },
+        },
+      },
       orderBy: [{ scheduledStart: "asc" }, { createdAt: "desc" }],
     }),
     techView
@@ -72,9 +84,25 @@ export default async function JobsPage({
           type: job.type,
           status: job.status,
           scheduledStart: job.scheduledStart?.toISOString() ?? null,
-          client: job.client,
-          property: { address1: job.property.address1 },
+          durationMin: job.durationMin,
+          instructions: job.instructions,
+          client: {
+            firstName: job.client.firstName,
+            lastName: job.client.lastName,
+            companyName: job.client.companyName,
+            phone: job.client.phone,
+          },
+          property: {
+            address1: job.property.address1,
+            city: job.property.city,
+            state: job.property.state,
+            postalCode: job.property.postalCode,
+            accessNotes: job.property.accessNotes,
+            gateCode: job.property.gateCode,
+            petsOnSite: job.property.petsOnSite,
+          },
           technician: job.technician,
+          counts: job._count,
         }))}
         views={views}
         activeKey={activeKey}
