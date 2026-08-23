@@ -158,7 +158,12 @@ export function FieldJobList({
                     <div className="mt-3 flex gap-2">
                       <NavigateLink destination={place} label="Navigate" className="flex-1 [&>a]:w-full [&>a]:justify-center" />
                       {notifyByJobId[job.id] ? (
-                        <NotifyCustomerButton {...notifyByJobId[job.id]} compact className="flex-1" />
+                        <NotifyCustomerButton
+                          {...notifyByJobId[job.id]}
+                          compact
+                          emphasized={emergency}
+                          className="flex-1"
+                        />
                       ) : null}
                     </div>
                     <div className="mt-3">
