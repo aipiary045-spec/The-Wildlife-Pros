@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
+import { JobSummaryCard } from "@/components/jobs/JobSummaryCard";
 import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobEntryPointsCard } from "@/components/jobs/JobEntryPointsCard";
 import { JobPhotosCard } from "@/components/jobs/JobPhotosCard";
@@ -127,33 +126,38 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           ) : null}
         </div>
       </div>
-      <section className="grid gap-4 md:grid-cols-2">
-        <Card title="Visit">
-          <p>{job.scheduledStart ? format(job.scheduledStart, "PPP p") : "Unscheduled"}</p>
-          <p className="text-sm text-stone-600">
-            {job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned"} ·{" "}
-            {job.durationMin} min
-          </p>
-          {job.sourceJob ? (
-            <Link href={`/jobs/${job.sourceJob.id}`} className="mt-2 block text-sm font-medium text-orange">
-              First trip {job.sourceJob.number}
-            </Link>
-          ) : null}
-          {job.trips.length ? (
-            <div className="mt-2 space-y-1 text-sm">
-              {job.trips.map((trip) => (
-                <Link key={trip.id} href={`/jobs/${trip.id}`} className="block font-medium text-orange">
-                  Later trip {trip.number}
-                  {trip.scheduledStart ? ` · ${format(trip.scheduledStart, "MMM d")}` : ""}
-                </Link>
-              ))}
-            </div>
-          ) : null}
-        </Card>
-        <Card title="Instructions">
-          <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
-        </Card>
-      </section>
+      <JobSummaryCard
+        job={{
+          number: job.number,
+          title: job.title,
+          type: job.type,
+          instructions: job.instructions,
+          scheduledStart: job.scheduledStart,
+          scheduledEnd: job.scheduledEnd,
+          durationMin: job.durationMin,
+          completedAt: job.completedAt,
+          client: job.client,
+          property: job.property,
+          technician: job.technician,
+          sourceJob: job.sourceJob
+            ? { id: job.sourceJob.id, number: job.sourceJob.number, scheduledStart: job.sourceJob.scheduledStart }
+            : null,
+          trips: job.trips.map((trip) => ({
+            id: trip.id,
+            number: trip.number,
+            scheduledStart: trip.scheduledStart,
+          })),
+          emergencyDispatch: job.emergencyDispatch
+            ? { message: job.emergencyDispatch.message, acknowledgedAt: job.emergencyDispatch.acknowledgedAt }
+            : null,
+          counts: {
+            deployments: job.deployments.length,
+            captures: job.captures.length,
+            entryPoints: job.entryPoints.length,
+            photos: job.photos.length,
+          },
+        }}
+      />
       <section className="grid gap-6 lg:grid-cols-2">
         <JobTrapsCard
           jobId={job.id}
@@ -192,14 +196,5 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
       />
     </div>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-line bg-panel p-5">
-      <h2 className="mb-3 font-semibold">{title}</h2>
-      {children}
-    </section>
   );
 }
