@@ -4,6 +4,7 @@ import { ViewModeToggle } from "@/components/layout/ViewModeToggle";
 import { getAppContext } from "@/lib/app-context";
 import { isTechnician } from "@/lib/paths";
 import { canSwitchViewMode } from "@/lib/view-mode";
+import { getMyOpenCheckIn } from "@/lib/active-checkins.server";
 import { getMyTimesheet } from "@/lib/timesheets";
 import { prisma } from "@/lib/prisma";
 
@@ -13,7 +14,14 @@ export default async function OfficeLayout({ children }: { children: React.React
   const context = await getAppContext();
   if (!context) redirect("/login");
   const { session, fieldView, navRole, viewMode } = context;
-  const myTime = fieldView ? await getMyTimesheet(session.id) : null;
+  const myTime = fieldView
+    ? await Promise.all([getMyTimesheet(session.id), getMyOpenCheckIn(session.id)]).then(([time, open]) => ({
+        ...time,
+        openJob: open
+          ? { id: open.jobId, number: open.jobNumber, title: open.jobTitle }
+          : null,
+      }))
+    : null;
   const showViewToggle = canSwitchViewMode(session.role);
   const viewToggle = showViewToggle ? (
     <div className="mx-3 mb-2 rounded-xl border border-white/10 bg-white/5 p-2">
