@@ -63,7 +63,8 @@ test("technicians see team emergency alert when not assigned", () => {
     ],
   });
   assert.equal(items.length, 1);
-  assert.match(items[0]?.title ?? "", /get there sooner/i);
+  assert.match(items[0]?.title ?? "", /steal if you're closer/i);
+  assert.equal(items[0]?.stealJobId, "em1");
 });
 
 test("technicians see go-now alert when assigned", () => {

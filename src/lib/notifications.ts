@@ -25,6 +25,7 @@ export type NotificationItem = {
   body: string;
   href: string;
   urgency: NotificationUrgency;
+  stealJobId?: string;
 };
 
 const KIND_ORDER = new Map(NOTIFICATION_KINDS.map((kind, index) => [kind, index]));
@@ -50,12 +51,13 @@ export function emergencyDispatchItems(
         ? dispatch.acknowledged
           ? "Emergency acknowledged"
           : "Emergency — go now"
-        : "Emergency — can you get there sooner?"
+        : "Emergency — steal if you're closer"
       : dispatch.overdue
         ? "Emergency not acknowledged yet"
         : "Emergency dispatched",
     body: [dispatch.title, dispatch.techName, dispatch.address].filter(Boolean).join(" · "),
     href: `/jobs/${dispatch.jobId}`,
+    stealJobId: techView && !dispatch.assignedToMe && !dispatch.acknowledged ? dispatch.jobId : undefined,
   }));
 }
 
