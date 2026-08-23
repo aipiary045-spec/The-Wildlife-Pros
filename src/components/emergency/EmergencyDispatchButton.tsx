@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Siren } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Siren, X } from "lucide-react";
 import { hazardTagOptions, type EmergencyHazardTag } from "@/lib/emergency";
 import { clientName } from "@/lib/utils";
 
@@ -55,8 +56,27 @@ export function EmergencyDispatchButton({
   const [serviceRequestId, setServiceRequestId] = useState<string | undefined>();
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const selectedClient = useMemo(() => clients.find((client) => client.id === clientId), [clients, clientId]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!prefill) return;
@@ -137,164 +157,204 @@ export function EmergencyDispatchButton({
         <Siren size={16} />
         <span className="hidden sm:inline">Emergency</span>
       </button>
-      {open ? (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-3 sm:items-center">
-          <form
-            onSubmit={(event) => void submit(event)}
-            className="max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-rose-200 bg-panel p-5 shadow-xl"
-          >
-            <p className="text-xs font-bold uppercase tracking-widest text-rose-700">Emergency dispatch</p>
-            <h2 className="mt-1 font-display text-2xl">Send a tech now</h2>
-            <p className="mt-2 text-sm text-stone-600">
-              Creates an emergency work order, texts the assigned tech, and pins the stop at the top of their field route.
-            </p>
-
-            <div className="mt-4 flex gap-2">
-              <ModeChip active={mode === "existing"} label="Existing client" onClick={() => setMode("existing")} />
-              <ModeChip active={mode === "quick"} label="Quick address" onClick={() => setMode("quick")} />
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {mode === "existing" ? (
-                <>
-                  <label className="block text-sm sm:col-span-2">
-                    Client
-                    <select value={clientId} onChange={(event) => setClientId(event.target.value)} className={inputClass}>
-                      {clients.map((client) => (
-                        <option key={client.id} value={client.id}>
-                          {clientName(client)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block text-sm sm:col-span-2">
-                    Property
-                    <select value={propertyId} onChange={(event) => setPropertyId(event.target.value)} className={inputClass}>
-                      {(selectedClient?.properties ?? []).map((property) => (
-                        <option key={property.id} value={property.id}>
-                          {property.address1}, {property.city}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </>
-              ) : (
-                <>
-                  <label className="block text-sm">
-                    First name
-                    <input value={quickFirst} onChange={(event) => setQuickFirst(event.target.value)} className={inputClass} />
-                  </label>
-                  <label className="block text-sm">
-                    Last name
-                    <input value={quickLast} onChange={(event) => setQuickLast(event.target.value)} className={inputClass} />
-                  </label>
-                  <label className="block text-sm sm:col-span-2">
-                    Phone
-                    <input value={quickPhone} onChange={(event) => setQuickPhone(event.target.value)} className={inputClass} />
-                  </label>
-                  <label className="block text-sm sm:col-span-2">
-                    Street address
-                    <input required value={quickAddress} onChange={(event) => setQuickAddress(event.target.value)} className={inputClass} />
-                  </label>
-                  <label className="block text-sm">
-                    City
-                    <input value={quickCity} onChange={(event) => setQuickCity(event.target.value)} className={inputClass} />
-                  </label>
-                  <label className="block text-sm">
-                    State
-                    <input value={quickState} onChange={(event) => setQuickState(event.target.value)} className={inputClass} />
-                  </label>
-                  <label className="block text-sm">
-                    ZIP
-                    <input value={quickPostal} onChange={(event) => setQuickPostal(event.target.value)} className={inputClass} />
-                  </label>
-                </>
-              )}
-
-              <label className="block text-sm sm:col-span-2">
-                What&apos;s happening
-                <input
-                  required
-                  value={situation}
-                  onChange={(event) => setSituation(event.target.value)}
-                  className={inputClass}
-                  placeholder="Snake in the kitchen"
-                />
-              </label>
-              <label className="block text-sm sm:col-span-2">
-                Note to tech
-                <textarea
-                  value={message}
-                  onChange={(event) => setMessage(event.target.value)}
-                  className={inputClass}
-                  rows={2}
-                  placeholder="Drop your current stop and go. Customer says kids are home."
-                />
-              </label>
-              <label className="block text-sm">
-                Assign to
-                <select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className={inputClass}>
-                  {technicians.map((tech) => (
-                    <option key={tech.id} value={tech.id}>
-                      {tech.firstName} {tech.lastName}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-sm">
-                Backup tech
-                <select value={backupTechnicianId} onChange={(event) => setBackupTechnicianId(event.target.value)} className={inputClass}>
-                  <option value="">None</option>
-                  {technicians
-                    .filter((tech) => tech.id !== technicianId)
-                    .map((tech) => (
-                      <option key={tech.id} value={tech.id}>
-                        {tech.firstName} {tech.lastName}
-                      </option>
-                    ))}
-                </select>
-              </label>
-            </div>
-
-            <fieldset className="mt-4">
-              <legend className="text-sm font-semibold">Hazards on site</legend>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {hazardTagOptions().map((tag) => (
-                  <button
-                    key={tag.value}
-                    type="button"
-                    onClick={() => toggleTag(tag.value)}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      hazardTags.includes(tag.value) ? "bg-rose-700 text-white" : "border border-line bg-white text-stone-600"
-                    }`}
-                  >
-                    {tag.label}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-
-            <label className="mt-4 flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={notifyCustomer} onChange={(event) => setNotifyCustomer(event.target.checked)} />
-              Text customer that a technician is on the way
-            </label>
-
-            {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}
-            <div className="mt-4 flex gap-2">
-              <button type="button" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-line px-3 py-2.5 text-sm font-semibold">
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 rounded-lg bg-rose-700 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+      {open && mounted
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[80] flex flex-col justify-end bg-black/40 sm:items-center sm:justify-center sm:p-3"
+              role="presentation"
+              onClick={() => setOpen(false)}
+            >
+              <form
+                onSubmit={(event) => void submit(event)}
+                onClick={(event) => event.stopPropagation()}
+                className="flex max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-0.75rem))] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-rose-200 bg-panel shadow-xl sm:max-h-[92dvh] sm:rounded-2xl"
               >
-                {saving ? "Dispatching…" : "Dispatch now"}
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
+                <div className="shrink-0 border-b border-line px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-rose-700">Emergency dispatch</p>
+                      <h2 className="mt-1 font-display text-2xl">Send a tech now</h2>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Close emergency dispatch"
+                      onClick={() => setOpen(false)}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-stone-500"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm text-stone-600">
+                    Creates an emergency work order, texts the assigned tech, and pins the stop at the top of their field route.
+                  </p>
+                </div>
+
+                <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+                  <div className="flex gap-2">
+                    <ModeChip active={mode === "existing"} label="Existing client" onClick={() => setMode("existing")} />
+                    <ModeChip active={mode === "quick"} label="Quick address" onClick={() => setMode("quick")} />
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {mode === "existing" ? (
+                      <>
+                        <label className="block text-sm sm:col-span-2">
+                          Client
+                          <select value={clientId} onChange={(event) => setClientId(event.target.value)} className={inputClass}>
+                            {clients.map((client) => (
+                              <option key={client.id} value={client.id}>
+                                {clientName(client)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block text-sm sm:col-span-2">
+                          Property
+                          <select value={propertyId} onChange={(event) => setPropertyId(event.target.value)} className={inputClass}>
+                            {(selectedClient?.properties ?? []).map((property) => (
+                              <option key={property.id} value={property.id}>
+                                {property.address1}, {property.city}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </>
+                    ) : (
+                      <>
+                        <label className="block text-sm">
+                          First name
+                          <input value={quickFirst} onChange={(event) => setQuickFirst(event.target.value)} className={inputClass} />
+                        </label>
+                        <label className="block text-sm">
+                          Last name
+                          <input value={quickLast} onChange={(event) => setQuickLast(event.target.value)} className={inputClass} />
+                        </label>
+                        <label className="block text-sm sm:col-span-2">
+                          Phone
+                          <input value={quickPhone} onChange={(event) => setQuickPhone(event.target.value)} className={inputClass} />
+                        </label>
+                        <label className="block text-sm sm:col-span-2">
+                          Street address
+                          <input
+                            required
+                            value={quickAddress}
+                            onChange={(event) => setQuickAddress(event.target.value)}
+                            className={inputClass}
+                          />
+                        </label>
+                        <label className="block text-sm">
+                          City
+                          <input value={quickCity} onChange={(event) => setQuickCity(event.target.value)} className={inputClass} />
+                        </label>
+                        <label className="block text-sm">
+                          State
+                          <input value={quickState} onChange={(event) => setQuickState(event.target.value)} className={inputClass} />
+                        </label>
+                        <label className="block text-sm">
+                          ZIP
+                          <input value={quickPostal} onChange={(event) => setQuickPostal(event.target.value)} className={inputClass} />
+                        </label>
+                      </>
+                    )}
+
+                    <label className="block text-sm sm:col-span-2">
+                      What&apos;s happening
+                      <input
+                        required
+                        value={situation}
+                        onChange={(event) => setSituation(event.target.value)}
+                        className={inputClass}
+                        placeholder="Snake in the kitchen"
+                      />
+                    </label>
+                    <label className="block text-sm sm:col-span-2">
+                      Note to tech
+                      <textarea
+                        value={message}
+                        onChange={(event) => setMessage(event.target.value)}
+                        className={inputClass}
+                        rows={2}
+                        placeholder="Drop your current stop and go. Customer says kids are home."
+                      />
+                    </label>
+                    <label className="block text-sm">
+                      Assign to
+                      <select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className={inputClass}>
+                        {technicians.map((tech) => (
+                          <option key={tech.id} value={tech.id}>
+                            {tech.firstName} {tech.lastName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block text-sm">
+                      Backup tech
+                      <select
+                        value={backupTechnicianId}
+                        onChange={(event) => setBackupTechnicianId(event.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="">None</option>
+                        {technicians
+                          .filter((tech) => tech.id !== technicianId)
+                          .map((tech) => (
+                            <option key={tech.id} value={tech.id}>
+                              {tech.firstName} {tech.lastName}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <fieldset className="mt-4">
+                    <legend className="text-sm font-semibold">Hazards on site</legend>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {hazardTagOptions().map((tag) => (
+                        <button
+                          key={tag.value}
+                          type="button"
+                          onClick={() => toggleTag(tag.value)}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            hazardTags.includes(tag.value) ? "bg-rose-700 text-white" : "border border-line bg-white text-stone-600"
+                          }`}
+                        >
+                          {tag.label}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <label className="mt-4 flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={notifyCustomer} onChange={(event) => setNotifyCustomer(event.target.checked)} />
+                    Text customer that a technician is on the way
+                  </label>
+
+                  {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}
+                </div>
+
+                <div className="shrink-0 border-t border-line px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="flex-1 rounded-lg border border-line px-3 py-2.5 text-sm font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="flex-1 rounded-lg bg-rose-700 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                    >
+                      {saving ? "Dispatching…" : "Dispatch now"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
