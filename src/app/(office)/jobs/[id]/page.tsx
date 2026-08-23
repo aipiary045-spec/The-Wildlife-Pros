@@ -147,6 +147,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
               clientPhone={notify.clientPhone}
               smsHref={notify.smsHref}
               autoSendSms={notify.autoSendSms}
+              alreadyNotified={notify.alreadyNotified}
               emphasized={job.type === "EMERGENCY"}
             />
           ) : null}
