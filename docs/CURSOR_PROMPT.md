@@ -13,8 +13,8 @@ Build and extend a web + mobile-ready operations system focused on **scheduling 
 ### Jobber-style core (must stay first-class)
 
 - Client & property CRM (one customer, many service addresses)
-- Incoming calls → work orders on the schedule
-- Home dashboard with pipeline cards (calls, jobs, field activity) and today’s technician timeline
+- Work orders on the schedule (create from clients or the schedule board)
+- Home dashboard with pipeline cards (jobs, field activity) and today’s technician timeline
 - Drag-and-drop dispatch calendar: week grid (technician × day) and day timeline (technician × time, 15-minute snap). **New job** / **+ Job** opens a create dialog; unscheduled jobs drag onto a tech.
 - Check in / check out on the job, field route, and calendar. Check-out asks if the customer needs a follow-up visit or if the job is complete. Follow-up creates a new job for the same client.
 - Recurring service visits

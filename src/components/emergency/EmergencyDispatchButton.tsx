@@ -18,7 +18,6 @@ type ClientOption = {
 export type EmergencyPrefill = {
   clientId?: string;
   propertyId?: string;
-  serviceRequestId?: string;
   situation?: string;
   phone?: string;
 };
@@ -49,7 +48,6 @@ export function EmergencyDispatchButton({
   const [quickCity, setQuickCity] = useState("");
   const [quickState, setQuickState] = useState("NC");
   const [quickPostal, setQuickPostal] = useState("");
-  const [serviceRequestId, setServiceRequestId] = useState<string | undefined>();
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -84,7 +82,6 @@ export function EmergencyDispatchButton({
     }
     if (prefill.situation) setSituation(prefill.situation);
     if (prefill.phone) setQuickPhone(prefill.phone);
-    if (prefill.serviceRequestId) setServiceRequestId(prefill.serviceRequestId);
   }, [prefill]);
 
   useEffect(() => {
@@ -115,7 +112,6 @@ export function EmergencyDispatchButton({
         message,
         hazardTags,
         notifyCustomer,
-        serviceRequestId,
         quickClient:
           mode === "quick"
             ? {

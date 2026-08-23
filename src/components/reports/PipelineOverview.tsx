@@ -1,7 +1,6 @@
 import { PipelineCard } from "@/components/dashboard/PipelineCard";
 
 export type PipelineOverviewData = {
-  requests: { new: number; assessed: number; converted: number; spark: number[] };
   jobs: {
     unscheduled: number;
     active: number;
@@ -18,19 +17,7 @@ export type PipelineOverviewData = {
 
 export function PipelineOverview(props: PipelineOverviewData) {
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      <PipelineCard
-        title="Incoming calls"
-        accent="#38bdf8"
-        rows={[
-          { label: "New", count: props.requests.new },
-          { label: "Looked at", count: props.requests.assessed },
-          { label: "Scheduled", count: props.requests.converted },
-        ]}
-        action="View call log"
-        href="/calls"
-        spark={props.requests.spark}
-      />
+    <section className="grid gap-3 sm:grid-cols-2">
       <PipelineCard
         title="Work orders"
         accent="#eab308"

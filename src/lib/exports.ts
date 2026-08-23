@@ -56,12 +56,6 @@ export const EXPORT_CATEGORIES = {
     sheetName: "Team",
     description: "Staff logins, roles, and contact info.",
   },
-  intake: {
-    id: "intake",
-    label: "Intake requests",
-    sheetName: "Intake",
-    description: "Inbound service requests before they become clients.",
-  },
 } as const;
 
 export type ExportCategoryId = keyof typeof EXPORT_CATEGORIES;
@@ -339,26 +333,6 @@ async function loadTeamTab(): Promise<ExportTab> {
   };
 }
 
-async function loadIntakeTab(): Promise<ExportTab> {
-  const requests = await prisma.serviceRequest.findMany({
-    include: { client: true, property: true },
-    orderBy: { createdAt: "desc" },
-  });
-  return {
-    name: EXPORT_CATEGORIES.intake.sheetName,
-    headers: ["id", "title", "client", "address", "status", "details", "createdAt"],
-    rows: requests.map((item) => [
-      item.id,
-      item.title,
-      item.client ? clientName(item.client) : "",
-      item.property ? propertyAddress(item.property) : "",
-      item.status,
-      item.details ?? "",
-      item.createdAt.toISOString(),
-    ]),
-  };
-}
-
 const LOADERS: Record<ExportCategoryId, () => Promise<ExportTab>> = {
   clients: loadClientsTab,
   properties: loadPropertiesTab,
@@ -368,7 +342,6 @@ const LOADERS: Record<ExportCategoryId, () => Promise<ExportTab>> = {
   deployments: loadDeploymentsTab,
   timesheets: loadTimesheetsTab,
   team: loadTeamTab,
-  intake: loadIntakeTab,
 };
 
 export async function loadExportTab(category: ExportCategoryId) {
@@ -381,7 +354,7 @@ export async function loadExportTabs(categories: ExportCategoryId[] = EXPORT_CAT
 }
 
 export async function loadExportRowCounts() {
-  const [clients, properties, jobs, species, traps, deployments, timesheets, team, intake] = await Promise.all([
+  const [clients, properties, jobs, species, traps, deployments, timesheets, team] = await Promise.all([
     prisma.client.count(),
     prisma.property.count(),
     prisma.job.count(),
@@ -390,7 +363,6 @@ export async function loadExportRowCounts() {
     prisma.equipmentDeployment.count(),
     prisma.timesheet.count(),
     prisma.user.count(),
-    prisma.serviceRequest.count(),
   ]);
   return {
     clients,
@@ -401,6 +373,5 @@ export async function loadExportRowCounts() {
     deployments,
     timesheets,
     team,
-    intake,
   } satisfies Record<ExportCategoryId, number>;
 }

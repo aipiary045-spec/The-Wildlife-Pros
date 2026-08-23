@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { jsonError, withAuth } from "@/lib/api";
 import { dateKey } from "@/lib/dates";
 import { resolvePropertyCoordinates } from "@/lib/geocode";
-import { canManageIntake } from "@/lib/intake";
+import { isOfficeRole } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { offKey, suggestNearbySlots } from "@/lib/schedule-suggest";
 import { startOfZonedDay } from "@/lib/timezone";
@@ -13,7 +13,7 @@ function coord(value: number | null | undefined) {
 }
 
 export const GET = withAuth(async (session, request) => {
-  if (!canManageIntake(session.role)) return jsonError("Office only.", 403);
+  if (!isOfficeRole(session.role)) return jsonError("Office only.", 403);
   const url = new URL(request.url);
   const propertyId = url.searchParams.get("propertyId")?.trim();
   const excludeJobId = url.searchParams.get("excludeJobId")?.trim() || undefined;

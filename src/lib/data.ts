@@ -14,22 +14,8 @@ export async function getReportsOverview() {
   const sparkStart = startOfDay(addDays(today, -6));
   const sparkDays = Array.from({ length: 7 }, (_, index) => addDays(sparkStart, index));
 
-  const [
-    requestGroups,
-    jobGroups,
-    recentRequests,
-    recentJobs,
-    recentCaptures,
-    activeTraps,
-    clockedIn,
-    captureWeek,
-  ] = await Promise.all([
-    prisma.serviceRequest.groupBy({ by: ["status"], _count: true }),
+  const [jobGroups, recentJobs, recentCaptures, activeTraps, clockedIn, captureWeek] = await Promise.all([
     prisma.job.groupBy({ by: ["status"], _count: true }),
-    prisma.serviceRequest.findMany({
-      where: { createdAt: { gte: sparkStart } },
-      select: { createdAt: true },
-    }),
     prisma.job.findMany({
       where: { createdAt: { gte: sparkStart } },
       select: { createdAt: true, status: true, completedAt: true },
@@ -50,7 +36,6 @@ export async function getReportsOverview() {
     }),
   ]);
 
-  const requestCount = Object.fromEntries(requestGroups.map((row) => [row.status, row._count]));
   const jobByStatus = Object.fromEntries(jobGroups.map((row) => [row.status, row._count]));
 
   const jobsActive = ["SCHEDULED", "EN_ROUTE", "ON_SITE", "IN_PROGRESS"].reduce(
@@ -67,12 +52,6 @@ export async function getReportsOverview() {
     activeTraps,
     clockedIn,
     captureWeek,
-    requests: {
-      new: requestCount.NEW ?? 0,
-      assessed: requestCount.ASSESSED ?? 0,
-      converted: (requestCount.CONVERTED_QUOTE ?? 0) + (requestCount.CONVERTED_JOB ?? 0),
-      spark: bucketCounts(recentRequests, sparkDays),
-    },
     jobs: {
       unscheduled: jobByStatus.UNSCHEDULED ?? 0,
       active: jobsActive,

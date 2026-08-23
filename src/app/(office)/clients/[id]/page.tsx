@@ -15,7 +15,6 @@ import {
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { OPEN_REQUEST_STATUSES } from "@/lib/intake";
 import { listCaptureEvents, summarizeCapturesBySpecies } from "@/lib/species-log";
 import { clientName, formatPhone, propertyAddress } from "@/lib/utils";
 
@@ -32,12 +31,7 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
   });
   if (!client) notFound();
 
-  const [captures, openCalls] = await Promise.all([
-    listCaptureEvents({ clientId: id }),
-    prisma.serviceRequest.count({
-      where: { clientId: id, status: { in: [...OPEN_REQUEST_STATUSES] } },
-    }),
-  ]);
+  const captures = await listCaptureEvents({ clientId: id });
   const speciesSummary = summarizeCapturesBySpecies(captures);
 
   const openJobs = client.jobs.filter((job) => !["COMPLETED", "INVOICED", "CANCELLED"].includes(job.status));
@@ -61,8 +55,8 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
 
       <ClientPortalLink portalToken={client.portalToken} />
 
-      <ClientQuickActions clientId={client.id} phone={client.phone} />
-      <ClientPipeline openCalls={openCalls} jobs={client.jobs} />
+      <ClientQuickActions clientId={client.id} />
+      <ClientPipeline jobs={client.jobs} />
 
       <section id="open-work">
         <ClientHubPanel title="Open work" empty="No open work orders.">

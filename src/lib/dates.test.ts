@@ -59,7 +59,6 @@ test("technicians are kept off dispatch and office pages", () => {
   assert.equal(isOfficeOnlyPath("/field"), false);
   assert.equal(isOfficeOnlyPath("/jobs/abc"), false);
   assert.equal(isOfficeOnlyPath("/time-off"), false);
-  assert.equal(isOfficeOnlyPath("/calls"), true);
 });
 
 test("technician time off lives under More, not the main tabs", () => {
@@ -78,7 +77,6 @@ test("admin mobile tabs prioritize today, schedule, and clients", () => {
   assert.ok(!tabs.includes("/reports"));
   assert.ok(more.includes("/reports"));
   assert.ok(more.includes("/jobs"));
-  assert.ok(more.includes("/calls"));
   assert.ok(!moreItems("TECHNICIAN").some((item) => item.href === "/calls"));
   assert.equal(primaryTabs("ADMIN")[0]?.label, "Today");
 });

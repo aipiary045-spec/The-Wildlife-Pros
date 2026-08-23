@@ -19,10 +19,7 @@ export default async function DashboardPage() {
       <PageHeader
         title="Today"
         description="Your stops for the day — everything else stays tucked away until you need it."
-        related={[
-          { href: "/schedule", label: "Schedule" },
-          { href: "/calls", label: "Call log" },
-        ]}
+        related={[{ href: "/schedule", label: "Schedule" }]}
       />
       <TodayBoard data={data} />
     </div>

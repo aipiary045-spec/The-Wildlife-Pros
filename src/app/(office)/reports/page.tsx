@@ -56,7 +56,6 @@ export default async function ReportsPage({
         ]}
       />
       <PipelineOverview
-        requests={overview.requests}
         jobs={overview.jobs}
         field={{
           activeTraps: overview.activeTraps,

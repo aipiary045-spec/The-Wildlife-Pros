@@ -15,8 +15,6 @@ export const OFFICE_ONLY_PREFIXES = [
   "/dashboard",
   "/schedule",
   "/clients",
-  "/calls",
-  "/requests",
   "/reports",
   "/routes",
   "/team",
