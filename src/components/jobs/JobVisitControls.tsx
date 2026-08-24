@@ -265,7 +265,7 @@ export function JobVisitControls({
   return (
     <div onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
       <button id="check-in" type="button" disabled={saving} className={buttonClass} onClick={() => void openVisit()}>
-        {saving ? "Checking in…" : "Check in"}
+        {saving && action === "check-in" ? "Checking in…" : action === "check-out" ? "Checked in" : "Check in"}
       </button>
       {error && !open ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
       {queuedNote && !open ? <p className="mt-1 text-xs text-amber-800">{queuedNote}</p> : null}
@@ -324,7 +324,9 @@ export function JobVisitControls({
             }}
           >
             <div className="flex-1 overflow-y-auto px-5 pb-4 pt-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-orange">Check in</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-orange">
+                {action === "check-out" ? "Checked in" : "Check in"}
+              </p>
               <h2 className="mt-1 font-display text-2xl">On this job</h2>
               <p className="mt-1 text-sm text-stone-600">
                 Log captures, traps, or exclusion if you need to, then check out when you leave.
