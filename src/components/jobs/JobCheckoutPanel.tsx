@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CHECKOUT_WORK } from "@/lib/job-visit";
 import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
 import { useJobVisit } from "@/components/jobs/JobVisitGate";
+import { CollapsibleJobSection } from "@/components/jobs/CollapsibleJobSection";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 const RETURN_PRESETS = [1, 3, 7, 14];
@@ -59,14 +60,12 @@ export function JobCheckoutPanel({ jobId }: { jobId: string }) {
   }
 
   return (
-    <section className="rounded-2xl border border-orange/30 bg-orange/5 p-5">
-      <p className="text-xs font-bold uppercase tracking-widest text-orange">Checked in</p>
-      <h2 className="mt-1 font-display text-2xl">Finish this visit</h2>
-      <p className="mt-1 text-sm text-stone-600">
+    <CollapsibleJobSection title="Finish this visit" defaultOpen emphasized>
+      <p className="text-sm text-stone-600">
         Log traps, captures, and photos above while you work. Check out when you leave.
       </p>
 
-      <form className="mt-5 space-y-4" onSubmit={(event) => void sendCheckout(event)}>
+      <form className="space-y-4" onSubmit={(event) => void sendCheckout(event)}>
         <div className="grid gap-2 sm:grid-cols-2">
           <button
             type="button"
@@ -166,6 +165,6 @@ export function JobCheckoutPanel({ jobId }: { jobId: string }) {
           {saving ? "Saving…" : finishedHere === false ? "Check out & schedule" : "Check out"}
         </button>
       </form>
-    </section>
+    </CollapsibleJobSection>
   );
 }

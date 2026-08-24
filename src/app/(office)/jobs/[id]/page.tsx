@@ -159,7 +159,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
         </Card>
       </section>
       <JobFieldWorkGate>
-        <section className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-3">
           <JobTrapsCard
             jobId={job.id}
             stock={stock.map((item) => ({
@@ -189,15 +189,15 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             exclusions={job.exclusions}
           />
           {techView ? null : <JobEditor job={job} technicians={technicians} />}
-        </section>
-        <JobPhotosCard
-          jobId={job.id}
-          propertyId={job.propertyId}
-          photos={job.photos}
-          entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
-        />
+          <JobPhotosCard
+            jobId={job.id}
+            propertyId={job.propertyId}
+            photos={job.photos}
+            entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
+          />
+          <JobCheckoutPanel jobId={job.id} />
+        </div>
       </JobFieldWorkGate>
-      <JobCheckoutPanel jobId={job.id} />
       </div>
     </JobVisitProvider>
   );
