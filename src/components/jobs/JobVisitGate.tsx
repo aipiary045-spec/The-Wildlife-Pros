@@ -16,12 +16,10 @@ export function JobVisitProvider({
   children,
   status,
   checkedIn,
-  techView,
 }: {
   children: React.ReactNode;
   status: string;
   checkedIn: boolean;
-  techView: boolean;
 }) {
   const action = visitActionForStatus(status);
   const serverOnSite = checkedIn || action === "check-out";
@@ -31,7 +29,7 @@ export function JobVisitProvider({
     setOnSite(serverOnSite);
   }, [serverOnSite]);
 
-  const alwaysShow = !techView || action === null;
+  const alwaysShow = action === null;
   const fieldWorkUnlocked = alwaysShow || onSite;
   const canCheckOut = onSite && action === "check-out";
 

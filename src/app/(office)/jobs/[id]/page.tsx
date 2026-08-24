@@ -80,7 +80,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   }
 
   return (
-    <JobVisitProvider status={displayStatus} checkedIn={checkedInHere} techView={techView}>
+    <JobVisitProvider status={displayStatus} checkedIn={checkedInHere}>
       <div className="space-y-6">
       <Breadcrumbs
         items={[
@@ -158,7 +158,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
         </Card>
       </section>
-      <JobFieldWorkGate techView={techView}>
+      <JobFieldWorkGate>
         <section className="grid gap-6 lg:grid-cols-2">
           <JobTrapsCard
             jobId={job.id}
