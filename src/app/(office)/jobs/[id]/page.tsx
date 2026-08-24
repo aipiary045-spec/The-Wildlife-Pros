@@ -6,6 +6,9 @@ import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobEntryPointsCard } from "@/components/jobs/JobEntryPointsCard";
 import { JobPhotosCard } from "@/components/jobs/JobPhotosCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
+import { JobCheckoutPanel } from "@/components/jobs/JobCheckoutPanel";
+import { JobFieldWorkGate } from "@/components/jobs/JobFieldWorkGate";
+import { JobVisitProvider } from "@/components/jobs/JobVisitGate";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
 import { JobEditor } from "@/components/jobs/JobEditor";
@@ -77,7 +80,8 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   }
 
   return (
-    <div className="space-y-6">
+    <JobVisitProvider status={displayStatus} checkedIn={checkedInHere} techView={techView}>
+      <div className="space-y-6">
       <Breadcrumbs
         items={[
           { label: techView ? "My work orders" : "Work orders", href: "/jobs" },
@@ -154,44 +158,48 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
         </Card>
       </section>
-      <section className="grid gap-6 lg:grid-cols-2">
-        <JobTrapsCard
-          jobId={job.id}
-          stock={stock.map((item) => ({
-            id: item.id,
-            serialNumber: item.serialNumber,
-            name: item.name,
-            type: item.type,
-            status: item.status,
-          }))}
-          deployments={job.deployments}
-          serials={allGear.map((item) => item.serialNumber)}
-          species={species.map((item) => item.commonName)}
-        />
-        <JobSpeciesCard
-          jobId={job.id}
-          captures={job.captures}
-          species={species}
-          deployments={job.deployments.map((item) => ({
-            id: item.id,
-            equipment: { serialNumber: item.equipment.serialNumber },
-          }))}
-        />
-        <JobEntryPointsCard
+      <JobFieldWorkGate techView={techView}>
+        <section className="grid gap-6 lg:grid-cols-2">
+          <JobTrapsCard
+            jobId={job.id}
+            stock={stock.map((item) => ({
+              id: item.id,
+              serialNumber: item.serialNumber,
+              name: item.name,
+              type: item.type,
+              status: item.status,
+            }))}
+            deployments={job.deployments}
+            serials={allGear.map((item) => item.serialNumber)}
+            species={species.map((item) => item.commonName)}
+          />
+          <JobSpeciesCard
+            jobId={job.id}
+            captures={job.captures}
+            species={species}
+            deployments={job.deployments.map((item) => ({
+              id: item.id,
+              equipment: { serialNumber: item.equipment.serialNumber },
+            }))}
+          />
+          <JobEntryPointsCard
+            jobId={job.id}
+            propertyId={job.propertyId}
+            entryPoints={job.entryPoints}
+            exclusions={job.exclusions}
+          />
+          {techView ? null : <JobEditor job={job} technicians={technicians} />}
+        </section>
+        <JobPhotosCard
           jobId={job.id}
           propertyId={job.propertyId}
-          entryPoints={job.entryPoints}
-          exclusions={job.exclusions}
+          photos={job.photos}
+          entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
         />
-        {techView ? null : <JobEditor job={job} technicians={technicians} />}
-      </section>
-      <JobPhotosCard
-        jobId={job.id}
-        propertyId={job.propertyId}
-        photos={job.photos}
-        entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
-      />
-    </div>
+      </JobFieldWorkGate>
+      <JobCheckoutPanel jobId={job.id} />
+      </div>
+    </JobVisitProvider>
   );
 }
 
