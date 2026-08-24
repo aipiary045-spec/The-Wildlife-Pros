@@ -35,6 +35,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       exclusions: { include: { entryPoint: true } },
       photos: { include: { entryPoint: true } },
       sourceJob: true,
+      visitPlan: true,
       trips: { orderBy: { scheduledStart: "asc" } },
       emergencyDispatch: true,
     },
@@ -92,6 +93,11 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           <p className="text-stone-600">
             {clientName(job.client)} · {propertyAddress(job.property)}
           </p>
+          {job.visitPlan && job.visitNumber ? (
+            <p className="text-sm font-medium text-orange">
+              {job.visitPlan.title} · trip {job.visitNumber} of {job.visitPlan.totalVisits}
+            </p>
+          ) : null}
           <NavigateLink
             className="mt-3"
             destination={{
