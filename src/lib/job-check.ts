@@ -4,6 +4,7 @@ import { hasOpenPunch } from "@/lib/time";
 import type { SessionUser } from "@/lib/auth";
 import { JobVisitError, checkoutSummary, visitActionForStatus, type CheckoutInput } from "@/lib/job-visit";
 import { resolveSpeciesId } from "@/lib/species";
+import { refreshVisitPlanStatus } from "@/lib/visit-plans.server";
 
 export { JobVisitError };
 
@@ -281,6 +282,10 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
       },
       include: { client: true, property: true },
     });
+  }
+
+  if (input.outcome === "complete" && job.visitPlanId) {
+    await refreshVisitPlanStatus(job.visitPlanId);
   }
 
   const updated = await prisma.job.findUnique({

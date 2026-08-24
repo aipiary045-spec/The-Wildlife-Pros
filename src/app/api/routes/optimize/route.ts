@@ -15,6 +15,7 @@ export const POST = withAuth(async (_session, request) => {
   const body = (await request.json()) as {
     date?: string;
     technicianIds?: string[];
+    jobIds?: string[];
     persist?: boolean;
     mode?: string;
     startHour?: number | string;
@@ -25,6 +26,9 @@ export const POST = withAuth(async (_session, request) => {
   const technicianIds = Array.isArray(body.technicianIds)
     ? body.technicianIds.filter((id) => typeof id === "string" && id.length > 0)
     : undefined;
+  const jobIds = Array.isArray(body.jobIds)
+    ? body.jobIds.filter((id) => typeof id === "string" && id.length > 0)
+    : undefined;
 
   const { plan, jobs, geoTechs } = await buildDayPlan({
     day,
@@ -32,6 +36,7 @@ export const POST = withAuth(async (_session, request) => {
     startHour: parseStartHour(body.startHour),
     persist,
     technicianIds,
+    jobIds,
   });
 
   if (persist) {

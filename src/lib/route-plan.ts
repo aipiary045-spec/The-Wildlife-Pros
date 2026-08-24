@@ -60,12 +60,13 @@ export async function loadRoutableTechnicians(technicianIds?: string[]) {
   });
 }
 
-export async function loadDayJobs(day: Date) {
+export async function loadDayJobs(day: Date, jobIds?: string[]) {
   const { from, to } = dayWindow(day);
   return prisma.job.findMany({
     where: {
       scheduledStart: { gte: from, lte: to },
       status: { in: [...ROUTABLE_STATUSES] },
+      ...(jobIds?.length ? { id: { in: jobIds } } : {}),
     },
     include: jobInclude,
     orderBy: { scheduledStart: "asc" },
@@ -264,9 +265,10 @@ export async function buildDayPlan(input: {
   startHour: number;
   persist: boolean;
   technicianIds?: string[];
+  jobIds?: string[];
 }) {
   const technicians = await loadRoutableTechnicians(input.technicianIds);
-  const jobs = await loadDayJobs(input.day);
+  const jobs = await loadDayJobs(input.day, input.jobIds);
   const selectedIds = new Set(technicians.map((tech) => tech.id));
   await hydrateMissingCoordinates(technicians, jobs, selectedIds);
   const geoTechs = toGeoTechnicians(technicians);
