@@ -27,7 +27,14 @@ function serialize(sheet: {
 
 export async function getMyTimesheet(userId: string) {
   const today = startOfDay(new Date());
-  const [current, recent] = await Promise.all([
+  const [openPunch, todaySheet, recent] = await Promise.all([
+    prisma.timePunch.findFirst({
+      where: { clockOutAt: null, timesheet: { userId } },
+      orderBy: { clockInAt: "desc" },
+      include: {
+        timesheet: { include: { punches: { orderBy: { clockInAt: "asc" } } } },
+      },
+    }),
     prisma.timesheet.findUnique({
       where: { userId_date: { userId, date: today } },
       include: { punches: { orderBy: { clockInAt: "asc" } } },
@@ -39,8 +46,10 @@ export async function getMyTimesheet(userId: string) {
     }),
   ]);
 
+  const currentSheet = openPunch?.timesheet ?? todaySheet;
+
   return {
-    current: current ? serialize(current) : null,
+    current: currentSheet ? serialize(currentSheet) : null,
     recent: recent.map(serialize),
   };
 }

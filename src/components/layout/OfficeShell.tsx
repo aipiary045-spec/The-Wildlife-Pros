@@ -12,12 +12,13 @@ import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import { EmergencyDispatchButton } from "@/components/emergency/EmergencyDispatchButton";
 import { EmergencyStatusStrip } from "@/components/emergency/EmergencyStatusStrip";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { ClockControls } from "@/components/timesheets/ClockControls";
+import { ClockStatusBar } from "@/components/timesheets/ClockStatusBar";
+import type { Sheet } from "@/components/timesheets/ClockControls";
 import { cn } from "@/lib/utils";
 
 type MyTime = {
-  current: ComponentProps<typeof ClockControls>["initialCurrent"];
-  recent: ComponentProps<typeof ClockControls>["initialRecent"];
+  current: Sheet | null;
+  recent: Sheet[];
 };
 
 type EmergencyData = {
@@ -103,9 +104,11 @@ export function OfficeShell({ role, name, fieldView, sidebarFooter, myTime, emer
             ) : null}
             <GlobalSearch />
             <NotificationCenter showIntake={!fieldView} />
-            {myTime ? <ClockControls compact initialCurrent={myTime.current} initialRecent={myTime.recent} /> : null}
           </div>
         </header>
+        {fieldView && myTime ? (
+          <ClockStatusBar initialCurrent={myTime.current} initialRecent={myTime.recent} />
+        ) : null}
         {!fieldView ? <EmergencyStatusStrip /> : null}
         <OfflineStatus />
         <main className="min-w-0 flex-1 overflow-x-clip p-4 md:p-8">{children}</main>
