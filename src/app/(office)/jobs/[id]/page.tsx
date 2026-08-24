@@ -158,6 +158,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
         </Card>
       </section>
+      {techView ? null : <JobEditor job={job} technicians={technicians} />}
       <JobFieldWorkGate>
         <div className="space-y-3">
           <JobTrapsCard
@@ -188,7 +189,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             entryPoints={job.entryPoints}
             exclusions={job.exclusions}
           />
-          {techView ? null : <JobEditor job={job} technicians={technicians} />}
           <JobPhotosCard
             jobId={job.id}
             propertyId={job.propertyId}
