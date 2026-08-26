@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
 import { DISPOSITION_LABEL } from "@/lib/constants";
 import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
-import { matchSpeciesInput } from "@/lib/species";
+import { matchSpeciesInput } from "@/lib/species-match";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 

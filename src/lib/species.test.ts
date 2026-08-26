@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { matchSpeciesInput } from "./species";
+import { matchSpeciesInput } from "./species-match";
 
 const catalog = [
   { id: "sp-raccoon", commonName: "Raccoon" },
