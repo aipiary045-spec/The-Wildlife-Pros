@@ -22,6 +22,8 @@ import { visitActionForStatus } from "@/lib/job-visit";
 import { jobNotifyProps, portalHubUrl } from "@/lib/messaging";
 import { TripVisitBadge } from "@/components/jobs/TripVisitBadge";
 import { tripRootId, tripVisitForJob } from "@/lib/job-trips";
+import { nextFieldStop } from "@/lib/field-next-stop";
+import { scheduleRange } from "@/lib/dates";
 import { clientName, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +53,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   const notify = jobNotifyProps(job, session?.firstName);
   if (session && !canAccessJobInFieldView(session, job, techView)) notFound();
 
-  const [stock, allGear, species, technicians, openCheckIn, tripChain] = await Promise.all([
+  const [stock, allGear, species, technicians, openCheckIn, tripChain, dayRouteJobs] = await Promise.all([
     prisma.equipment.findMany({
       where: { status: { in: ["IN_INVENTORY", "RETRIEVED"] } },
       orderBy: { serialNumber: "asc" },
@@ -85,8 +87,34 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           orderBy: { createdAt: "asc" },
         })
       : Promise.resolve([]),
+    job.scheduledStart
+      ? (() => {
+          const { from, to } = scheduleRange("day", job.scheduledStart);
+          const techId = job.technicianId ?? session?.id;
+          return prisma.job.findMany({
+            where: {
+              status: { notIn: ["CANCELLED"] },
+              scheduledStart: { gte: from, lte: to },
+              ...(techId ? { technicianId: techId } : {}),
+            },
+            include: { property: true },
+            orderBy: { scheduledStart: "asc" },
+          });
+        })()
+      : Promise.resolve([]),
   ]);
   const tripVisit = tripChain.length ? tripVisitForJob(job, tripChain) : null;
+  const nextStopJob = nextFieldStop(dayRouteJobs, job.id);
+  const nextStop = nextStopJob
+    ? {
+        id: nextStopJob.id,
+        number: nextStopJob.number,
+        title: nextStopJob.title,
+        address: propertyAddress(nextStopJob.property),
+        lat: nextStopJob.property.lat,
+        lng: nextStopJob.property.lng,
+      }
+    : null;
 
   const checkedInHere = Boolean(openCheckIn);
   let displayStatus = job.status;
@@ -228,6 +256,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           <JobCheckoutPanel
             jobId={job.id}
             clientPhone={job.client.phone}
+            nextStop={nextStop}
             visitSummary={{
               clientFirstName: job.client.firstName,
               jobTitle: job.title,

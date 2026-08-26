@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { format } from "date-fns";
+import { DayNotifyButton } from "@/components/field/DayNotifyButton";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { TripVisitBadge } from "@/components/jobs/TripVisitBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { dateKey } from "@/lib/dates";
+import { nextFieldStop } from "@/lib/field-next-stop";
 import { propertyAddress } from "@/lib/utils";
 import type { TripVisitInfo } from "@/lib/job-trips";
 import type { ScheduleTech } from "@/components/schedule/job-card";
@@ -64,6 +66,7 @@ export function FieldJobList({
   notifyByJobId = {},
   onSiteJobId,
   species = [],
+  trapCheckMode = false,
 }: {
   jobs: FieldJob[];
   days: Date[];
@@ -74,12 +77,14 @@ export function FieldJobList({
   notifyByJobId?: Record<string, FieldJobNotify>;
   onSiteJobId?: string | null;
   species?: Array<{ id: string; commonName: string }>;
+  trapCheckMode?: boolean;
 }) {
   return (
     <div className="space-y-4">
       {days.map((day) => {
         const dayJobs = jobs
           .filter((job) => job.scheduledStart && dateKey(job.scheduledStart) === dateKey(day))
+          .filter((job) => !trapCheckMode || job.deployments.length > 0)
           .sort((a, b) => {
             const emergencyA = isEmergencyJob(a) ? 0 : 1;
             const emergencyB = isEmergencyJob(b) ? 0 : 1;
@@ -101,23 +106,32 @@ export function FieldJobList({
                 <span className="ml-2 text-xs font-normal text-stone-500">
                   {dayJobs.length} stop{dayJobs.length === 1 ? "" : "s"}
                   {routed ? " · optimized" : ""}
+                  {trapCheckMode ? " · traps only" : ""}
                 </span>
               </h2>
             ) : null}
             {isSingleDay && dayJobs.length > 0 ? (
-              <NavigateLink
-                label="Navigate this route"
-                stops={dayJobs.map((job) => ({
-                  address: propertyAddress(job.property),
-                  lat: job.property.lat,
-                  lng: job.property.lng,
-                }))}
-                className="px-1"
-              />
+              <div className="space-y-2 px-1">
+                <NavigateLink
+                  label="Navigate this route"
+                  stops={dayJobs.map((job) => ({
+                    address: propertyAddress(job.property),
+                    lat: job.property.lat,
+                    lng: job.property.lng,
+                  }))}
+                />
+                <DayNotifyButton
+                  jobIds={dayJobs.filter((job) => notifyByJobId[job.id]?.clientPhone).map((job) => job.id)}
+                />
+              </div>
             ) : null}
             {dayJobs.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-center text-sm text-stone-500">
-                {isSingleDay ? "No stops on this day." : "Off / no stops"}
+                {trapCheckMode
+                  ? "No stops with live traps on this day."
+                  : isSingleDay
+                    ? "No stops on this day."
+                    : "Off / no stops"}
               </p>
             ) : (
               dayJobs.map((job, index) => {
@@ -132,6 +146,7 @@ export function FieldJobList({
                   lng: job.property.lng,
                 };
                 const tripVisit = tripVisitByJobId[job.id];
+                const next = nextFieldStop(dayJobs, job.id);
                 return (
                   <article
                     key={job.id}
@@ -176,6 +191,11 @@ export function FieldJobList({
                           : ""}
                         {job.deployments.length} trap{job.deployments.length === 1 ? "" : "s"}
                       </p>
+                      {next ? (
+                        <p className="mt-1 text-xs text-stone-500">
+                          Next: {next.number} · {next.title}
+                        </p>
+                      ) : null}
                     </Link>
                     <div className="mt-3 flex gap-2">
                       <NavigateLink destination={place} label="Navigate" className="flex-1 [&>a]:w-full [&>a]:justify-center" />

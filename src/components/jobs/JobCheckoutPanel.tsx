@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { NavigateLink } from "@/components/maps/NavigateLink";
 import { CHECKOUT_WORK, type CheckoutInput } from "@/lib/job-visit";
 import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
 import { useJobVisit } from "@/components/jobs/JobVisitGate";
@@ -11,14 +13,25 @@ import { visitSummarySmsHref, type VisitSummaryContext } from "@/lib/visit-summa
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 const RETURN_PRESETS = [1, 3, 7, 14];
 
+export type CheckoutNextStop = {
+  id: string;
+  number: string;
+  title: string;
+  address: string;
+  lat?: number | null;
+  lng?: number | null;
+};
+
 export function JobCheckoutPanel({
   jobId,
   clientPhone = null,
   visitSummary = null,
+  nextStop = null,
 }: {
   jobId: string;
   clientPhone?: string | null;
   visitSummary?: VisitSummaryContext | null;
+  nextStop?: CheckoutNextStop | null;
 }) {
   const router = useRouter();
   const { canCheckOut } = useJobVisit();
@@ -149,6 +162,29 @@ export function JobCheckoutPanel({
               <p key={line}>{line}</p>
             ))}
           </div>
+          {nextStop ? (
+            <div className="mt-4 rounded-xl border border-orange/40 bg-orange/10 p-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-orange">Next stop</p>
+              <p className="mt-1 text-sm font-semibold">
+                {nextStop.number} · {nextStop.title}
+              </p>
+              <p className="text-xs text-stone-600">{nextStop.address}</p>
+              <div className="mt-3 flex gap-2">
+                <NavigateLink
+                  destination={{ address: nextStop.address, lat: nextStop.lat, lng: nextStop.lng }}
+                  label="Navigate"
+                  className="flex-1 [&>a]:w-full [&>a]:justify-center"
+                />
+                <Link
+                  href={`/jobs/${nextStop.id}`}
+                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg bg-orange px-3 text-sm font-semibold text-white"
+                  onClick={() => setCheckoutDone(null)}
+                >
+                  Open & check in
+                </Link>
+              </div>
+            </div>
+          ) : null}
           <div className="mt-4 flex flex-col gap-2">
             {checkoutDone.smsHref ? (
               <button
@@ -161,12 +197,19 @@ export function JobCheckoutPanel({
                 Open Messages again
               </button>
             ) : null}
+            <Link
+              href="/field"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold"
+              onClick={() => setCheckoutDone(null)}
+            >
+              Back to field route
+            </Link>
             <button
               type="button"
               onClick={dismissCheckoutDone}
               className="min-h-11 w-full rounded-lg bg-orange px-4 text-sm font-semibold text-white"
             >
-              OK
+              {nextStop ? "Stay here" : "OK"}
             </button>
           </div>
         </div>

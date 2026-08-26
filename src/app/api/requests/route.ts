@@ -120,7 +120,7 @@ export const POST = withAuth(async (session, request) => {
   }
 
   if (!propertyId) {
-    return jsonError("Need a street so we can quote or send a tech.");
+    return jsonError("Need a street so we can send a tech.");
   }
 
   const open = match

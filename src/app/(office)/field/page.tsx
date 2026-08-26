@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { EmergencyTeamBanner } from "@/components/emergency/EmergencyTeamBanner";
 import { FieldJobList } from "@/components/field/FieldJobList";
+import { FieldModeToggle } from "@/components/field/FieldModeToggle";
 import { OnSiteNowBanner } from "@/components/field/OnSiteNowBanner";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { getMyOpenCheckIn } from "@/lib/active-checkins.server";
@@ -18,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function FieldPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; date?: string }>;
+  searchParams: Promise<{ view?: string; date?: string; mode?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -26,6 +27,7 @@ export default async function FieldPage({
   const params = await searchParams;
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
+  const trapCheckMode = params.mode === "traps";
   const { from, to, days } = scheduleRange(view, date);
   const technicianFilter = isTechnician(session.role) ? session.id : undefined;
   const [jobs, routeDays, technicians, activeEmergencies, myOpenCheckIn, species] = await Promise.all([
@@ -138,6 +140,7 @@ export default async function FieldPage({
         </p>
       </div>
       <ScheduleToolbar view={view} date={date} basePath="/field" />
+      <FieldModeToggle view={view} date={date} trapCheckMode={trapCheckMode} />
       <FieldJobList
         jobs={sortedJobs}
         days={days}
@@ -148,6 +151,7 @@ export default async function FieldPage({
         notifyByJobId={notifyByJobId}
         onSiteJobId={myOpenCheckIn?.jobId}
         species={species}
+        trapCheckMode={trapCheckMode}
       />
     </div>
   );

@@ -15,7 +15,7 @@ export const JOB_STATUS_LABEL: Record<string, string> = {
   ON_SITE: "On site",
   IN_PROGRESS: "In progress",
   COMPLETED: "Completed",
-  INVOICED: "Invoiced",
+  INVOICED: "Closed",
   CANCELLED: "Cancelled",
   ON_HOLD: "On hold",
 };
@@ -23,7 +23,7 @@ export const JOB_STATUS_LABEL: Record<string, string> = {
 export const REQUEST_STATUS_LABEL: Record<string, string> = {
   NEW: "New call",
   ASSESSED: "Looked at",
-  CONVERTED_QUOTE: "Quote started",
+  CONVERTED_QUOTE: "Converted",
   CONVERTED_JOB: "Trip started",
   CLOSED: "Closed",
   SPAM: "Spam",
@@ -34,26 +34,6 @@ export const INTAKE_SOURCE_LABEL: Record<string, string> = {
   web: "Web",
   "walk-in": "Walk-in",
   referral: "Referral",
-};
-
-export const QUOTE_STATUS_LABEL: Record<string, string> = {
-  DRAFT: "Draft",
-  SENT: "Sent",
-  VIEWED: "Viewed",
-  APPROVED: "Approved",
-  DECLINED: "Declined",
-  EXPIRED: "Expired",
-  CONVERTED: "Converted",
-};
-
-export const INVOICE_STATUS_LABEL: Record<string, string> = {
-  DRAFT: "Draft",
-  SENT: "Sent",
-  VIEWED: "Viewed",
-  PARTIAL: "Partial",
-  PAID: "Paid",
-  OVERDUE: "Overdue",
-  VOID: "Void",
 };
 
 export const USER_ROLE_LABEL: Record<string, string> = {
