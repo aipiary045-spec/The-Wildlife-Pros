@@ -4,7 +4,7 @@ Use this document as the standing product and engineering brief when continuing 
 
 ## Product
 
-Build and extend a web + mobile-ready operations system focused on **scheduling and field data**. Billing happens in Square outside CritterOps.
+Build and extend a web + mobile-ready operations system focused on **scheduling and field data**. CritterOps has no billing, quotes, invoices, or payments.
 
 **Company:** The Wildlife Pros  
 **Product name:** CritterOps  
@@ -19,7 +19,7 @@ Build and extend a web + mobile-ready operations system focused on **scheduling 
 - Check in / check out on the job, field route, and calendar. Check-out asks if the customer needs a follow-up visit or if the job is complete. Follow-up creates a new job for the same client.
 - Recurring service visits
 - Recurring visits generated from a job (`RecurringSchedule`)
-- Optional Client Hub for upcoming visit info only — never billing
+- Optional Client Hub for upcoming visit info only
 - Technician field view (phone-first): route, jobs, timesheets
 - Route optimization for a day’s stops
 - Daily timesheets: technicians clock in/out (multiple punches per day), office reviews and approves hours
@@ -64,7 +64,7 @@ Everything else requires a session (`src/proxy.ts`).
 ## Domain rules
 
 - A **Client** owns many **Properties**. Jobs always belong to one property.
-- Quotes, invoices, and payments may remain in the database schema for legacy data, but the product UI and APIs do not expose them. Square is the billing system of record.
+- Quote/invoice/payment tables may remain in the database schema for legacy data only. Do not expose them in UI or APIs.
 - Equipment has a global serial number. A live **EquipmentDeployment** is the site-specific status. Add inventory on `/inventory`. Deploy and retrieve from the job screen so the trap is attached to the job they are on.
 - Capture events may point at a deployment. Logging a capture should flip that deployment to `ACTIVE_CAPTURE`.
 - Photos must be able to reference job, property, and entry point.
@@ -135,5 +135,5 @@ Client hub: /portal/demo-client-hub
 - Do not weaken auth on office APIs.
 - Do not invent EPA numbers or legal text — keep products/forms data-driven.
 - Match existing naming (`Job`, `Visit`, `EquipmentDeployment`) instead of introducing synonyms.
-- Do not add quotes, invoices, or in-app payment collection — billing stays in Square.
+- Do not add quotes, invoices, payments, or any billing UI/APIs.
 - When adding features, update this file and `docs/API.md`.

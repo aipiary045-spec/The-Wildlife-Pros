@@ -25,6 +25,8 @@ export function JobEditor({
     scheduledStart: Date | string | null;
     durationMin: number;
     propertyId: string;
+    sourceJobId?: string | null;
+    includedTrips?: number | null;
   };
   technicians: ScheduleTech[];
 }) {
@@ -39,6 +41,7 @@ export function JobEditor({
   const [date, setDate] = useState(start ? dateKey(start) : "");
   const [time, setTime] = useState(start ? `${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}` : "09:00");
   const [durationMin, setDurationMin] = useState(job.durationMin);
+  const [includedTrips, setIncludedTrips] = useState(job.includedTrips ? String(job.includedTrips) : "");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -64,6 +67,7 @@ export function JobEditor({
         technicianId: technicianId || null,
         scheduledStart,
         durationMin,
+        includedTrips: includedTrips.trim() ? Number(includedTrips) : null,
       }),
     });
     const data = (await response.json()) as { error?: string };
@@ -148,6 +152,29 @@ export function JobEditor({
                 Minutes on site
                 <input type="number" min={15} step={15} value={durationMin} onChange={(event) => setDurationMin(Number(event.target.value))} className={inputClass} />
               </label>
+              {job.sourceJobId ? (
+                job.includedTrips ? (
+                  <p className="text-sm text-stone-600 sm:col-span-2">
+                    Package: {job.includedTrips} included visits (set on the first trip).
+                  </p>
+                ) : null
+              ) : (
+                <label className="block text-sm sm:col-span-2">
+                  Included visits
+                  <input
+                    type="number"
+                    min={2}
+                    max={99}
+                    value={includedTrips}
+                    onChange={(event) => setIncludedTrips(event.target.value)}
+                    placeholder="Optional"
+                    className={inputClass}
+                  />
+                  <span className="mt-1 block text-xs font-normal text-stone-500">
+                    Applies to this job and every later trip copied from it.
+                  </span>
+                </label>
+              )}
               <div className="sm:col-span-2">
                 <AreaSuggestions
                   propertyId={job.propertyId}

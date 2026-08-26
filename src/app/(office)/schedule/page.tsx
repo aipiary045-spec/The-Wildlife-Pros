@@ -6,13 +6,15 @@ import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
 import { getActiveCheckIns } from "@/lib/active-checkins.server";
 import { getSession } from "@/lib/auth";
 import { getSchedule } from "@/lib/data";
+import { loadTripVisitMapForJobs } from "@/lib/job-trips.server";
+import type { TripVisitInfo } from "@/lib/job-trips";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { dayAppointmentStats } from "@/lib/schedule-stats";
 
 export const dynamic = "force-dynamic";
 
-function toCard(job: Awaited<ReturnType<typeof getSchedule>>["jobs"][number]) {
+function toCard(job: Awaited<ReturnType<typeof getSchedule>>["jobs"][number], tripVisit?: TripVisitInfo | null) {
   return {
     id: job.id,
     number: job.number,
@@ -25,6 +27,8 @@ function toCard(job: Awaited<ReturnType<typeof getSchedule>>["jobs"][number]) {
     technicianId: job.technicianId,
     propertyId: job.propertyId,
     sourceJobId: job.sourceJobId,
+    includedTrips: job.includedTrips,
+    tripVisit: tripVisit ?? null,
     client: job.client,
     property: job.property,
   };
@@ -56,6 +60,7 @@ export default async function SchedulePage({
     }),
     getActiveCheckIns(),
   ]);
+  const tripVisitByJobId = await loadTripVisitMapForJobs([...jobs, ...unscheduled]);
 
   return (
     <div className="space-y-5">
@@ -63,7 +68,7 @@ export default async function SchedulePage({
         <h1 className="hidden font-display text-2xl tracking-wide md:block md:text-3xl">Schedule</h1>
         <p className="text-muted md:mt-0 sm:hidden">Drag jobs onto a tech and a time. Scroll sideways for the rest of the day.</p>
         <p className="hidden text-muted sm:block">
-          Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order, traps, or invoice.
+          Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order or traps.
         </p>
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-orange">
           <Link href="/jobs" className="hover:underline">
@@ -88,8 +93,8 @@ export default async function SchedulePage({
         date={dateKey(date)}
         weekOf={dateKey(from)}
         technicians={technicians}
-        jobs={jobs.map(toCard)}
-        unscheduled={unscheduled.map(toCard)}
+        jobs={jobs.map((job) => toCard(job, tripVisitByJobId.get(job.id)))}
+        unscheduled={unscheduled.map((job) => toCard(job, tripVisitByJobId.get(job.id)))}
         clients={clients}
         availability={blocks.map((block) => ({
           technicianId: block.userId,

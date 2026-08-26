@@ -6,6 +6,7 @@ import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { approvedDayOffError } from "@/lib/day-off-guard";
 import { duplicateJobTrip } from "@/lib/jobs";
 import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
+import { isTechnician } from "@/lib/paths";
 
 export const GET = withAuth(async (_session, request) => {
   const url = new URL(request.url);
@@ -17,6 +18,7 @@ export const GET = withAuth(async (_session, request) => {
 });
 
 export const POST = withAuth(async (session, request) => {
+  if (isTechnician(session.role)) return jsonError("Office only.", 403);
   const body = await request.json();
   if (!body.jobId || !body.scheduledStart) {
     return jsonError("jobId and scheduledStart are required");
@@ -37,7 +39,8 @@ export const POST = withAuth(async (session, request) => {
   return NextResponse.json({ job }, { status: 201 });
 });
 
-export const PATCH = withAuth(async (_session, request) => {
+export const PATCH = withAuth(async (session, request) => {
+  if (isTechnician(session.role)) return jsonError("Office only.", 403);
   const body = await request.json();
   const blockedMove = await approvedDayOffError(body.technicianId, body.scheduledStart);
   if (blockedMove) return blockedMove;

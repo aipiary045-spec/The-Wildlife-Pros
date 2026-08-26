@@ -13,7 +13,7 @@ Keep wildlife domain objects (Equipment, EquipmentDeployment, CaptureEvent, Entr
 
 Daily time uses Timesheet + TimePunch (clock in/out). Do not replace that with ad-hoc timestamps on User.
 
-Payments go through Square and are staff-collected only. Do not add a customer checkout or invoice pay button on the client hub.
+Payments are out of scope for CritterOps — no quotes, invoices, or in-app payment collection. Do not add a customer checkout or invoice pay button on the client hub.
 
 Google Sheets is an export. Sync must reuse `Organization.googleSpreadsheetId` and upsert by row id. Do not create a new spreadsheet on every upload. PostgreSQL is the system of record; SQLite is a possible local/Pi mode, not a second live database.
 

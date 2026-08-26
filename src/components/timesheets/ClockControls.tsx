@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { format } from "date-fns";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ClockOutConflictModal } from "@/components/timesheets/ClockOutConflictModal";
 import { useTimesheetClock } from "@/components/timesheets/useTimesheetClock";
 import { currentPunchElapsedMs, formatDuration, formatElapsedClock, openPunch } from "@/lib/time";
 
@@ -15,14 +17,23 @@ export type Sheet = {
   punches: Array<{ id: string; clockInAt: string; clockOutAt: string | null; note: string | null }>;
 };
 
+export type OpenJobHint = {
+  id: string;
+  number: string;
+  title: string;
+};
+
 export function ClockControls({
   compact = false,
   initialCurrent = null,
   initialRecent = [],
+  openJob = null,
 }: {
   compact?: boolean;
   initialCurrent?: Sheet | null;
   initialRecent?: Sheet[];
+  /** Soft hint when already on site — clock-out still confirms via API. */
+  openJob?: OpenJobHint | null;
 }) {
   const {
     sheet,
@@ -32,6 +43,8 @@ export function ClockControls({
     queuedNote,
     now,
     liveMin,
+    openJobConflict,
+    clearOpenJobConflict,
     clockedIn,
     clockIn,
     clockOut,
@@ -40,6 +53,16 @@ export function ClockControls({
 
   const activePunch = sheet ? openPunch(sheet.punches) : null;
   const elapsedMs = sheet ? currentPunchElapsedMs(sheet.punches, new Date(now)) : 0;
+  const onSiteHint = openJobConflict ?? (clockedIn ? openJob : null);
+
+  const conflictModal = openJobConflict ? (
+    <ClockOutConflictModal
+      openJob={openJobConflict}
+      busy={busy}
+      onDismiss={clearOpenJobConflict}
+      onForceClockOut={() => void clockOut(true)}
+    />
+  ) : null;
 
   if (compact) {
     return (
@@ -60,8 +83,12 @@ export function ClockControls({
         >
           {busy ? "Saving…" : clockedIn ? "Clock out" : "Clock in"}
         </button>
+        {onSiteHint && clockedIn ? (
+          <p className="max-w-[11rem] text-right text-[10px] text-amber-800">On site · {onSiteHint.number}</p>
+        ) : null}
         {error ? <p className="text-[10px] text-rose-700">{error}</p> : null}
         {queuedNote ? <p className="text-[10px] text-amber-800">Saved on phone</p> : null}
+        {conflictModal}
       </div>
     );
   }
@@ -90,6 +117,16 @@ export function ClockControls({
         </div>
         {sheet ? <StatusBadge status={sheet.status} /> : null}
       </div>
+      {onSiteHint && clockedIn ? (
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          Still checked in on{" "}
+          <Link href={`/jobs/${onSiteHint.id}`} className="font-semibold text-orange underline-offset-2 hover:underline">
+            {onSiteHint.number}
+          </Link>
+          {" — "}
+          {onSiteHint.title}. Check out there when you leave the stop.
+        </p>
+      ) : null}
       <div className="mt-4 flex gap-2">
         <button
           type="button"
@@ -126,6 +163,7 @@ export function ClockControls({
           {formatDuration(recent.reduce((sum, item) => sum + (item.id === sheet?.id ? liveMin : item.workedMin), 0))}
         </p>
       ) : null}
+      {conflictModal}
     </section>
   );
 }

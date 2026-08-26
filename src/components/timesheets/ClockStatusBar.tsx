@@ -1,23 +1,37 @@
 "use client";
 
+import Link from "next/link";
 import { format } from "date-fns";
-import { ClockControls, type Sheet } from "@/components/timesheets/ClockControls";
+import { ClockOutConflictModal } from "@/components/timesheets/ClockOutConflictModal";
+import { type OpenJobHint, type Sheet } from "@/components/timesheets/ClockControls";
 import { useTimesheetClock } from "@/components/timesheets/useTimesheetClock";
 import { currentPunchElapsedMs, formatElapsedClock, openPunch } from "@/lib/time";
 
 export function ClockStatusBar({
   initialCurrent = null,
   initialRecent = [],
+  openJob = null,
 }: {
   initialCurrent?: Sheet | null;
   initialRecent?: Sheet[];
+  openJob?: OpenJobHint | null;
 }) {
-  const { sheet, busy, error, queuedNote, now, liveMin, clockedIn, clockIn, clockOut, todayLabel } = useTimesheetClock(
-    initialCurrent,
-    initialRecent,
-  );
+  const {
+    sheet,
+    busy,
+    error,
+    queuedNote,
+    now,
+    openJobConflict,
+    clearOpenJobConflict,
+    clockedIn,
+    clockIn,
+    clockOut,
+    todayLabel,
+  } = useTimesheetClock(initialCurrent, initialRecent);
   const activePunch = sheet ? openPunch(sheet.punches) : null;
   const elapsedMs = sheet ? currentPunchElapsedMs(sheet.punches, new Date(now)) : 0;
+  const onSiteHint = openJobConflict ?? (clockedIn ? openJob : null);
 
   return (
     <section
@@ -51,6 +65,14 @@ export function ClockStatusBar({
               "Clock in when you start your day."
             )}
           </p>
+          {onSiteHint && clockedIn ? (
+            <p className="mt-1 text-xs text-amber-900">
+              On site ·{" "}
+              <Link href={`/jobs/${onSiteHint.id}`} className="font-semibold text-orange underline-offset-2 hover:underline">
+                {onSiteHint.number}
+              </Link>
+            </p>
+          ) : null}
         </div>
         <button
           type="button"
@@ -65,6 +87,14 @@ export function ClockStatusBar({
       </div>
       {error ? <p className="mx-auto mt-2 max-w-3xl text-xs text-rose-700">{error}</p> : null}
       {queuedNote ? <p className="mx-auto mt-2 max-w-3xl text-xs text-amber-800">{queuedNote}</p> : null}
+      {openJobConflict ? (
+        <ClockOutConflictModal
+          openJob={openJobConflict}
+          busy={busy}
+          onDismiss={clearOpenJobConflict}
+          onForceClockOut={() => void clockOut(true)}
+        />
+      ) : null}
     </section>
   );
 }

@@ -23,6 +23,16 @@ export async function pendingMutationCount() {
   }
 }
 
+export async function pendingMutationLabels(): Promise<string[]> {
+  if (typeof indexedDB === "undefined") return [];
+  try {
+    const items = await listMutations();
+    return items.map((item) => item.label).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 function queuedResponse() {
   return new Response(JSON.stringify(queuedPayload()), {
     status: 202,
@@ -77,6 +87,31 @@ export async function flushOfflineQueue() {
           body: item.body ?? undefined,
         });
         if (response.status === 401) break;
+        // Offline clock-out can't show the on-site confirm — replay with force.
+        if (
+          response.status === 409 &&
+          item.url.includes("/api/timesheets/clock") &&
+          item.body
+        ) {
+          try {
+            const parsed = JSON.parse(item.body) as { action?: string; force?: boolean };
+            if (parsed.action === "out" && !parsed.force) {
+              const retry = await fetch(item.url, {
+                method: item.method,
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...parsed, force: true }),
+              });
+              if (retry.ok || (retry.status >= 400 && retry.status < 500)) {
+                await removeMutation(item.id);
+                flushed += 1;
+                continue;
+              }
+            }
+          } catch {
+            // Fall through to normal 4xx handling.
+          }
+        }
         if (response.ok || (response.status >= 400 && response.status < 500)) {
           await removeMutation(item.id);
           flushed += 1;

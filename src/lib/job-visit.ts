@@ -132,7 +132,7 @@ export function parseCheckoutBody(body: Record<string, unknown>): CheckoutInput 
       const speciesName = typeof item.speciesName === "string" ? item.speciesName.trim() : "";
       if (!speciesId && !speciesName) continue;
       const disposition =
-        typeof item.disposition === "string" && item.disposition in DISPOSITION_SET
+        typeof item.disposition === "string" && DISPOSITION_SET.has(item.disposition)
           ? item.disposition
           : "RELOCATED";
       const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));

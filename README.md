@@ -1,10 +1,8 @@
 # CritterOps
 
-Field-service operations for **The Wildlife Pros** — CRM, dispatch, quotes, invoicing, Square payments, timesheets, trap inventory, species logs, and field tools.
+Field-service operations for **The Wildlife Pros** — CRM, dispatch, scheduling, timesheets, trap inventory, species logs, and field tools. No billing in CritterOps.
 
 **Production:** https://the-wildlife-pros.vercel.app
-
-Payments are collected by staff in **Square** (Terminal, POS, or keyed card on the invoice). Customers do not log in to pay.
 
 ## Stack
 
@@ -50,7 +48,7 @@ src/app/(office)         office UI
 src/app/field            technician phone UI
 src/app/portal           customer hub
 src/app/api              REST API
-src/lib/                 auth, routing, billing, messaging, etc.
+src/lib/                 auth, routing, messaging, etc.
 docs/                    API, data, and agent briefs
 scripts/backup-postgres.sh  local Postgres dumps
 .github/workflows/ci.yml tests + build on push/PR

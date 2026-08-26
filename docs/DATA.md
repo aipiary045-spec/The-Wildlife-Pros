@@ -32,7 +32,6 @@ Why not use Google Sheets as the database? It will break scheduling, clock-in, a
 | SQLite | $0 |
 | CritterOps app (`npm run start`) | $0 |
 | Google Sheets export | $0 (normal Google account) |
-| Square | whatever Square already charges for card processing — not a database |
 | Tailscale (phones reach the shop box from a job) | $0 on the free plan for a small crew |
 | Neon / Supabase / RDS | avoid |
 

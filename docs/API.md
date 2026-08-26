@@ -2,7 +2,7 @@
 
 All office endpoints require the `critterops_session` cookie unless noted.
 
-Billing happens in Square outside CritterOps. These APIs cover scheduling and field data only.
+These APIs cover scheduling and field data only. There is no billing, quotes, invoices, or payments API.
 
 ## Auth
 

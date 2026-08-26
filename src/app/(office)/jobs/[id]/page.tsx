@@ -19,7 +19,11 @@ import { canAccessJobInFieldView } from "@/lib/paths";
 import { getAppContext } from "@/lib/app-context";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { visitActionForStatus } from "@/lib/job-visit";
-import { jobNotifyProps } from "@/lib/messaging";
+import { jobNotifyProps, portalHubUrl } from "@/lib/messaging";
+import { TripVisitBadge } from "@/components/jobs/TripVisitBadge";
+import { tripRootId, tripVisitForJob } from "@/lib/job-trips";
+import { nextFieldStop } from "@/lib/field-next-stop";
+import { scheduleRange } from "@/lib/dates";
 import { clientName, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +53,7 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   const notify = jobNotifyProps(job, session?.firstName);
   if (session && !canAccessJobInFieldView(session, job, techView)) notFound();
 
-  const [stock, allGear, species, technicians, openCheckIn] = await Promise.all([
+  const [stock, allGear, species, technicians, openCheckIn, tripChain, dayRouteJobs] = await Promise.all([
     prisma.equipment.findMany({
       where: { status: { in: ["IN_INVENTORY", "RETRIEVED"] } },
       orderBy: { serialNumber: "asc" },
@@ -67,7 +71,50 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           select: { id: true },
         })
       : Promise.resolve(null),
+    job.includedTrips || job.sourceJobId || job.trips.length
+      ? prisma.job.findMany({
+          where: {
+            OR: [{ id: tripRootId(job) }, { sourceJobId: tripRootId(job) }],
+          },
+          select: {
+            id: true,
+            number: true,
+            sourceJobId: true,
+            createdAt: true,
+            scheduledStart: true,
+            includedTrips: true,
+          },
+          orderBy: { createdAt: "asc" },
+        })
+      : Promise.resolve([]),
+    job.scheduledStart
+      ? (() => {
+          const { from, to } = scheduleRange("day", job.scheduledStart);
+          const techId = job.technicianId ?? session?.id;
+          return prisma.job.findMany({
+            where: {
+              status: { notIn: ["CANCELLED"] },
+              scheduledStart: { gte: from, lte: to },
+              ...(techId ? { technicianId: techId } : {}),
+            },
+            include: { property: true },
+            orderBy: { scheduledStart: "asc" },
+          });
+        })()
+      : Promise.resolve([]),
   ]);
+  const tripVisit = tripChain.length ? tripVisitForJob(job, tripChain) : null;
+  const nextStopJob = nextFieldStop(dayRouteJobs, job.id);
+  const nextStop = nextStopJob
+    ? {
+        id: nextStopJob.id,
+        number: nextStopJob.number,
+        title: nextStopJob.title,
+        address: propertyAddress(nextStopJob.property),
+        lat: nextStopJob.property.lat,
+        lng: nextStopJob.property.lng,
+      }
+    : null;
 
   const checkedInHere = Boolean(openCheckIn);
   let displayStatus = job.status;
@@ -92,7 +139,10 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-widest text-orange">{job.number}</p>
-          <h1 className="font-display text-2xl tracking-wide md:text-3xl">{job.title}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h1 className="font-display text-2xl tracking-wide md:text-3xl">{job.title}</h1>
+            <TripVisitBadge info={tripVisit} />
+          </div>
           <p className="text-stone-600">
             {clientName(job.client)} · {propertyAddress(job.property)}
           </p>
@@ -133,6 +183,11 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       </div>
       <section className="grid gap-4 md:grid-cols-2">
         <Card title="Visit">
+          {tripVisit ? (
+            <p className="mb-2 text-sm font-semibold text-orange">
+              {tripVisit.visitNumber} of {tripVisit.includedTrips} included visits
+            </p>
+          ) : null}
           <p>{job.scheduledStart ? format(job.scheduledStart, "PPP p") : "Unscheduled"}</p>
           <p className="text-sm text-stone-600">
             {job.technician ? `${job.technician.firstName} ${job.technician.lastName}` : "Unassigned"} ·{" "}
@@ -145,12 +200,15 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
           ) : null}
           {job.trips.length ? (
             <div className="mt-2 space-y-1 text-sm">
-              {job.trips.map((trip) => (
-                <Link key={trip.id} href={`/jobs/${trip.id}`} className="block font-medium text-orange">
-                  Later trip {trip.number}
-                  {trip.scheduledStart ? ` · ${format(trip.scheduledStart, "MMM d")}` : ""}
-                </Link>
-              ))}
+              {job.trips.map((trip) => {
+                const visit = tripVisitForJob(trip, tripChain);
+                return (
+                  <Link key={trip.id} href={`/jobs/${trip.id}`} className="block font-medium text-orange">
+                    {visit ? `Visit ${visit.visitNumber} of ${visit.includedTrips}` : "Later trip"} {trip.number}
+                    {trip.scheduledStart ? ` · ${format(trip.scheduledStart, "MMM d")}` : ""}
+                  </Link>
+                );
+              })}
             </div>
           ) : null}
         </Card>
@@ -195,7 +253,20 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             photos={job.photos}
             entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
           />
-          <JobCheckoutPanel jobId={job.id} />
+          <JobCheckoutPanel
+            jobId={job.id}
+            clientPhone={job.client.phone}
+            nextStop={nextStop}
+            visitSummary={{
+              clientFirstName: job.client.firstName,
+              jobTitle: job.title,
+              techName: job.technician
+                ? `${job.technician.firstName} ${job.technician.lastName}`
+                : session?.firstName,
+              companyName: job.client.companyName,
+              portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : null,
+            }}
+          />
         </div>
       </JobFieldWorkGate>
       </div>
