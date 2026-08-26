@@ -10,7 +10,7 @@ export type ScheduleJobCard = {
   technicianId: string | null;
   propertyId?: string;
   sourceJobId?: string | null;
-  client: { firstName: string; lastName: string; companyName?: string | null; phone?: string | null; portalToken?: string | null };
+  client: { firstName: string; lastName: string; companyName?: string | null };
   property: { address1: string };
 };
 

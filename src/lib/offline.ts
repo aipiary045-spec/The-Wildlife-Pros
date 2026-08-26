@@ -4,8 +4,6 @@ export const MAX_OCCURRED_FUTURE_MS = 2 * 60 * 1000;
 export const CACHEABLE_FIELD_PREFIXES = [
   "/field",
   "/jobs",
-  "/quotes",
-  "/invoices",
   "/timesheets",
   "/more",
   "/time-off",
@@ -59,8 +57,6 @@ export function isCacheableApiGet(pathname: string) {
   if (pathname === "/api/timesheets/me") return true;
   if (pathname === "/api/jobs/late-checkin") return true;
   if (pathname === "/api/jobs") return true;
-  if (/^\/api\/quotes\/[^/]+$/.test(pathname)) return true;
-  if (/^\/api\/invoices\/[^/]+$/.test(pathname)) return true;
   return /^\/api\/jobs\/[^/]+$/.test(pathname);
 }
 

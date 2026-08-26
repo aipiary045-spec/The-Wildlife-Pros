@@ -22,13 +22,12 @@ test("equipmentSearchResult links to inventory", () => {
 
 test("groupSearchResults keeps stable section order", () => {
   const groups = groupSearchResults([
-    { id: "1", kind: "invoice", title: "INV", subtitle: "", href: "/invoices/1" },
     { id: "2", kind: "client", title: "Client", subtitle: "", href: "/clients/2" },
     { id: "3", kind: "job", title: "Job", subtitle: "", href: "/jobs/3" },
     { id: "4", kind: "equipment", title: "T-014", subtitle: "", href: "/inventory?serial=T-014" },
   ]);
   assert.deepEqual(
     groups.map((group) => group.kind),
-    ["client", "job", "invoice", "equipment"],
+    ["client", "job", "equipment"],
   );
 });

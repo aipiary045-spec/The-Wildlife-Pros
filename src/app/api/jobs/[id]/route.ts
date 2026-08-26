@@ -16,7 +16,6 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       client: true,
       property: true,
       technician: true,
-      lineItems: true,
       visits: true,
       deployments: { include: { equipment: true, captures: true, checks: true } },
       captures: { include: { species: true } },
@@ -61,19 +60,8 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   const session = await getSession();
   if (!session) return jsonError("Sign in required", 401);
   const { id } = await context.params;
-  const job = await prisma.job.findUnique({
-    where: { id },
-    include: { invoices: { select: { id: true } } },
-  });
+  const job = await prisma.job.findUnique({ where: { id } });
   if (!job) return jsonError("Job not found", 404);
-  if (job.invoices.length > 0) {
-    const cancelled = await prisma.job.update({
-      where: { id },
-      data: { status: "CANCELLED", technicianId: null, scheduledStart: null, scheduledEnd: null },
-    });
-    queueJobGoogleCalendarSync(id);
-    return NextResponse.json({ job: cancelled, cancelled: true });
-  }
   await removeJobGoogleCalendar(id);
   await prisma.job.delete({ where: { id } });
   return NextResponse.json({ ok: true });

@@ -48,7 +48,7 @@ export default async function JobsPage({
             ? "Assigned stops, grouped by today, leftover late jobs, and what's coming."
             : "The file for every job. Action needed is late leftovers, today, and anything without a day yet. The schedule is still where you place the time."
         }
-        related={techView ? undefined : [{ href: "/schedule", label: "Schedule" }, { href: "/quotes", label: "Quotes" }]}
+        related={techView ? undefined : [{ href: "/schedule", label: "Schedule" }, { href: "/calls", label: "Call log" }]}
         actions={
           techView ? undefined : (
             <JobsPageActions
@@ -71,7 +71,6 @@ export default async function JobsPage({
           title: job.title,
           type: job.type,
           status: job.status,
-          total: Number(job.total),
           scheduledStart: job.scheduledStart?.toISOString() ?? null,
           client: job.client,
           property: { address1: job.property.address1 },

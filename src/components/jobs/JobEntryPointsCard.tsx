@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CollapsibleJobSection } from "@/components/jobs/CollapsibleJobSection";
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm";
 
@@ -107,8 +108,15 @@ export function JobEntryPointsCard({
   }
 
   return (
-    <section className="rounded-2xl border border-line bg-panel p-5">
-      <h2 className="mb-3 font-semibold">Entry points & exclusion</h2>
+    <CollapsibleJobSection
+      title="Exclusion / sealing"
+      collapsedHint={
+        entryPoints.length || exclusions.length
+          ? `${entryPoints.length} spot${entryPoints.length === 1 ? "" : "s"}`
+          : undefined
+      }
+      defaultOpen={entryPoints.length > 0 || exclusions.length > 0}
+    >
 
       {entryPoints.length === 0 ? (
         <p className="text-sm text-stone-500">No entry points mapped yet.</p>
@@ -207,6 +215,6 @@ export function JobEntryPointsCard({
           {saving === "exclusion" ? "Saving…" : "Log exclusion"}
         </button>
       </form>
-    </section>
+    </CollapsibleJobSection>
   );
 }

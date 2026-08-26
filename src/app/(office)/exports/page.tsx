@@ -28,7 +28,7 @@ export default async function ExportsPage() {
             without any Google setup.
           </>
         }
-        related={[{ href: "/reports", label: "Reports" }, { href: "/invoices", label: "Invoices" }]}
+        related={[{ href: "/reports", label: "Reports" }, { href: "/jobs", label: "Work orders" }]}
       />
       <section className="rounded-2xl border border-line bg-panel p-5">
         <h2 className="mb-2 font-semibold">Google Sheets workbook</h2>

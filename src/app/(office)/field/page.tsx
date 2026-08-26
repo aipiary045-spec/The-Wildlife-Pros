@@ -2,10 +2,8 @@ import { redirect } from "next/navigation";
 import { EmergencyFieldBanner } from "@/components/emergency/EmergencyFieldBanner";
 import { EmergencyTeamBanner } from "@/components/emergency/EmergencyTeamBanner";
 import { FieldJobList } from "@/components/field/FieldJobList";
-import { FieldModeToggle } from "@/components/field/FieldModeToggle";
 import { OnSiteNowBanner } from "@/components/field/OnSiteNowBanner";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
-import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getMyOpenCheckIn } from "@/lib/active-checkins.server";
 import { getSession } from "@/lib/auth";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
@@ -13,7 +11,6 @@ import { sortJobsEmergencyFirst } from "@/lib/emergency";
 import { isTechnician } from "@/lib/paths";
 import { jobNotifyProps } from "@/lib/messaging";
 import { prisma } from "@/lib/prisma";
-import { getMyTimesheet } from "@/lib/timesheets";
 import { propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +18,7 @@ export const dynamic = "force-dynamic";
 export default async function FieldPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; date?: string; mode?: string }>;
+  searchParams: Promise<{ view?: string; date?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -29,10 +26,8 @@ export default async function FieldPage({
   const params = await searchParams;
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
-  const trapCheckMode = params.mode === "traps";
   const { from, to, days } = scheduleRange(view, date);
   const technicianFilter = isTechnician(session.role) ? session.id : undefined;
-  const myTime = await getMyTimesheet(session.id);
   const [jobs, routeDays, technicians, activeEmergencies, myOpenCheckIn, species] = await Promise.all([
     prisma.job.findMany({
       where: {
@@ -155,9 +150,7 @@ export default async function FieldPage({
           {optimizedStops > 0 ? " Dispatch saved a driving order for these stops." : ""}
         </p>
       </div>
-      <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
       <ScheduleToolbar view={view} date={date} basePath="/field" />
-      <FieldModeToggle view={view} date={date} trapCheckMode={trapCheckMode} />
       <FieldJobList
         jobs={sortedJobs}
         days={days}
@@ -167,7 +160,6 @@ export default async function FieldPage({
         notifyByJobId={notifyByJobId}
         onSiteJobId={myOpenCheckIn?.jobId}
         species={species}
-        trapCheckMode={trapCheckMode}
       />
     </div>
   );

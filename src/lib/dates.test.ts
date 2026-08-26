@@ -59,19 +59,15 @@ test("technicians are kept off dispatch and office pages", () => {
   assert.equal(isOfficeOnlyPath("/field"), false);
   assert.equal(isOfficeOnlyPath("/jobs/abc"), false);
   assert.equal(isOfficeOnlyPath("/time-off"), false);
-  assert.equal(isOfficeOnlyPath("/invoices"), true);
-  assert.equal(isOfficeOnlyPath("/invoices/abc"), false);
-  assert.equal(isOfficeOnlyPath("/quotes"), false);
-  assert.equal(isOfficeOnlyPath("/quotes/abc"), false);
-  assert.equal(isOfficeOnlyPath("/quotes/pricing"), true);
+  assert.equal(isOfficeOnlyPath("/calls"), true);
 });
 
 test("technician time off lives under More, not the main tabs", () => {
   const tabs = primaryTabs("TECHNICIAN").map((item) => item.href);
   const more = moreItems("TECHNICIAN").map((item) => item.href);
   assert.deepEqual(tabs, ["/field", "/jobs", "/timesheets", "/more"]);
-  assert.equal(more[0], "/quotes");
   assert.ok(more.includes("/time-off"));
+  assert.ok(more.includes("/inventory"));
   assert.ok(!primaryTabs("ADMIN").some((item) => item.href === "/time-off"));
 });
 
@@ -84,13 +80,7 @@ test("admin mobile tabs prioritize today, schedule, and clients", () => {
   assert.ok(more.includes("/jobs"));
   assert.ok(more.includes("/calls"));
   assert.ok(!moreItems("TECHNICIAN").some((item) => item.href === "/calls"));
-  assert.equal(isOfficeOnlyPath("/calls"), true);
   assert.equal(primaryTabs("ADMIN")[0]?.label, "Today");
-});
-
-test("quote price list is an office page under quotes", () => {
-  assert.equal(isOfficeOnlyPath("/quotes/pricing"), true);
-  assert.ok(moreItems("TECHNICIAN").some((item) => item.href === "/quotes"));
 });
 
 test("tripStartOnDay keeps the original clock time on a new calendar day", () => {

@@ -6,22 +6,21 @@ import { JobTrapsCard } from "@/components/jobs/JobTrapsCard";
 import { JobEntryPointsCard } from "@/components/jobs/JobEntryPointsCard";
 import { JobPhotosCard } from "@/components/jobs/JobPhotosCard";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
-import { JobQuoteBillingBanner } from "@/components/jobs/JobQuoteBillingBanner";
+import { JobCheckoutPanel } from "@/components/jobs/JobCheckoutPanel";
+import { JobFieldWorkGate } from "@/components/jobs/JobFieldWorkGate";
+import { JobVisitProvider } from "@/components/jobs/JobVisitGate";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { JobSpeciesCard } from "@/components/jobs/JobSpeciesCard";
 import { JobEditor } from "@/components/jobs/JobEditor";
-import { CreateInvoiceButton } from "@/components/billing/InvoiceActions";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { canAccessJobInFieldView } from "@/lib/paths";
 import { getAppContext } from "@/lib/app-context";
-import { canBillJob } from "@/lib/billing-access";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { visitActionForStatus } from "@/lib/job-visit";
 import { jobNotifyProps, portalHubUrl } from "@/lib/messaging";
-import { quoteBillingAction } from "@/lib/quotes";
-import { clientName, formatMoney, propertyAddress } from "@/lib/utils";
+import { clientName, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -33,24 +32,12 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
       client: true,
       property: true,
       technician: true,
-      lineItems: true,
       deployments: { include: { equipment: true, checks: true } },
       captures: { include: { species: true } },
       entryPoints: true,
       exclusions: { include: { entryPoint: true } },
       photos: { include: { entryPoint: true } },
-      invoices: true,
       sourceJob: true,
-      quote: {
-        select: {
-          id: true,
-          number: true,
-          title: true,
-          status: true,
-          total: true,
-          invoices: { orderBy: { createdAt: "desc" }, take: 1 },
-        },
-      },
       trips: { orderBy: { scheduledStart: "asc" } },
       emergencyDispatch: true,
     },
@@ -59,15 +46,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   const context = await getAppContext();
   const session = context?.session ?? null;
   const techView = Boolean(context?.fieldView);
-  const canBill = session ? canBillJob(session, job) : false;
-  const quoteInvoice = job.quote?.invoices[0] ?? null;
-  const quoteBilling = job.quote
-    ? quoteBillingAction(
-        job.quote,
-        quoteInvoice ? { balance: Number(quoteInvoice.balance) } : null,
-      )
-    : null;
-  const showQuoteBanner = Boolean(techView && job.quote && quoteBilling);
   const notify = jobNotifyProps(job, session?.firstName);
   if (session && !canAccessJobInFieldView(session, job, techView)) notFound();
 
@@ -102,7 +80,8 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   }
 
   return (
-    <div className="space-y-6">
+    <JobVisitProvider status={displayStatus} checkedIn={checkedInHere}>
+      <div className="space-y-6">
       <Breadcrumbs
         items={[
           { label: techView ? "My work orders" : "Work orders", href: "/jobs" },
@@ -136,17 +115,6 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             technicianId={job.technicianId}
             technicians={technicians}
             species={species}
-            propertyId={job.propertyId}
-            clientPhone={job.client.phone}
-            visitSummary={{
-              clientFirstName: job.client.firstName,
-              jobTitle: job.title,
-              techName: job.technician
-                ? `${job.technician.firstName} ${job.technician.lastName}`
-                : session?.firstName,
-              companyName: job.client.companyName,
-              portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : null,
-            }}
             deployments={job.deployments.map((item) => ({
               id: item.id,
               equipment: { serialNumber: item.equipment.serialNumber },
@@ -158,38 +126,12 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
               clientPhone={notify.clientPhone}
               smsHref={notify.smsHref}
               autoSendSms={notify.autoSendSms}
-              alreadyNotified={notify.alreadyNotified}
               emphasized={job.type === "EMERGENCY"}
             />
           ) : null}
-          {canBill ? (
-            <CreateInvoiceButton jobId={job.id} disabled={job.status !== "COMPLETED" || job.invoices.length > 0} />
-          ) : null}
-          {techView || !job.quote || showQuoteBanner ? null : quoteInvoice ? (
-            <Link
-              href={`/invoices/${quoteInvoice.id}`}
-              className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center"
-            >
-              {Number(quoteInvoice.balance) > 0 ? "Collect payment" : "View invoice"}
-            </Link>
-          ) : quoteBilling === "create" ? (
-            <CreateInvoiceButton quoteId={job.quote.id} label="Create invoice" />
-          ) : null}
         </div>
       </div>
-      {showQuoteBanner && job.quote ? (
-        <JobQuoteBillingBanner
-          quote={{
-            id: job.quote.id,
-            number: job.quote.number,
-            title: job.quote.title,
-            total: Number(job.quote.total),
-          }}
-          invoice={quoteInvoice ? { id: quoteInvoice.id, balance: Number(quoteInvoice.balance) } : null}
-          action={quoteBilling}
-        />
-      ) : null}
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2">
         <Card title="Visit">
           <p>{job.scheduledStart ? format(job.scheduledStart, "PPP p") : "Unscheduled"}</p>
           <p className="text-sm text-stone-600">
@@ -212,89 +154,64 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             </div>
           ) : null}
         </Card>
-        {canBill || (job.quote && !techView) ? (
-          <Card title="Value">
-            <p className="font-display text-2xl">{formatMoney(job.total)}</p>
-            <p className="text-sm text-stone-600">Tax {formatMoney(job.taxAmount)}</p>
-            {techView || !job.quote ? null : (
-              <Link href={`/quotes/${job.quote.id}`} className="mt-2 block text-sm font-medium text-orange">
-                Quote {job.quote.number}
-              </Link>
-            )}
-            {[...(quoteInvoice ? [quoteInvoice] : []), ...job.invoices.filter((item) => item.id !== quoteInvoice?.id)].map((invoice) => (
-              <Link key={invoice.id} href={`/invoices/${invoice.id}`} className="mt-2 block text-sm font-medium text-orange">
-                {techView ? "Take payment" : "Collect"} · {invoice.number ?? "Invoice"} · {formatMoney(invoice.balance)} due
-              </Link>
-            ))}
-          </Card>
-        ) : null}
         <Card title="Instructions">
           <p className="text-sm">{job.instructions ?? "No special instructions."}</p>
         </Card>
       </section>
-      <section className="grid gap-6 lg:grid-cols-2">
-        {techView ? null : (
-          <Card title="Line items">
-            {job.lineItems.map((item) => (
-              <p key={item.id} className="flex justify-between py-1 text-sm">
-                <span>
-                  {item.name} × {Number(item.quantity)}
-                </span>
-                <span>{formatMoney(Number(item.quantity) * Number(item.unitPrice))}</span>
-              </p>
-            ))}
-          </Card>
-        )}
-        {techView ? null : (
-          <>
-            <JobTrapsCard
-              jobId={job.id}
-              stock={stock.map((item) => ({
-                id: item.id,
-                serialNumber: item.serialNumber,
-                name: item.name,
-                type: item.type,
-                status: item.status,
-              }))}
-              deployments={job.deployments}
-              serials={allGear.map((item) => item.serialNumber)}
-              species={species.map((item) => item.commonName)}
-            />
-            <JobSpeciesCard
-              jobId={job.id}
-              captures={job.captures}
-              species={species}
-              deployments={job.deployments.map((item) => ({
-                id: item.id,
-                equipment: { serialNumber: item.equipment.serialNumber },
-              }))}
-            />
-            <JobEntryPointsCard
-              jobId={job.id}
-              propertyId={job.propertyId}
-              entryPoints={job.entryPoints}
-              exclusions={job.exclusions}
-            />
-            <JobEditor job={job} technicians={technicians} />
-          </>
-        )}
-        {techView && job.captures.length ? (
-          <Card title="Captures this job">
-            {job.captures.map((capture) => (
-              <p key={capture.id} className="py-1 text-sm">
-                {capture.quantity}× {capture.species.commonName} · {capture.disposition.replaceAll("_", " ").toLowerCase()}
-              </p>
-            ))}
-          </Card>
-        ) : null}
-      </section>
-      <JobPhotosCard
-        jobId={job.id}
-        propertyId={job.propertyId}
-        photos={job.photos}
-        entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
-      />
-    </div>
+      {techView ? null : <JobEditor job={job} technicians={technicians} />}
+      <JobFieldWorkGate>
+        <div className="space-y-3">
+          <JobTrapsCard
+            jobId={job.id}
+            stock={stock.map((item) => ({
+              id: item.id,
+              serialNumber: item.serialNumber,
+              name: item.name,
+              type: item.type,
+              status: item.status,
+            }))}
+            deployments={job.deployments}
+            serials={allGear.map((item) => item.serialNumber)}
+            species={species.map((item) => item.commonName)}
+          />
+          <JobSpeciesCard
+            jobId={job.id}
+            captures={job.captures}
+            species={species}
+            deployments={job.deployments.map((item) => ({
+              id: item.id,
+              equipment: { serialNumber: item.equipment.serialNumber },
+            }))}
+          />
+          <JobEntryPointsCard
+            jobId={job.id}
+            propertyId={job.propertyId}
+            entryPoints={job.entryPoints}
+            exclusions={job.exclusions}
+          />
+          <JobPhotosCard
+            jobId={job.id}
+            propertyId={job.propertyId}
+            photos={job.photos}
+            entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
+          />
+          <JobCheckoutPanel
+            jobId={job.id}
+            clientPhone={job.client.phone}
+            visitSummary={{
+              clientFirstName: job.client.firstName,
+              jobTitle: job.title,
+              techName: job.technician
+                ? `${job.technician.firstName} ${job.technician.lastName}`
+                : session?.firstName,
+              companyName: job.client.companyName,
+              portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : null,
+            }}
+          />
+        </div>
+      </JobFieldWorkGate>
+      </div>
+    </JobVisitProvider>
   );
 }
 

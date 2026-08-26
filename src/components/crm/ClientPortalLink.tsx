@@ -22,7 +22,7 @@ export function ClientPortalLink({ portalToken }: { portalToken: string }) {
     <section className="rounded-2xl border border-line bg-panel p-4">
       <h2 className="font-semibold">Customer hub</h2>
       <p className="mt-1 text-sm text-stone-600">
-        Visits and quote approve/decline only — no payment login.
+        Visits and service updates only — no payment login.
       </p>
       <p className="mt-2 break-all font-mono text-xs text-stone-600">{path}</p>
       <div className="mt-3 flex flex-wrap gap-2">

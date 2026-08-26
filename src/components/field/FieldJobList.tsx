@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { DayNotifyButton } from "@/components/field/DayNotifyButton";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { NotifyCustomerButton } from "@/components/jobs/NotifyCustomerButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { JobVisitControls } from "@/components/jobs/JobVisitControls";
 import { dateKey } from "@/lib/dates";
-import { nextFieldStop } from "@/lib/field-next-stop";
-import { portalHubUrl } from "@/lib/messaging";
 import { propertyAddress } from "@/lib/utils";
 import type { ScheduleTech } from "@/components/schedule/job-card";
 
@@ -24,10 +21,8 @@ type FieldJob = {
     firstName: string;
     phone: string | null;
     companyName?: string | null;
-    portalToken?: string | null;
   };
   property: {
-    id?: string;
     address1: string;
     city: string;
     state: string;
@@ -48,7 +43,6 @@ export type FieldJobNotify = {
   clientPhone: string | null;
   smsHref: string | null;
   autoSendSms: boolean;
-  alreadyNotified?: boolean;
 };
 
 export type RouteHint = {
@@ -67,7 +61,6 @@ export function FieldJobList({
   notifyByJobId = {},
   onSiteJobId,
   species = [],
-  trapCheckMode = false,
 }: {
   jobs: FieldJob[];
   days: Date[];
@@ -77,14 +70,12 @@ export function FieldJobList({
   notifyByJobId?: Record<string, FieldJobNotify>;
   onSiteJobId?: string | null;
   species?: Array<{ id: string; commonName: string }>;
-  trapCheckMode?: boolean;
 }) {
   return (
     <div className="space-y-4">
       {days.map((day) => {
         const dayJobs = jobs
           .filter((job) => job.scheduledStart && dateKey(job.scheduledStart) === dateKey(day))
-          .filter((job) => !trapCheckMode || job.deployments.length > 0)
           .sort((a, b) => {
             const emergencyA = isEmergencyJob(a) ? 0 : 1;
             const emergencyB = isEmergencyJob(b) ? 0 : 1;
@@ -106,32 +97,23 @@ export function FieldJobList({
                 <span className="ml-2 text-xs font-normal text-stone-500">
                   {dayJobs.length} stop{dayJobs.length === 1 ? "" : "s"}
                   {routed ? " · optimized" : ""}
-                  {trapCheckMode ? " · traps only" : ""}
                 </span>
               </h2>
             ) : null}
             {isSingleDay && dayJobs.length > 0 ? (
-              <div className="space-y-2 px-1">
-                <NavigateLink
-                  label="Navigate this route"
-                  stops={dayJobs.map((job) => ({
-                    address: propertyAddress(job.property),
-                    lat: job.property.lat,
-                    lng: job.property.lng,
-                  }))}
-                />
-                <DayNotifyButton
-                  jobIds={dayJobs.filter((job) => notifyByJobId[job.id]?.clientPhone).map((job) => job.id)}
-                />
-              </div>
+              <NavigateLink
+                label="Navigate this route"
+                stops={dayJobs.map((job) => ({
+                  address: propertyAddress(job.property),
+                  lat: job.property.lat,
+                  lng: job.property.lng,
+                }))}
+                className="px-1"
+              />
             ) : null}
             {dayJobs.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-center text-sm text-stone-500">
-                {trapCheckMode
-                  ? "No stops with live traps on this day."
-                  : isSingleDay
-                    ? "No stops on this day."
-                    : "Off / no stops"}
+                {isSingleDay ? "No stops on this day." : "Off / no stops"}
               </p>
             ) : (
               dayJobs.map((job, index) => {
@@ -145,7 +127,6 @@ export function FieldJobList({
                   lat: job.property.lat,
                   lng: job.property.lng,
                 };
-                const next = nextFieldStop(dayJobs, job.id);
                 return (
                   <article
                     key={job.id}
@@ -207,33 +188,10 @@ export function FieldJobList({
                         technicianId={job.technicianId}
                         technicians={technicians}
                         species={species}
-                        propertyId={job.property.id}
-                        clientPhone={job.client.phone}
-                        visitSummary={{
-                          clientFirstName: job.client.firstName,
-                          jobTitle: job.title,
-                          techName: job.technician
-                            ? `${job.technician.firstName} ${job.technician.lastName}`
-                            : undefined,
-                          companyName: job.client.companyName ?? null,
-                          portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : null,
-                        }}
                         deployments={job.deployments.map((item) => ({
                           id: item.id,
                           equipment: { serialNumber: item.equipment.serialNumber },
                         }))}
-                        nextStop={
-                          next
-                            ? {
-                                id: next.id,
-                                number: next.number,
-                                title: next.title,
-                                address: propertyAddress(next.property),
-                                lat: next.property.lat,
-                                lng: next.property.lng,
-                              }
-                            : null
-                        }
                       />
                     </div>
                   </article>

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession, type SessionUser } from "@/lib/auth";
 
-export { lineTotals } from "@/lib/money";
-
 export async function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }

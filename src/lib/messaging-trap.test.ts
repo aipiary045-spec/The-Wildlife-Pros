@@ -3,7 +3,6 @@ import { test } from "node:test";
 import {
   buildEmergencyCustomerMessage,
   buildEnRouteMessage,
-  buildQuoteDeliveryMessage,
   jobNotifyProps,
   portalHubUrl,
   smsFallbackUrl,
@@ -15,19 +14,6 @@ test("portalHubUrl builds customer hub links", () => {
   process.env.NEXT_PUBLIC_APP_URL = "https://the-wildlife-pros.vercel.app";
   assert.equal(portalHubUrl("demo-token"), "https://the-wildlife-pros.vercel.app/portal/demo-token");
   process.env.NEXT_PUBLIC_APP_URL = original;
-});
-
-test("buildQuoteDeliveryMessage includes hub link and total", () => {
-  const body = buildQuoteDeliveryMessage({
-    clientFirstName: "Riley",
-    quoteNumber: "Q-0001",
-    quoteTitle: "Raccoon attic",
-    total: "$655.91",
-    hubUrl: "https://example.com/portal/tok",
-  });
-  assert.match(body, /Q-0001/);
-  assert.match(body, /\$655\.91/);
-  assert.match(body, /https:\/\/example\.com\/portal\/tok/);
 });
 
 test("buildEnRouteMessage names the technician", () => {
