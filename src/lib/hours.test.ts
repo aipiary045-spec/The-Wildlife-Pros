@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { hoursByDay, punchMinutes } from "./hours";
+import { buildHoursGrid, hoursByDay, punchMinutes } from "./hours";
 
 test("punchMinutes subtracts unpaid break", () => {
   const punches = [
@@ -26,4 +26,58 @@ test("hoursByDay rolls timesheets onto calendar days", () => {
   assert.equal(days.length, 2);
   assert.equal(days[0]?.minutes, 60);
   assert.equal(days[1]?.minutes, 240);
+});
+
+test("buildHoursGrid fills daily columns and week totals", () => {
+  const mon = new Date(2026, 7, 17); // Monday
+  const tue = new Date(2026, 7, 18);
+  const days = [
+    mon,
+    tue,
+    new Date(2026, 7, 19),
+    new Date(2026, 7, 20),
+    new Date(2026, 7, 21),
+    new Date(2026, 7, 22),
+    new Date(2026, 7, 23),
+  ];
+  const grid = buildHoursGrid(
+    [
+      {
+        userId: "u1",
+        date: mon,
+        status: "CLOCKED_OUT",
+        breakMin: 0,
+        punches: [{ clockInAt: new Date(2026, 7, 17, 8, 0, 0), clockOutAt: new Date(2026, 7, 17, 16, 0, 0) }],
+        user: { id: "u1", firstName: "Jordan", lastName: "Blake", color: "#E85D04" },
+      },
+      {
+        userId: "u1",
+        date: tue,
+        status: "CLOCKED_IN",
+        breakMin: 0,
+        punches: [{ clockInAt: new Date(2026, 7, 18, 8, 0, 0), clockOutAt: null }],
+        user: { id: "u1", firstName: "Jordan", lastName: "Blake", color: "#E85D04" },
+      },
+      {
+        userId: "u2",
+        date: mon,
+        status: "CLOCKED_OUT",
+        breakMin: 30,
+        punches: [{ clockInAt: new Date(2026, 7, 17, 9, 0, 0), clockOutAt: new Date(2026, 7, 17, 17, 0, 0) }],
+        user: { id: "u2", firstName: "Alex", lastName: "Rivera", color: "#111111" },
+      },
+    ],
+    days,
+    new Date(2026, 7, 18, 12, 0, 0),
+  );
+
+  assert.equal(grid.rows.length, 2);
+  assert.equal(grid.rows[0]?.user.firstName, "Alex"); // sorted by name
+  assert.equal(grid.rows[0]?.byDay["2026-08-17"], 450); // 8h - 30m
+  assert.equal(grid.rows[1]?.byDay["2026-08-17"], 480);
+  assert.equal(grid.rows[1]?.byDay["2026-08-18"], 240); // open punch to noon
+  assert.equal(grid.rows[1]?.open, true);
+  assert.equal(grid.rows[1]?.weekMinutes, 720);
+  assert.equal(grid.dayTotals[0], 930);
+  assert.equal(grid.weekTotal, 1170);
 });
