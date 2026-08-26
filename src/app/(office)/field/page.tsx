@@ -7,6 +7,7 @@ import { getMyOpenCheckIn } from "@/lib/active-checkins.server";
 import { getSession } from "@/lib/auth";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { sortJobsEmergencyFirst } from "@/lib/emergency";
+import { loadTripVisitMapForJobs } from "@/lib/job-trips.server";
 import { isTechnician } from "@/lib/paths";
 import { jobNotifyProps } from "@/lib/messaging";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +83,7 @@ export default async function FieldPage({
   );
 
   const sortedJobs = sortJobsEmergencyFirst(jobs);
+  const tripVisitByJobId = Object.fromEntries(await loadTripVisitMapForJobs(jobs));
 
   const routeByJobId = Object.fromEntries(
     routeDays.flatMap((route) =>
@@ -141,6 +143,7 @@ export default async function FieldPage({
         days={days}
         showTech={session.role !== "TECHNICIAN"}
         routeByJobId={routeByJobId}
+        tripVisitByJobId={tripVisitByJobId}
         technicians={technicians}
         notifyByJobId={notifyByJobId}
         onSiteJobId={myOpenCheckIn?.jobId}

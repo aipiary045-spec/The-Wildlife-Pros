@@ -6,13 +6,15 @@ import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
 import { getActiveCheckIns } from "@/lib/active-checkins.server";
 import { getSession } from "@/lib/auth";
 import { getSchedule } from "@/lib/data";
+import { loadTripVisitMapForJobs } from "@/lib/job-trips.server";
+import type { TripVisitInfo } from "@/lib/job-trips";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { dayAppointmentStats } from "@/lib/schedule-stats";
 
 export const dynamic = "force-dynamic";
 
-function toCard(job: Awaited<ReturnType<typeof getSchedule>>["jobs"][number]) {
+function toCard(job: Awaited<ReturnType<typeof getSchedule>>["jobs"][number], tripVisit?: TripVisitInfo | null) {
   return {
     id: job.id,
     number: job.number,
@@ -25,6 +27,8 @@ function toCard(job: Awaited<ReturnType<typeof getSchedule>>["jobs"][number]) {
     technicianId: job.technicianId,
     propertyId: job.propertyId,
     sourceJobId: job.sourceJobId,
+    includedTrips: job.includedTrips,
+    tripVisit: tripVisit ?? null,
     client: job.client,
     property: job.property,
   };
@@ -56,6 +60,7 @@ export default async function SchedulePage({
     }),
     getActiveCheckIns(),
   ]);
+  const tripVisitByJobId = await loadTripVisitMapForJobs([...jobs, ...unscheduled]);
 
   return (
     <div className="space-y-5">
@@ -88,8 +93,8 @@ export default async function SchedulePage({
         date={dateKey(date)}
         weekOf={dateKey(from)}
         technicians={technicians}
-        jobs={jobs.map(toCard)}
-        unscheduled={unscheduled.map(toCard)}
+        jobs={jobs.map((job) => toCard(job, tripVisitByJobId.get(job.id)))}
+        unscheduled={unscheduled.map((job) => toCard(job, tripVisitByJobId.get(job.id)))}
         clients={clients}
         availability={blocks.map((block) => ({
           technicianId: block.userId,

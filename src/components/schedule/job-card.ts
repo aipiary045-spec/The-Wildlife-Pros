@@ -10,7 +10,9 @@ export type ScheduleJobCard = {
   technicianId: string | null;
   propertyId?: string;
   sourceJobId?: string | null;
-  client: { firstName: string; lastName: string; companyName?: string | null };
+  includedTrips?: number | null;
+  tripVisit?: import("@/lib/job-trips").TripVisitInfo | null;
+  client: { firstName: string; lastName: string; companyName?: string | null; phone?: string | null };
   property: { address1: string };
 };
 
