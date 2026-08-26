@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { jsonError } from "@/lib/api";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { approvedDayOffError } from "@/lib/day-off-guard";
+import { parseIncludedTrips, tripRootId } from "@/lib/job-trips";
 import { queueJobGoogleCalendarSync, removeJobGoogleCalendar } from "@/lib/google-calendar";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -37,6 +38,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const type = typeof body.type === "string" && body.type in JOB_TYPE_LABEL ? body.type : undefined;
   const blocked = await approvedDayOffError(body.technicianId, body.scheduledStart);
   if (blocked) return blocked;
+
+  if (body.includedTrips !== undefined) {
+    const existing = await prisma.job.findUnique({
+      where: { id },
+      select: { id: true, sourceJobId: true },
+    });
+    if (!existing) return jsonError("Job not found", 404);
+    const rootId = tripRootId(existing);
+    const includedTrips = parseIncludedTrips(body.includedTrips);
+    await prisma.job.updateMany({
+      where: { OR: [{ id: rootId }, { sourceJobId: rootId }] },
+      data: { includedTrips },
+    });
+  }
+
   const job = await prisma.job.update({
     where: { id },
     data: {

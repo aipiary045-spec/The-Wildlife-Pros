@@ -39,6 +39,7 @@ export async function duplicateJobTrip(input: {
         scheduledStart,
         scheduledEnd,
         durationMin,
+        includedTrips: source.includedTrips,
         sourceJobId: source.sourceJobId ?? source.id,
       },
       include: { client: true, property: true, technician: true },

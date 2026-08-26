@@ -2,7 +2,9 @@
 
 import { use, useEffect, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
+import { TripVisitBadge } from "@/components/jobs/TripVisitBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import type { TripVisitInfo } from "@/lib/job-trips";
 
 type PortalData = {
   client: {
@@ -15,6 +17,7 @@ type PortalData = {
       scheduledStart: string | null;
       property: { address1: string };
       technician: { firstName: string; lastName: string } | null;
+      tripVisit?: TripVisitInfo | null;
     }>;
   };
 };
@@ -63,7 +66,14 @@ export default function PortalPage({ params }: { params: Promise<{ token: string
           {data.jobs.map((job) => (
             <div key={job.id} className="border-t border-line py-4 first:mt-3 first:border-0 first:pt-0">
               <div className="flex justify-between gap-3">
-                <p className="font-semibold">{job.title}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold">{job.title}</p>
+                  {job.tripVisit ? (
+                    <div className="mt-1">
+                      <TripVisitBadge info={job.tripVisit} />
+                    </div>
+                  ) : null}
+                </div>
                 <StatusBadge status={job.status} />
               </div>
               <p className="mt-1 text-sm text-muted">

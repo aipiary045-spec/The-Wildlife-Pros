@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { loadTripVisitMapForJobs } from "@/lib/job-trips.server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(_request: Request, context: { params: Promise<{ token: string }> }) {
@@ -16,13 +17,18 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
   });
   if (!client) return NextResponse.json({ error: "Portal not found" }, { status: 404 });
 
+  const tripVisitByJobId = await loadTripVisitMapForJobs(client.jobs);
+
   return NextResponse.json({
     client: {
       firstName: client.firstName,
       lastName: client.lastName,
       companyName: client.companyName,
       properties: client.properties,
-      jobs: client.jobs,
+      jobs: client.jobs.map((job) => ({
+        ...job,
+        tripVisit: tripVisitByJobId.get(job.id) ?? null,
+      })),
     },
   });
 }
