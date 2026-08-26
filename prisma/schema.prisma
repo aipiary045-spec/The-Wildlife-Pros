@@ -294,6 +294,7 @@ model EmergencyDispatch {
   acknowledgedById     String?
   acknowledgedBy       User?     @relation("EmergencyAckBy", fields: [acknowledgedById], references: [id])
   escalatedAt          DateTime?
+  notifyCustomerRequested Boolean  @default(false)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 

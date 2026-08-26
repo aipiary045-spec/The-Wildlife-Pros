@@ -291,9 +291,19 @@ export function EmergencyDispatchButton({
                     </div>
                   </fieldset>
 
-                  <label className="mt-4 flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={notifyCustomer} onChange={(event) => setNotifyCustomer(event.target.checked)} />
-                    Text customer that help is on the way
+                  <label className="mt-4 flex items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={notifyCustomer}
+                      onChange={(event) => setNotifyCustomer(event.target.checked)}
+                    />
+                    <span>
+                      Text customer when a tech claims the job
+                      <span className="mt-0.5 block text-xs font-normal text-stone-500">
+                        Sends after steal or check-in — not at dispatch.
+                      </span>
+                    </span>
                   </label>
 
                   {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}

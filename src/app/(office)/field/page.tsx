@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { EmergencyFieldBanner } from "@/components/emergency/EmergencyFieldBanner";
 import { EmergencyTeamBanner } from "@/components/emergency/EmergencyTeamBanner";
 import { FieldJobList } from "@/components/field/FieldJobList";
 import { OnSiteNowBanner } from "@/components/field/OnSiteNowBanner";
@@ -78,10 +77,6 @@ export default async function FieldPage({
     prisma.species.findMany({ orderBy: { commonName: "asc" }, select: { id: true, commonName: true } }),
   ]);
 
-  const pendingAssigned =
-    activeEmergencies.find(
-      (dispatch) => dispatch.assignedTechnicianId === session.id && !dispatch.acknowledgedAt,
-    ) ?? null;
   const teamAlerts = activeEmergencies.filter(
     (dispatch) => !dispatch.assignedTechnicianId || dispatch.assignedTechnicianId !== session.id,
   );
@@ -114,16 +109,6 @@ export default async function FieldPage({
   return (
     <div className="mx-auto max-w-lg space-y-4">
       {myOpenCheckIn ? <OnSiteNowBanner checkIn={myOpenCheckIn} /> : null}
-      {pendingAssigned ? (
-        <EmergencyFieldBanner
-          jobId={pendingAssigned.jobId}
-          title={pendingAssigned.job.title}
-          address={propertyAddress(pendingAssigned.job.property)}
-          message={pendingAssigned.message}
-          lat={pendingAssigned.job.property.lat}
-          lng={pendingAssigned.job.property.lng}
-        />
-      ) : null}
       {teamAlerts.map((dispatch) => (
         <EmergencyTeamBanner
           key={dispatch.id}

@@ -2,6 +2,7 @@ import { startOfDay } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { hasOpenPunch } from "@/lib/time";
 import type { SessionUser } from "@/lib/auth";
+import { claimEmergencyOnCheckIn } from "@/lib/emergency-claim";
 import { JobVisitError, checkoutSummary, visitActionForStatus, type CheckoutInput } from "@/lib/job-visit";
 import { resolveSpeciesId } from "@/lib/species";
 
@@ -83,7 +84,16 @@ export async function checkInToJob(jobId: string, user: SessionUser, occurredAt 
             },
           });
         }
-        return { job: repaired, already: true as const, repaired: true as const };
+        await claimEmergencyOnCheckIn({
+          jobId,
+          organizationId: user.organizationId,
+          technicianId: user.id,
+        });
+        const repairedFresh = await prisma.job.findUnique({
+          where: { id: jobId },
+          include: { client: true, property: true, technician: true },
+        });
+        return { job: repairedFresh ?? repaired, already: true as const, repaired: true as const };
       }
       return { job, already: true as const, repaired: false as const };
     }
@@ -136,7 +146,18 @@ export async function checkInToJob(jobId: string, user: SessionUser, occurredAt 
     }),
   ]);
 
-  return { job: updated, already: false as const };
+  await claimEmergencyOnCheckIn({
+    jobId,
+    organizationId: user.organizationId,
+    technicianId: user.id,
+  });
+
+  const refreshed = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: { client: true, property: true, technician: true },
+  });
+
+  return { job: refreshed ?? updated, already: false as const };
 }
 
 export async function checkOutOfJob(jobId: string, user: SessionUser, input: CheckoutInput, occurredAt = new Date()) {

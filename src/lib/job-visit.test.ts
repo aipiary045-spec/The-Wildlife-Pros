@@ -34,7 +34,7 @@ test("parseCheckoutBody accepts captures and exclusion", () => {
   const next = parseCheckoutBody({
     outcome: "complete",
     captures: [
-      { speciesName: "Raccoon", quantity: 1, disposition: "RELOCATED", locationNote: "Attic" },
+      { speciesName: "Raccoon", quantity: 1, disposition: "EUTHANIZED", locationNote: "Attic" },
       { speciesId: "sp1", quantity: 2, disposition: "FOUND_DEAD" },
     ],
     exclusion: {
@@ -45,6 +45,7 @@ test("parseCheckoutBody accepts captures and exclusion", () => {
   });
   assert.equal(next.captures?.length, 2);
   assert.equal(next.captures?.[0]?.speciesName, "Raccoon");
+  assert.equal(next.captures?.[0]?.disposition, "EUTHANIZED");
   assert.equal(next.exclusion?.material, "Hardware cloth");
   assert.equal(next.exclusion?.entryLabel, "Ridge vent");
 });
