@@ -161,7 +161,13 @@ export async function checkInToJob(jobId: string, user: SessionUser, occurredAt 
 }
 
 export async function checkOutOfJob(jobId: string, user: SessionUser, input: CheckoutInput, occurredAt = new Date()) {
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: {
+      client: { select: { firstName: true, phone: true, companyName: true, portalToken: true } },
+      technician: { select: { firstName: true, lastName: true } },
+    },
+  });
   if (!job) throw new JobVisitError("Job not found", 404);
 
   const openEntry = await prisma.timeEntry.findFirst({
@@ -182,6 +188,7 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     orderBy: { createdAt: "desc" },
   });
   const summary = checkoutSummary(input);
+  let closedVisitId: string | null = openVisit?.id ?? null;
 
   await prisma.$transaction(async (tx) => {
     if (openEntry) {
@@ -286,28 +293,10 @@ export async function checkOutOfJob(jobId: string, user: SessionUser, input: Che
     });
   });
 
-  let followUp = null;
-  if (input.outcome === "follow_up" && input.followUp) {
-    followUp = await prisma.scheduleNeed.create({
-      data: {
-        clientId: job.clientId,
-        propertyId: job.propertyId,
-        sourceJobId: job.id,
-        preferredTechId: job.technicianId,
-        title: job.title,
-        notes: input.followUp.notes ?? input.notes,
-        returnInDays: input.followUp.returnInDays,
-        dueOn: input.followUp.dueOn,
-        status: "OPEN",
-      },
-      include: { client: true, property: true },
-    });
-  }
-
   const updated = await prisma.job.findUnique({
     where: { id: jobId },
     include: { client: true, property: true, technician: true },
   });
 
-  return { job: updated, followUp };
+  return { job: updated, followUp: null };
 }

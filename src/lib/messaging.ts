@@ -42,6 +42,47 @@ export function buildEnRouteMessage(input: {
   return `${tech} is on the way for ${input.jobTitle}. Reply to this number if you need to reschedule.`;
 }
 
+export function buildOnSiteMessage(input: {
+  clientFirstName: string;
+  techName?: string;
+  jobTitle: string;
+  companyName?: string;
+}) {
+  const who = input.companyName?.trim() || "The Wildlife Pros";
+  const tech = input.techName ? `${input.techName} from ${who}` : `Your ${who} technician`;
+  return `Hi ${input.clientFirstName}, ${tech} has arrived for ${input.jobTitle}.`;
+}
+
+export function buildJobCompleteMessage(input: {
+  clientFirstName: string;
+  techName?: string;
+  jobTitle: string;
+  companyName?: string;
+}) {
+  const who = input.companyName?.trim() || "The Wildlife Pros";
+  return `Hi ${input.clientFirstName}, ${who} finished today's visit for ${input.jobTitle}. Call or text if anything comes up.`;
+}
+
+export type JobNotifyKind = "en_route" | "on_site" | "complete";
+
+export function buildNotifyKindMessage(
+  kind: JobNotifyKind,
+  input: {
+    type?: string;
+    clientFirstName: string;
+    techName?: string;
+    jobTitle: string;
+    companyName?: string;
+  },
+) {
+  if (input.type === "EMERGENCY" && kind === "en_route") {
+    return buildEmergencyCustomerMessage(input);
+  }
+  if (kind === "on_site") return buildOnSiteMessage(input);
+  if (kind === "complete") return buildJobCompleteMessage(input);
+  return buildEnRouteMessage(input);
+}
+
 export function buildEmergencyCustomerMessage(input: {
   clientFirstName: string;
   techName?: string;
@@ -66,10 +107,7 @@ export function buildJobNotifyMessage(input: {
   jobTitle: string;
   companyName?: string;
 }) {
-  if (input.type === "EMERGENCY") {
-    return buildEmergencyCustomerMessage(input);
-  }
-  return buildEnRouteMessage(input);
+  return buildNotifyKindMessage("en_route", input);
 }
 
 export const JOB_NOTIFY_STATUSES = ["SCHEDULED", "EN_ROUTE", "ON_SITE"] as const;
@@ -80,6 +118,7 @@ export function jobNotifyProps(
     title: string;
     type?: string;
     status: string;
+    customerNotifiedAt?: Date | null;
     client: { firstName: string; phone: string | null; companyName?: string | null };
     technician?: { firstName: string; lastName: string } | null;
   },
@@ -100,6 +139,7 @@ export function jobNotifyProps(
     clientPhone: job.client.phone,
     smsHref: smsFallbackUrl(job.client.phone, message),
     autoSendSms: messagingCapabilities().sms,
+    alreadyNotified: Boolean(job.customerNotifiedAt),
   };
 }
 

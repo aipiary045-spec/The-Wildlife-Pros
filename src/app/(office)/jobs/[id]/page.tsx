@@ -19,7 +19,7 @@ import { canAccessJobInFieldView } from "@/lib/paths";
 import { getAppContext } from "@/lib/app-context";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { visitActionForStatus } from "@/lib/job-visit";
-import { jobNotifyProps } from "@/lib/messaging";
+import { jobNotifyProps, portalHubUrl } from "@/lib/messaging";
 import { clientName, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -195,7 +195,19 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
             photos={job.photos}
             entryPoints={job.entryPoints.map((item) => ({ id: item.id, label: item.label }))}
           />
-          <JobCheckoutPanel jobId={job.id} />
+          <JobCheckoutPanel
+            jobId={job.id}
+            clientPhone={job.client.phone}
+            visitSummary={{
+              clientFirstName: job.client.firstName,
+              jobTitle: job.title,
+              techName: job.technician
+                ? `${job.technician.firstName} ${job.technician.lastName}`
+                : session?.firstName,
+              companyName: job.client.companyName,
+              portalUrl: job.client.portalToken ? portalHubUrl(job.client.portalToken) : null,
+            }}
+          />
         </div>
       </JobFieldWorkGate>
       </div>
