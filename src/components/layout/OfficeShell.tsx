@@ -13,12 +13,13 @@ import { EmergencyDispatchButton } from "@/components/emergency/EmergencyDispatc
 import { EmergencyStatusStrip } from "@/components/emergency/EmergencyStatusStrip";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ClockStatusBar } from "@/components/timesheets/ClockStatusBar";
-import type { Sheet } from "@/components/timesheets/ClockControls";
+import type { OpenJobHint, Sheet } from "@/components/timesheets/ClockControls";
 import { cn } from "@/lib/utils";
 
 type MyTime = {
   current: Sheet | null;
   recent: Sheet[];
+  openJob?: OpenJobHint | null;
 };
 
 type EmergencyData = {
@@ -107,7 +108,11 @@ export function OfficeShell({ role, name, fieldView, sidebarFooter, myTime, emer
           </div>
         </header>
         {fieldView && myTime ? (
-          <ClockStatusBar initialCurrent={myTime.current} initialRecent={myTime.recent} />
+          <ClockStatusBar
+            initialCurrent={myTime.current}
+            initialRecent={myTime.recent}
+            openJob={myTime.openJob ?? null}
+          />
         ) : null}
         {!fieldView ? <EmergencyStatusStrip /> : null}
         <OfflineStatus />

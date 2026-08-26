@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { OpenJobHint, Sheet } from "@/components/timesheets/ClockControls";
 import { fieldFetch, isQueuedResponse } from "@/lib/field-fetch";
 import { formatDuration, workedMinutes } from "@/lib/time";
-import type { Sheet } from "@/components/timesheets/ClockControls";
 
 export function useTimesheetClock(initialCurrent: Sheet | null = null, initialRecent: Sheet[] = []) {
   const router = useRouter();
@@ -14,6 +14,7 @@ export function useTimesheetClock(initialCurrent: Sheet | null = null, initialRe
   const [error, setError] = useState("");
   const [queuedNote, setQueuedNote] = useState("");
   const [now, setNow] = useState(() => Date.now());
+  const [openJobConflict, setOpenJobConflict] = useState<OpenJobHint | null>(null);
 
   useEffect(() => {
     setSheet(initialCurrent);
@@ -59,21 +60,32 @@ export function useTimesheetClock(initialCurrent: Sheet | null = null, initialRe
     });
   }
 
-  async function clock(action: "in" | "out") {
+  async function clock(action: "in" | "out", force = false) {
     setBusy(true);
     setError("");
     setQueuedNote("");
+    if (action === "out" && !force) setOpenJobConflict(null);
     const response = await fieldFetch("/api/timesheets/clock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, force: force || undefined }),
     });
-    const data = (await response.json()) as { error?: string; timesheet?: Sheet; queued?: boolean };
+    const data = (await response.json()) as {
+      error?: string;
+      timesheet?: Sheet;
+      queued?: boolean;
+      openJob?: OpenJobHint | null;
+    };
     setBusy(false);
     if (!response.ok) {
+      if (action === "out" && response.status === 409 && data.openJob?.id) {
+        setOpenJobConflict(data.openJob);
+        return;
+      }
       setError(data.error ?? "Could not update clock");
       return;
     }
+    setOpenJobConflict(null);
     if (isQueuedResponse(data)) {
       applyQueuedClock(action);
       setQueuedNote("Saved on this phone. It uploads when you have data.");
@@ -101,9 +113,11 @@ export function useTimesheetClock(initialCurrent: Sheet | null = null, initialRe
     queuedNote,
     now,
     liveMin,
+    openJobConflict,
+    clearOpenJobConflict: () => setOpenJobConflict(null),
     clockedIn: Boolean(sheet?.open),
     clockIn: () => clock("in"),
-    clockOut: () => clock("out"),
+    clockOut: (force = false) => clock("out", force),
     toggleClock: () => clock(sheet?.open ? "out" : "in"),
     todayLabel: formatDuration(liveMin),
   };
