@@ -1,15 +1,11 @@
-import { startOfDay } from "date-fns";
 import { dateKey } from "@/lib/dates";
+import { workedMinutes, type PunchLike } from "@/lib/time";
 
-export type PunchLike = { clockInAt: Date | string; clockOutAt?: Date | string | null };
+export type { PunchLike };
 
-export function punchMinutes(punches: PunchLike[], breakMin = 0, now = new Date()) {
-  const raw = punches.reduce((sum, punch) => {
-    const start = new Date(punch.clockInAt).getTime();
-    const end = punch.clockOutAt ? new Date(punch.clockOutAt).getTime() : now.getTime();
-    return sum + Math.max(0, (end - start) / 60000);
-  }, 0);
-  return Math.max(0, raw - breakMin);
+/** @deprecated Prefer workedMinutes from @/lib/time with a sheetDate. */
+export function punchMinutes(punches: PunchLike[], breakMin = 0, now = new Date(), sheetDate?: Date | string) {
+  return workedMinutes(punches, breakMin, now, sheetDate);
 }
 
 export function hoursByDay<T extends { date: Date | string; punches: PunchLike[]; breakMin?: number }>(
@@ -18,10 +14,10 @@ export function hoursByDay<T extends { date: Date | string; punches: PunchLike[]
 ) {
   const days = new Map<string, { date: Date; minutes: number; sheets: T[] }>();
   for (const sheet of sheets) {
-    const date = startOfDay(new Date(sheet.date));
-    const key = date.toISOString();
+    const date = new Date(sheet.date);
+    const key = dateKey(date);
     const current = days.get(key) ?? { date, minutes: 0, sheets: [] as T[] };
-    current.minutes += punchMinutes(sheet.punches, sheet.breakMin ?? 0, now);
+    current.minutes += workedMinutes(sheet.punches, sheet.breakMin ?? 0, now, sheet.date);
     current.sheets.push(sheet);
     days.set(key, current);
   }
@@ -74,7 +70,7 @@ export function buildHoursGrid<
         weekMinutes: 0,
         open: false,
       } satisfies HoursGridRow);
-    const minutes = punchMinutes(sheet.punches, sheet.breakMin ?? 0, now);
+    const minutes = workedMinutes(sheet.punches, sheet.breakMin ?? 0, now, sheet.date);
     row.byDay[key] = (row.byDay[key] ?? 0) + minutes;
     row.weekMinutes += minutes;
     if (sheet.status === "CLOCKED_IN") row.open = true;

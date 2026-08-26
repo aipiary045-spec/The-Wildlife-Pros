@@ -12,6 +12,7 @@ export function PeriodToolbar({
   weekLabel = "Week",
   routesHref,
   footer,
+  hideViewToggle = false,
 }: {
   view: ScheduleView;
   date: Date;
@@ -21,6 +22,8 @@ export function PeriodToolbar({
   weekLabel?: string;
   routesHref?: string;
   footer?: React.ReactNode;
+  /** When true, only show period prev/next (no Day/Week switch). */
+  hideViewToggle?: boolean;
 }) {
   const dateParam = dateKey(date);
   const prev = dateKey(adjacentDate(view, date, -1));
@@ -35,23 +38,29 @@ export function PeriodToolbar({
 
   return (
     <div className="space-y-3">
-      <div className="flex rounded-full border border-line bg-panel p-1">
-        {routesHref ? (
-          <Link
-            href={routesHref}
-            className="flex-1 rounded-full py-2.5 text-center text-sm font-semibold text-stone-600"
-          >
-            <span className="sm:hidden">Routes</span>
-            <span className="hidden sm:inline">Optimize routes</span>
-          </Link>
-        ) : null}
-        <ViewLink href={href("day")} active={view === "day"}>
-          {dayLabel}
-        </ViewLink>
-        <ViewLink href={href("week")} active={view === "week"}>
-          {weekLabel}
-        </ViewLink>
-      </div>
+      {!hideViewToggle || routesHref ? (
+        <div className="flex rounded-full border border-line bg-panel p-1">
+          {routesHref ? (
+            <Link
+              href={routesHref}
+              className="flex-1 rounded-full py-2.5 text-center text-sm font-semibold text-stone-600"
+            >
+              <span className="sm:hidden">Routes</span>
+              <span className="hidden sm:inline">Optimize routes</span>
+            </Link>
+          ) : null}
+          {!hideViewToggle ? (
+            <>
+              <ViewLink href={href("day")} active={view === "day"}>
+                {dayLabel}
+              </ViewLink>
+              <ViewLink href={href("week")} active={view === "week"}>
+                {weekLabel}
+              </ViewLink>
+            </>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex items-center gap-2">
         <Link
           href={href(view, prev)}

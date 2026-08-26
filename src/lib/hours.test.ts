@@ -29,7 +29,7 @@ test("hoursByDay rolls timesheets onto calendar days", () => {
 });
 
 test("buildHoursGrid fills daily columns and week totals", () => {
-  const mon = new Date(2026, 7, 17); // Monday
+  const mon = new Date(2026, 7, 17);
   const tue = new Date(2026, 7, 18);
   const days = [
     mon,
@@ -72,14 +72,44 @@ test("buildHoursGrid fills daily columns and week totals", () => {
   );
 
   assert.equal(grid.rows.length, 2);
-  assert.equal(grid.rows[0]?.user.firstName, "Alex"); // sorted by name
-  assert.equal(grid.rows[0]?.byDay["2026-08-17"], 450); // 8h - 30m
+  assert.equal(grid.rows[0]?.user.firstName, "Alex");
+  assert.equal(grid.rows[0]?.byDay["2026-08-17"], 450);
   assert.equal(grid.rows[1]?.byDay["2026-08-17"], 480);
-  assert.equal(grid.rows[1]?.byDay["2026-08-18"], 240); // open punch to noon
+  assert.equal(grid.rows[1]?.byDay["2026-08-18"], 240);
   assert.equal(grid.rows[1]?.open, true);
   assert.equal(grid.rows[1]?.weekMinutes, 720);
   assert.equal(grid.dayTotals[0], 930);
   assert.equal(grid.weekTotal, 1170);
+});
+
+test("buildHoursGrid caps forgotten open punches on past days", () => {
+  const mon = new Date(2026, 7, 24);
+  const days = [
+    mon,
+    new Date(2026, 7, 25),
+    new Date(2026, 7, 26),
+    new Date(2026, 7, 27),
+    new Date(2026, 7, 28),
+    new Date(2026, 7, 29),
+    new Date(2026, 7, 30),
+  ];
+  const now = new Date(2026, 7, 26, 12, 0, 0);
+  const grid = buildHoursGrid(
+    [
+      {
+        userId: "u1",
+        date: mon,
+        status: "CLOCKED_IN",
+        breakMin: 0,
+        punches: [{ clockInAt: new Date(2026, 7, 24, 8, 0, 0), clockOutAt: null }],
+        user: { id: "u1", firstName: "Jordan", lastName: "Blake" },
+      },
+    ],
+    days,
+    now,
+  );
+  assert.equal(grid.rows[0]?.byDay["2026-08-24"], 16 * 60);
+  assert.ok((grid.rows[0]?.weekMinutes ?? 0) < 20 * 60);
 });
 
 test("applyDayOffsToGrid marks Off days and adds off-only people", () => {

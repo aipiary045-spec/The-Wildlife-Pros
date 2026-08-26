@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PeriodToolbar } from "@/components/schedule/PeriodToolbar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getAppContext } from "@/lib/app-context";
-import { dateKey, monthGrid, monthKey, parseDateParam, parseMonthParam, parseScheduleView, scheduleRange } from "@/lib/dates";
+import { dateKey, monthGrid, monthKey, parseDateParam, parseMonthParam, scheduleRange } from "@/lib/dates";
 import { applyDayOffsToGrid, buildHoursGrid } from "@/lib/hours";
 import { canReviewDayOff } from "@/lib/day-off";
 import { isOfficeRole } from "@/lib/roles";
@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 export default async function TimesheetsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; date?: string; tab?: string; month?: string }>;
+  searchParams: Promise<{ date?: string; tab?: string; month?: string }>;
 }) {
   const context = await getAppContext();
   if (!context) redirect("/login");
@@ -33,10 +33,7 @@ export default async function TimesheetsPage({
   const canApproveHours = isOfficeRole(session.role);
   const canReviewOff = canReviewDayOff(session.role) && !fieldView;
 
-  // Week first so daily columns + week total are visible immediately.
-  const view = params.view ? parseScheduleView(params.view) : "week";
   const date = parseDateParam(params.date);
-  const detailRange = scheduleRange(view, date);
   const weekRange = scheduleRange("week", date);
   const month = parseMonthParam(params.month);
   const monthRange = monthGrid(month);
@@ -73,10 +70,6 @@ export default async function TimesheetsPage({
       : Promise.resolve([]),
   ]);
 
-  const detailKeys = new Set(detailRange.days.map((day) => dateKey(day)));
-  const sheets =
-    view === "week" ? weekSheets : weekSheets.filter((sheet) => detailKeys.has(dateKey(sheet.date)));
-
   const onClock = weekSheets.filter((sheet) => sheet.status === "CLOCKED_IN");
   const { grid, offKeys } = applyDayOffsToGrid(
     buildHoursGrid(weekSheets, weekRange.days),
@@ -95,11 +88,11 @@ export default async function TimesheetsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={techView ? "Time tracker" : "Time tracker"}
+        title="Time tracker"
         description={
           techView
-            ? "Clock in, see daily and weekly hours, and request time off — all in one place."
-            : "Crew hours by day and week, plus time-off requests and approvals."
+            ? "Clock in, see hours by day this week, and request time off — all in one place."
+            : "Crew hours by day this week, plus time-off requests and approvals."
         }
         related={techView ? undefined : [{ href: "/reports", label: "Reports" }, { href: "/schedule", label: "Schedule" }]}
       />
@@ -123,14 +116,9 @@ export default async function TimesheetsPage({
       ) : (
         <>
           <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
-          <PeriodToolbar view={view} date={date} basePath="/timesheets" dayLabel="Day detail" weekLabel="Week detail" />
+          <PeriodToolbar view="week" date={date} basePath="/timesheets" hideViewToggle />
 
-          <HoursTotalsTable
-            grid={grid}
-            showTech={!techView}
-            highlightDate={view === "day" ? date : undefined}
-            offKeys={offKeys}
-          />
+          <HoursTotalsTable grid={grid} showTech={!techView} offKeys={offKeys} />
 
           {!techView && onClock.length ? (
             <section className="rounded-2xl border border-line bg-panel p-5">
@@ -140,7 +128,7 @@ export default async function TimesheetsPage({
                   <span key={sheet.id} className="rounded-full bg-background px-3 py-1 text-sm">
                     <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: sheet.user.color }} />
                     {sheet.user.firstName} {sheet.user.lastName} ·{" "}
-                    {formatDuration(workedMinutes(sheet.punches, sheet.breakMin))}
+                    {formatDuration(workedMinutes(sheet.punches, sheet.breakMin, new Date(), sheet.date))}
                   </span>
                 ))}
               </div>
@@ -149,22 +137,18 @@ export default async function TimesheetsPage({
 
           <section className="space-y-3">
             <div>
-              <h2 className="font-semibold">{view === "week" ? "Punch detail this week" : "Punch detail today"}</h2>
-              <p className="text-sm text-stone-600">
-                {view === "week"
-                  ? "Every clock-in and clock-out in the selected week."
-                  : "Punches for the highlighted day. Switch to Week detail to see the full week’s punches."}
-              </p>
+              <h2 className="font-semibold">Punch detail this week</h2>
+              <p className="text-sm text-stone-600">Every clock-in and clock-out in the selected week.</p>
             </div>
 
-            {sheets.length === 0 ? (
+            {weekSheets.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-center text-sm text-stone-500">
-                No punches in this {view === "week" ? "week" : "day"}.
+                No punches this week.
               </p>
             ) : null}
 
             <div className="space-y-2 md:hidden">
-              {sheets.map((sheet) => (
+              {weekSheets.map((sheet) => (
                 <article key={sheet.id} className="rounded-2xl border border-line bg-panel p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -185,7 +169,7 @@ export default async function TimesheetsPage({
                         ))}
                       </p>
                       <p className="mt-1 text-sm font-medium">
-                        {formatDuration(workedMinutes(sheet.punches, sheet.breakMin))}
+                        {formatDuration(workedMinutes(sheet.punches, sheet.breakMin, new Date(), sheet.date))}
                       </p>
                     </div>
                     <StatusBadge status={sheet.status} />
@@ -212,7 +196,7 @@ export default async function TimesheetsPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {sheets.map((sheet) => (
+                  {weekSheets.map((sheet) => (
                     <tr key={sheet.id} className="border-t border-line">
                       {techView ? null : (
                         <td className="px-4 py-3">
@@ -228,7 +212,9 @@ export default async function TimesheetsPage({
                           </p>
                         ))}
                       </td>
-                      <td className="px-4 py-3">{formatDuration(workedMinutes(sheet.punches, sheet.breakMin))}</td>
+                      <td className="px-4 py-3">
+                        {formatDuration(workedMinutes(sheet.punches, sheet.breakMin, new Date(), sheet.date))}
+                      </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={sheet.status} />
                       </td>

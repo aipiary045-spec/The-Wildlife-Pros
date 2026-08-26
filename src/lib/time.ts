@@ -1,20 +1,37 @@
-import { differenceInMinutes } from "date-fns";
+import { addDays, differenceInMinutes, startOfDay } from "date-fns";
 
 export type PunchLike = {
   clockInAt: Date | string;
   clockOutAt?: Date | string | null;
 };
 
-export function punchMinutes(punches: PunchLike[], now = new Date()) {
+/** End time used for an open punch — never run past midnight ending the timesheet day. */
+export function openPunchCap(sheetDate: Date | string | null | undefined, now = new Date()) {
+  if (!sheetDate) return now;
+  const dayClose = startOfDay(addDays(new Date(sheetDate), 1));
+  return now.getTime() >= dayClose.getTime() ? dayClose : now;
+}
+
+export function punchMinutes(
+  punches: PunchLike[],
+  now = new Date(),
+  sheetDate?: Date | string | null,
+) {
+  const openEnd = openPunchCap(sheetDate, now);
   return punches.reduce((sum, punch) => {
     const start = new Date(punch.clockInAt);
-    const end = punch.clockOutAt ? new Date(punch.clockOutAt) : now;
+    const end = punch.clockOutAt ? new Date(punch.clockOutAt) : openEnd;
     return sum + Math.max(0, differenceInMinutes(end, start));
   }, 0);
 }
 
-export function workedMinutes(punches: PunchLike[], breakMin = 0, now = new Date()) {
-  return Math.max(0, punchMinutes(punches, now) - breakMin);
+export function workedMinutes(
+  punches: PunchLike[],
+  breakMin = 0,
+  now = new Date(),
+  sheetDate?: Date | string | null,
+) {
+  return Math.max(0, punchMinutes(punches, now, sheetDate) - breakMin);
 }
 
 export function formatDuration(minutes: number) {

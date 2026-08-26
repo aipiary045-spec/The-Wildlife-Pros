@@ -22,6 +22,32 @@ test("workedMinutes subtracts unpaid break", () => {
   assert.equal(minutes, 8 * 60 + 30);
 });
 
+test("open punches on a past day stop at end of that day", () => {
+  // Clocked in Monday morning, never clocked out; viewing on Wednesday must not show ~42h.
+  const sheetDate = new Date(2026, 7, 24); // local Monday Aug 24
+  const now = new Date(2026, 7, 26, 12, 0, 0); // Wednesday noon
+  const minutes = workedMinutes(
+    [{ clockInAt: new Date(2026, 7, 24, 8, 0, 0), clockOutAt: null }],
+    0,
+    now,
+    sheetDate,
+  );
+  // 8:00 AM → end of Monday = 16 hours
+  assert.equal(minutes, 16 * 60);
+});
+
+test("open punches today still use live now", () => {
+  const sheetDate = new Date(2026, 7, 26);
+  const now = new Date(2026, 7, 26, 12, 0, 0);
+  const minutes = workedMinutes(
+    [{ clockInAt: new Date(2026, 7, 26, 8, 0, 0), clockOutAt: null }],
+    0,
+    now,
+    sheetDate,
+  );
+  assert.equal(minutes, 4 * 60);
+});
+
 test("formatDuration and open-punch helper", () => {
   assert.equal(formatDuration(75), "1h 15m");
   assert.equal(formatDuration(12), "12m");
