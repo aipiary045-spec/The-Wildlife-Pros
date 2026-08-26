@@ -12,9 +12,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (!session) return jsonError("Sign in required", 401);
   if (!canManageIntake(session.role)) return jsonError("Office only.", 403);
   const { id } = await context.params;
-  let to: "quote" | "job";
   try {
-    to = parseConvertTarget((await request.json().catch(() => ({}))) as Record<string, unknown>);
+    parseConvertTarget((await request.json().catch(() => ({}))) as Record<string, unknown>);
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Could not convert that call.");
   }
@@ -29,26 +28,6 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
   if (!existing.propertyId) {
     return jsonError("Need a street on this call first.");
-  }
-
-  if (to === "quote") {
-    const count = await prisma.quote.count();
-    const quote = await prisma.quote.create({
-      data: {
-        number: nextNumber("Q", count),
-        clientId: existing.clientId,
-        propertyId: existing.propertyId,
-        createdById: session.id,
-        status: "DRAFT",
-        title: existing.title,
-        message: existing.details,
-      },
-    });
-    await prisma.serviceRequest.update({
-      where: { id },
-      data: { status: "CONVERTED_QUOTE" },
-    });
-    return NextResponse.json({ quoteId: quote.id, href: `/quotes/${quote.id}` }, { status: 201 });
   }
 
   const count = await prisma.job.count();

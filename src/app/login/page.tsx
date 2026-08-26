@@ -26,7 +26,7 @@ export default async function LoginPage({
           </div>
           <h1 className="mt-8 font-display text-4xl tracking-wide">The Wildlife Pros</h1>
           <p className="mt-4 text-lg leading-relaxed text-ink/75">
-            CritterOps runs the office, the truck, and the trapline — quotes, dispatch, and the client hub in one sharp
+            CritterOps runs the office, the truck, and the trapline — dispatch, field data, and scheduling in one sharp
             workspace.
           </p>
         </div>

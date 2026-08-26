@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { jsonError, lineTotals, withAuth } from "@/lib/api";
+import { jsonError, withAuth } from "@/lib/api";
 import { approvedDayOffError } from "@/lib/day-off-guard";
 import { queueJobGoogleCalendarSync } from "@/lib/google-calendar";
 import { nextNumber } from "@/lib/utils";
@@ -24,7 +24,7 @@ export const GET = withAuth(async (_session, request) => {
             }
           : undefined,
     },
-    include: { client: true, property: true, technician: true, lineItems: true },
+    include: { client: true, property: true, technician: true },
     orderBy: { scheduledStart: "asc" },
   });
   return NextResponse.json({ jobs });
@@ -36,14 +36,6 @@ export const POST = withAuth(async (session, request) => {
     return jsonError("clientId, propertyId, and title are required");
   }
   const count = await prisma.job.count();
-  const items = (body.lineItems ?? []) as Array<{
-    name: string;
-    quantity: number;
-    unitPrice: number;
-    taxable?: boolean;
-    serviceId?: string;
-  }>;
-  const totals = lineTotals(items);
   const blocked = await approvedDayOffError(body.technicianId, body.scheduledStart);
   if (blocked) return blocked;
 
@@ -62,19 +54,8 @@ export const POST = withAuth(async (session, request) => {
       scheduledStart: body.scheduledStart ? new Date(body.scheduledStart) : null,
       scheduledEnd: body.scheduledEnd ? new Date(body.scheduledEnd) : null,
       durationMin: body.durationMin ?? 60,
-      ...totals,
-      lineItems: {
-        create: items.map((item, index) => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          taxable: item.taxable ?? true,
-          serviceId: item.serviceId,
-          sortOrder: index,
-        })),
-      },
     },
-    include: { client: true, property: true, lineItems: true },
+    include: { client: true, property: true, technician: true },
   });
   queueJobGoogleCalendarSync(job.id);
   return NextResponse.json({ job }, { status: 201 });

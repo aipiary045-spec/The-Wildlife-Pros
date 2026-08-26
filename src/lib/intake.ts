@@ -239,7 +239,7 @@ export function parseIntakeBody(body: Record<string, unknown>): IntakeInput {
   if (!title) throw new Error("What did they call about?");
   const address1 = typeof body.address1 === "string" ? body.address1.trim() : "";
   if (!clientId && !address1) {
-    throw new Error("Need a street so we can quote or send a tech.");
+    throw new Error("Need a street so we can send a tech.");
   }
   const source =
     typeof body.source === "string" && (INTAKE_SOURCES as readonly string[]).includes(body.source)
@@ -279,6 +279,6 @@ export function parseRequestPatch(body: Record<string, unknown>) {
 }
 
 export function parseConvertTarget(body: Record<string, unknown>) {
-  if (body.to === "quote" || body.to === "job") return body.to;
-  throw new Error("Turn this into a quote or a first trip.");
+  if (body.to === "job") return body.to;
+  throw new Error("Turn this into a first trip.");
 }

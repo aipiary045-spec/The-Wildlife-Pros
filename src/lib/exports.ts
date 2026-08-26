@@ -20,29 +20,11 @@ export const EXPORT_CATEGORIES = {
     sheetName: "Properties",
     description: "Every service address with access notes and coordinates.",
   },
-  quotes: {
-    id: "quotes",
-    label: "Quotes",
-    sheetName: "Quotes",
-    description: "Estimates, totals, status, and linked client.",
-  },
   jobs: {
     id: "jobs",
     label: "Work orders",
     sheetName: "Jobs",
-    description: "Jobs on the book with schedule, tech, and totals.",
-  },
-  invoices: {
-    id: "invoices",
-    label: "Invoices",
-    sheetName: "Invoices",
-    description: "Billed work, balances, and due dates.",
-  },
-  payments: {
-    id: "payments",
-    label: "Payments",
-    sheetName: "Payments",
-    description: "Square, cash, and check payments against invoices.",
+    description: "Jobs on the book with schedule, tech, and status.",
   },
   species: {
     id: "species",
@@ -73,12 +55,6 @@ export const EXPORT_CATEGORIES = {
     label: "Team",
     sheetName: "Team",
     description: "Staff logins, roles, and contact info.",
-  },
-  "price-list": {
-    id: "price-list",
-    label: "Price list",
-    sheetName: "Price list",
-    description: "Quote catalog lines, prices, and visibility.",
   },
   intake: {
     id: "intake",
@@ -187,28 +163,6 @@ async function loadPropertiesTab(): Promise<ExportTab> {
   };
 }
 
-async function loadQuotesTab(): Promise<ExportTab> {
-  const quotes = await prisma.quote.findMany({
-    include: { client: true, property: true },
-    orderBy: { createdAt: "desc" },
-  });
-  return {
-    name: EXPORT_CATEGORIES.quotes.sheetName,
-    headers: ["id", "number", "title", "client", "address", "status", "total", "validUntil", "createdAt"],
-    rows: quotes.map((item) => [
-      item.id,
-      item.number,
-      item.title,
-      clientName(item.client),
-      item.property ? propertyAddress(item.property) : "",
-      item.status,
-      String(item.total),
-      item.validUntil?.toISOString() ?? "",
-      item.createdAt.toISOString(),
-    ]),
-  };
-}
-
 async function loadJobsTab(): Promise<ExportTab> {
   const jobs = await prisma.job.findMany({
     include: { client: true, property: true, technician: true },
@@ -227,7 +181,6 @@ async function loadJobsTab(): Promise<ExportTab> {
       "technician",
       "scheduledStart",
       "scheduledEnd",
-      "total",
       "createdAt",
     ],
     rows: jobs.map((item) => [
@@ -241,51 +194,7 @@ async function loadJobsTab(): Promise<ExportTab> {
       item.technician ? `${item.technician.firstName} ${item.technician.lastName}` : "",
       item.scheduledStart?.toISOString() ?? "",
       item.scheduledEnd?.toISOString() ?? "",
-      String(item.total),
       item.createdAt.toISOString(),
-    ]),
-  };
-}
-
-async function loadInvoicesTab(): Promise<ExportTab> {
-  const invoices = await prisma.invoice.findMany({
-    include: { client: true, job: true },
-    orderBy: { createdAt: "desc" },
-  });
-  return {
-    name: EXPORT_CATEGORIES.invoices.sheetName,
-    headers: ["id", "number", "client", "job", "status", "total", "balance", "dueOn", "createdAt"],
-    rows: invoices.map((item) => [
-      item.id,
-      item.number,
-      clientName(item.client),
-      item.job?.number ?? "",
-      item.status,
-      String(item.total),
-      String(item.balance),
-      item.dueOn?.toISOString() ?? "",
-      item.createdAt.toISOString(),
-    ]),
-  };
-}
-
-async function loadPaymentsTab(): Promise<ExportTab> {
-  const payments = await prisma.payment.findMany({
-    include: { invoice: { include: { client: true } } },
-    orderBy: { receivedOn: "desc" },
-  });
-  return {
-    name: EXPORT_CATEGORIES.payments.sheetName,
-    headers: ["id", "invoice", "client", "amount", "method", "reference", "squarePaymentId", "receivedOn"],
-    rows: payments.map((item) => [
-      item.id,
-      item.invoice.number,
-      clientName(item.invoice.client),
-      String(item.amount),
-      item.method,
-      item.reference ?? "",
-      item.squarePaymentId ?? "",
-      item.receivedOn.toISOString(),
     ]),
   };
 }
@@ -430,23 +339,6 @@ async function loadTeamTab(): Promise<ExportTab> {
   };
 }
 
-async function loadPriceListTab(): Promise<ExportTab> {
-  const services = await prisma.service.findMany({ orderBy: [{ active: "desc" }, { name: "asc" }] });
-  return {
-    name: EXPORT_CATEGORIES["price-list"].sheetName,
-    headers: ["id", "name", "description", "jobType", "unitPrice", "taxable", "active"],
-    rows: services.map((item) => [
-      item.id,
-      item.name,
-      item.description ?? "",
-      item.jobType,
-      String(item.unitPrice),
-      item.taxable ? "yes" : "no",
-      item.active ? "yes" : "no",
-    ]),
-  };
-}
-
 async function loadIntakeTab(): Promise<ExportTab> {
   const requests = await prisma.serviceRequest.findMany({
     include: { client: true, property: true },
@@ -470,16 +362,12 @@ async function loadIntakeTab(): Promise<ExportTab> {
 const LOADERS: Record<ExportCategoryId, () => Promise<ExportTab>> = {
   clients: loadClientsTab,
   properties: loadPropertiesTab,
-  quotes: loadQuotesTab,
   jobs: loadJobsTab,
-  invoices: loadInvoicesTab,
-  payments: loadPaymentsTab,
   species: loadSpeciesTab,
   traps: loadTrapsTab,
   deployments: loadDeploymentsTab,
   timesheets: loadTimesheetsTab,
   team: loadTeamTab,
-  "price-list": loadPriceListTab,
   intake: loadIntakeTab,
 };
 
@@ -493,48 +381,26 @@ export async function loadExportTabs(categories: ExportCategoryId[] = EXPORT_CAT
 }
 
 export async function loadExportRowCounts() {
-  const [
-    clients,
-    properties,
-    quotes,
-    jobs,
-    invoices,
-    payments,
-    species,
-    traps,
-    deployments,
-    timesheets,
-    team,
-    priceList,
-    intake,
-  ] = await Promise.all([
+  const [clients, properties, jobs, species, traps, deployments, timesheets, team, intake] = await Promise.all([
     prisma.client.count(),
     prisma.property.count(),
-    prisma.quote.count(),
     prisma.job.count(),
-    prisma.invoice.count(),
-    prisma.payment.count(),
     prisma.captureEvent.count(),
     prisma.equipment.count(),
     prisma.equipmentDeployment.count(),
     prisma.timesheet.count(),
     prisma.user.count(),
-    prisma.service.count(),
     prisma.serviceRequest.count(),
   ]);
   return {
     clients,
     properties,
-    quotes,
     jobs,
-    invoices,
-    payments,
     species,
     traps,
     deployments,
     timesheets,
     team,
-    "price-list": priceList,
     intake,
   } satisfies Record<ExportCategoryId, number>;
 }

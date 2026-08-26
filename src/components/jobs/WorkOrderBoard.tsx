@@ -12,7 +12,7 @@ import {
   workOrderCounts,
   type WorkOrderView,
 } from "@/lib/work-orders";
-import { clientName, formatMoney } from "@/lib/utils";
+import { clientName } from "@/lib/utils";
 
 export type WorkOrderRow = {
   id: string;
@@ -20,7 +20,6 @@ export type WorkOrderRow = {
   title: string;
   type: string;
   status: string;
-  total: number;
   scheduledStart: string | null;
   client: { firstName: string; lastName: string; companyName: string | null };
   property: { address1: string };
@@ -34,7 +33,6 @@ type PreparedJob = {
   type: string;
   typeLabel: string;
   status: string;
-  total: number;
   scheduledStart: Date | null;
   clientName: string;
   address: string;
@@ -68,7 +66,6 @@ export function WorkOrderBoard({
         type: job.type,
         typeLabel: JOB_TYPE_LABEL[job.type] ?? job.type,
         status: job.status,
-        total: job.total,
         scheduledStart: job.scheduledStart ? new Date(job.scheduledStart) : null,
         clientName: clientName(job.client),
         address: job.property.address1,
@@ -160,7 +157,7 @@ function JobCard({ job, showOfficeMeta, now }: { job: PreparedJob; showOfficeMet
           </p>
           <p className="text-xs text-stone-500">
             {job.scheduledStart ? format(job.scheduledStart, "MMM d, h:mm a") : "No day yet"}
-            {showOfficeMeta ? ` · ${job.technicianName ?? "Unassigned"} · ${formatMoney(job.total)}` : null}
+            {showOfficeMeta ? ` · ${job.technicianName ?? "Unassigned"}` : null}
           </p>
           {lateToday ? <p className="mt-1 text-xs font-semibold text-orange">Late for check-in</p> : null}
         </div>
@@ -179,7 +176,6 @@ function JobTable({ jobs, showOfficeMeta, now }: { jobs: PreparedJob[]; showOffi
           <th className="px-4 py-3">Client / property</th>
           <th className="px-4 py-3">When</th>
           {showOfficeMeta ? <th className="px-4 py-3">Tech</th> : null}
-          {showOfficeMeta ? <th className="px-4 py-3">Total</th> : null}
           <th className="px-4 py-3">Status</th>
         </tr>
       </thead>
@@ -203,7 +199,6 @@ function JobTable({ jobs, showOfficeMeta, now }: { jobs: PreparedJob[]; showOffi
               </td>
               <td className="px-4 py-3">{job.scheduledStart ? format(job.scheduledStart, "MMM d, h:mm a") : "No day yet"}</td>
               {showOfficeMeta ? <td className="px-4 py-3">{job.technicianName ?? "—"}</td> : null}
-              {showOfficeMeta ? <td className="px-4 py-3">{formatMoney(job.total)}</td> : null}
               <td className="px-4 py-3">
                 <StatusBadge status={job.status} />
               </td>

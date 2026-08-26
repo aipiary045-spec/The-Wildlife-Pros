@@ -11,8 +11,6 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     include: {
       properties: true,
       jobs: { include: { technician: true, property: true }, orderBy: { createdAt: "desc" } },
-      quotes: { orderBy: { createdAt: "desc" } },
-      invoices: { orderBy: { createdAt: "desc" } },
       notesList: { orderBy: { createdAt: "desc" } },
     },
   });
@@ -46,10 +44,10 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   const { id } = await context.params;
   const client = await prisma.client.findUnique({
     where: { id },
-    include: { _count: { select: { jobs: true, invoices: true, quotes: true } } },
+    include: { _count: { select: { jobs: true } } },
   });
   if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
-  if (client._count.jobs > 0 || client._count.invoices > 0 || client._count.quotes > 0) {
+  if (client._count.jobs > 0) {
     const updated = await prisma.client.update({
       where: { id },
       data: { status: "INACTIVE" },

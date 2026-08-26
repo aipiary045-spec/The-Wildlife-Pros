@@ -37,9 +37,9 @@ export default async function CallLogPage({
     <div className="space-y-5">
       <PageHeader
         title="Call log"
-        description="Open calls wait for a quote or a first trip. Log a new one only when you need to."
+        description="Open calls wait for a first trip. Log a new one only when you need to."
         related={[
-          { href: "/quotes", label: "Quotes" },
+          { href: "/schedule", label: "Schedule" },
           { href: "/clients", label: "Clients" },
         ]}
       />
