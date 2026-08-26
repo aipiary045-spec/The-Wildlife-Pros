@@ -4,7 +4,6 @@ import { EmergencyTeamBanner } from "@/components/emergency/EmergencyTeamBanner"
 import { FieldJobList } from "@/components/field/FieldJobList";
 import { OnSiteNowBanner } from "@/components/field/OnSiteNowBanner";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
-import { ClockControls } from "@/components/timesheets/ClockControls";
 import { getMyOpenCheckIn } from "@/lib/active-checkins.server";
 import { getSession } from "@/lib/auth";
 import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
@@ -13,7 +12,6 @@ import { loadTripVisitMapForJobs } from "@/lib/job-trips.server";
 import { isTechnician } from "@/lib/paths";
 import { jobNotifyProps } from "@/lib/messaging";
 import { prisma } from "@/lib/prisma";
-import { getMyTimesheet } from "@/lib/timesheets";
 import { propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +29,6 @@ export default async function FieldPage({
   const date = parseDateParam(params.date);
   const { from, to, days } = scheduleRange(view, date);
   const technicianFilter = isTechnician(session.role) ? session.id : undefined;
-  const myTime = await getMyTimesheet(session.id);
   const [jobs, routeDays, technicians, activeEmergencies, myOpenCheckIn, species] = await Promise.all([
     prisma.job.findMany({
       where: {
@@ -155,7 +152,6 @@ export default async function FieldPage({
           {optimizedStops > 0 ? " Dispatch saved a driving order for these stops." : ""}
         </p>
       </div>
-      <ClockControls initialCurrent={myTime.current} initialRecent={myTime.recent} />
       <ScheduleToolbar view={view} date={date} basePath="/field" />
       <FieldJobList
         jobs={sortedJobs}

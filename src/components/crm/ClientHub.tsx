@@ -4,20 +4,16 @@ import { buildClientPipeline } from "@/lib/client-pipeline";
 
 export function ClientPipeline({
   openCalls,
-  quotes,
   jobs,
-  invoices,
 }: {
   openCalls: number;
-  quotes: Array<{ id: string; status: string }>;
   jobs: Array<{ id: string; status: string }>;
-  invoices: Array<{ id: string; status: string; balance: number }>;
 }) {
-  const stages = buildClientPipeline({ openCalls, quotes, jobs, invoices });
+  const stages = buildClientPipeline({ openCalls, jobs });
   return (
     <section className="rounded-2xl border border-line bg-panel p-5">
       <h2 className="font-semibold">Pipeline</h2>
-      <p className="mt-1 text-sm text-stone-600">Call → quote → work order → invoice → paid</p>
+      <p className="mt-1 text-sm text-stone-600">Call → work order → done</p>
       <ol className="mt-4 flex flex-wrap gap-2">
         {stages.map((stage) => (
           <li
@@ -52,12 +48,6 @@ export function ClientQuickActions({
     <section className="flex flex-wrap gap-2">
       <Link href={callHref} className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white inline-flex items-center">
         Log call
-      </Link>
-      <Link
-        href={`/quotes?clientId=${clientId}`}
-        className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold inline-flex items-center"
-      >
-        New quote
       </Link>
       <Link
         href={`/schedule?clientId=${clientId}`}

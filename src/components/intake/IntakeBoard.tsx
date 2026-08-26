@@ -185,13 +185,13 @@ export function IntakeBoard({
     router.refresh();
   }
 
-  async function convert(id: string, to: "quote" | "job") {
+  async function convert(id: string) {
     setBusyId(id);
     const response = await fetch(`/api/requests/${id}/convert`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to }),
+      body: JSON.stringify({ to: "job" }),
     });
     const data = (await response.json()) as { error?: string; href?: string };
     setBusyId(null);
@@ -432,7 +432,7 @@ export function IntakeBoard({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-stone-600">
             {open.length
-              ? `${open.length === 1 ? "1 call still needs" : `${open.length} calls still need`} a quote or trip`
+              ? `${open.length === 1 ? "1 call still needs" : `${open.length} calls still need`} a first trip`
               : "Nothing waiting — handled calls stay in the log below"}
           </p>
           <button
@@ -462,8 +462,7 @@ export function IntakeBoard({
                   item={item}
                   busy={busyId === item.id}
                   onFinish={() => finish(item)}
-                  onQuote={() => void convert(item.id, "quote")}
-                  onTrip={() => void convert(item.id, "job")}
+                  onTrip={() => void convert(item.id)}
                   onEmergency={() =>
                     setEmergencyPrefill({
                       clientId: item.client.id,
@@ -527,7 +526,6 @@ function RequestCard({
   item,
   busy,
   onFinish,
-  onQuote,
   onTrip,
   onEmergency,
   showEmergency,
@@ -536,7 +534,6 @@ function RequestCard({
   item: IntakeRequest;
   busy: boolean;
   onFinish: () => void;
-  onQuote: () => void;
   onTrip: () => void;
   onEmergency: () => void;
   showEmergency: boolean;
@@ -570,16 +567,8 @@ function RequestCard({
         <button
           type="button"
           disabled={busy}
-          onClick={onQuote}
-          className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          Start quote
-        </button>
-        <button
-          type="button"
-          disabled={busy}
           onClick={onTrip}
-          className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold disabled:opacity-60"
+          className="min-h-11 rounded-lg bg-orange px-4 text-sm font-semibold text-white disabled:opacity-60"
         >
           First trip
         </button>

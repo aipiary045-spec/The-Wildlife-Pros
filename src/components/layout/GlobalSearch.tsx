@@ -87,7 +87,7 @@ export function GlobalSearch() {
                 ref={inputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Client, phone, job #, trap serial, quote…"
+                placeholder="Client, phone, job #, trap serial…"
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-soft"
               />
               <button type="button" onClick={() => setOpen(false)} className="chip px-2.5 py-1 text-xs">
@@ -122,7 +122,7 @@ export function GlobalSearch() {
               ))}
             </div>
             <div className="border-t border-line bg-panel-muted/60 px-4 py-2.5 text-xs text-muted-soft">
-              Jump to clients, work orders, quotes, and invoices.{" "}
+              Jump to clients, work orders, and traps.{" "}
               <Link href="/clients" onClick={() => setOpen(false)} className="font-semibold text-orange">
                 Browse clients
               </Link>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { CollapsibleJobSection } from "@/components/jobs/CollapsibleJobSection";
 import { groupPhotoPairs } from "@/lib/photo-pairs";
 
 const PHOTO_KINDS = ["BEFORE", "AFTER", "DURING", "DAMAGE", "ENTRY_POINT", "CAPTURE", "OTHER"] as const;
@@ -120,8 +121,11 @@ export function JobPhotosCard({
   }
 
   return (
-    <section className="rounded-2xl border border-line bg-panel p-5">
-      <h2 className="mb-3 font-semibold">Photo documentation</h2>
+    <CollapsibleJobSection
+      title="Photo documentation"
+      collapsedHint={photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"}` : undefined}
+      defaultOpen={photos.length > 0}
+    >
 
       {pairs.length > 0 ? (
         <div className="mb-4 space-y-4">
@@ -218,6 +222,6 @@ export function JobPhotosCard({
         </button>
         {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       </div>
-    </section>
+    </CollapsibleJobSection>
   );
 }

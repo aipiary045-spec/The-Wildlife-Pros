@@ -37,7 +37,7 @@ test("office can log intake; technicians cannot", () => {
   assert.equal(canManageIntake("TECHNICIAN"), false);
 });
 
-test("only new or looked-at calls can become a quote or trip", () => {
+test("only new or looked-at calls can become a first trip", () => {
   assert.equal(requestIsOpen("NEW"), true);
   assert.equal(canConvertRequest("ASSESSED"), true);
   assert.equal(canConvertRequest("CONVERTED_QUOTE"), false);
@@ -180,10 +180,10 @@ test("call log day headings say today, yesterday, or the weekday", () => {
   assert.equal(formatCallLoggedAt("2026-08-18T14:05:00.000Z", "America/New_York"), "10:05 AM");
 });
 
-test("parse helpers accept quote, job, or a simple close", () => {
-  assert.equal(parseConvertTarget({ to: "quote" }), "quote");
+test("parse helpers accept a job conversion or a simple close", () => {
   assert.equal(parseConvertTarget({ to: "job" }), "job");
-  assert.throws(() => parseConvertTarget({ to: "invoice" }), /quote or a first trip/);
+  assert.throws(() => parseConvertTarget({ to: "quote" }), /first trip/);
+  assert.throws(() => parseConvertTarget({ to: "invoice" }), /first trip/);
   assert.equal(parseRequestPatch({ status: "CLOSED" }), "CLOSED");
   assert.throws(() => parseRequestPatch({ status: "CONVERTED_JOB" }), /looked at/);
 });

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "CritterOps — The Wildlife Pros",
     short_name: "CritterOps",
-    description: "Dispatch, field routes, traps, and billing for The Wildlife Pros.",
+    description: "Dispatch, field routes, traps, and scheduling for The Wildlife Pros.",
     start_url: "/",
     scope: "/",
     display: "standalone",

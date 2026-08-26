@@ -13,7 +13,6 @@ export async function duplicateJobTrip(input: {
 }) {
   const source = await prisma.job.findUnique({
     where: { id: input.jobId },
-    include: { lineItems: { orderBy: { sortOrder: "asc" } } },
   });
   if (!source) return null;
 
@@ -40,22 +39,8 @@ export async function duplicateJobTrip(input: {
         scheduledStart,
         scheduledEnd,
         durationMin,
-        subtotal: source.subtotal,
-        taxAmount: source.taxAmount,
-        total: source.total,
         includedTrips: source.includedTrips,
         sourceJobId: source.sourceJobId ?? source.id,
-        lineItems: {
-          create: source.lineItems.map((item) => ({
-            name: item.name,
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            taxable: item.taxable,
-            serviceId: item.serviceId,
-            sortOrder: item.sortOrder,
-          })),
-        },
       },
       include: { client: true, property: true, technician: true },
     });

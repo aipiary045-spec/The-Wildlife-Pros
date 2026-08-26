@@ -21,7 +21,7 @@ export default async function MorePage() {
         <p className="mt-1 max-w-2xl text-[0.9375rem] leading-relaxed text-muted">
           {fieldView
             ? "Time off, traps, species log, and sign out."
-            : "Call log, quotes, invoices, and the rest of the office tools — grouped by what they are for."}
+            : "Call log, routes, reports, and the rest of the office tools — grouped by what they are for."}
         </p>
       </div>
       {showViewToggle ? <ViewModeToggle mode={viewMode} /> : null}

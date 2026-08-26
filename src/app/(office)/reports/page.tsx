@@ -1,4 +1,4 @@
-import { format, startOfMonth, startOfWeek } from "date-fns";
+import { format, startOfWeek } from "date-fns";
 import { PipelineOverview } from "@/components/reports/PipelineOverview";
 import { AreaDensityReport } from "@/components/reports/AreaDensityReport";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -8,7 +8,6 @@ import { parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { hoursByDay } from "@/lib/hours";
 import { prisma } from "@/lib/prisma";
 import { formatDuration } from "@/lib/time";
-import { formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -22,17 +21,9 @@ export default async function ReportsPage({
   const hoursDate = parseDateParam(params.date);
   const hoursRange = scheduleRange(hoursView, hoursDate);
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const monthStart = startOfMonth(new Date());
 
-  const [overview, weekPayments, monthPayments, openInvoices, completedWeek, captures, traps, timesheets] = await Promise.all([
+  const [overview, completedWeek, captures, traps, timesheets] = await Promise.all([
     getReportsOverview(),
-    prisma.payment.aggregate({ where: { createdAt: { gte: weekStart } }, _sum: { amount: true } }),
-    prisma.payment.aggregate({ where: { createdAt: { gte: monthStart } }, _sum: { amount: true } }),
-    prisma.invoice.aggregate({
-      where: { status: { notIn: ["PAID", "VOID"] } },
-      _sum: { balance: true },
-      _count: true,
-    }),
     prisma.job.count({
       where: { status: { in: ["COMPLETED", "INVOICED"] }, completedAt: { gte: weekStart } },
     }),
@@ -58,27 +49,25 @@ export default async function ReportsPage({
     <div className="space-y-6">
       <PageHeader
         title="Reports"
-        description="Open work, collections, and field activity."
+        description="Scheduling, field activity, and labor hours."
         related={[
-          { href: "/invoices", label: "Invoices" },
+          { href: "/schedule", label: "Schedule" },
           { href: "/jobs", label: "Work orders" },
         ]}
       />
       <PipelineOverview
         requests={overview.requests}
-        quotes={overview.quotes}
         jobs={overview.jobs}
-        invoices={overview.invoices}
+        field={{
+          activeTraps: overview.activeTraps,
+          captureWeek: overview.captureWeek,
+          clockedIn: overview.clockedIn,
+        }}
       />
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Payments this week" value={formatMoney(weekPayments._sum.amount ?? 0)} />
-        <Stat label="Payments this month" value={formatMoney(monthPayments._sum.amount ?? 0)} />
-        <Stat
-          label="Accounts receivable"
-          value={formatMoney(openInvoices._sum.balance ?? 0)}
-          hint={`${openInvoices._count} unpaid invoice${openInvoices._count === 1 ? "" : "s"}`}
-        />
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Stat label="Jobs completed this week" value={String(completedWeek)} />
+        <Stat label="Active traps in the field" value={String(overview.activeTraps)} />
+        <Stat label="Technicians on the clock" value={String(overview.clockedIn)} />
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
         <article className="card p-5 lg:col-span-2">
