@@ -29,15 +29,58 @@ export function NeedsPool({
   needs: PoolNeed[];
   technicians: ScheduleTech[];
 }) {
+  const router = useRouter();
   const grouped = useMemo(() => groupNeedsByPriority(needs.map((need) => ({ ...need, dueOn: new Date(need.dueOn) }))), [needs]);
   const waiting = grouped.overdue.length + grouped.due.length;
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "overdue" | "due">("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkDate, setBulkDate] = useState(dateKey(new Date()));
+  const [bulkTime, setBulkTime] = useState("09:00");
+  const [bulkTechnicianId, setBulkTechnicianId] = useState(technicians[0]?.id ?? "");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkError, setBulkError] = useState("");
+
   const sections = [
     { key: "overdue" as const, title: "Overdue for a trip", items: grouped.overdue },
     { key: "due" as const, title: "Due for a trip", items: grouped.due },
     { key: "upcoming" as const, title: "Coming up", items: grouped.upcoming },
   ].filter((section) => filter === "all" || section.key === filter);
+
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+  function toggleSelected(id: string) {
+    setSelectedIds((current) => (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]));
+  }
+
+  async function scheduleSelected() {
+    if (selectedIds.length < 2) return;
+    setBulkSaving(true);
+    setBulkError("");
+    const [year, month, day] = bulkDate.split("-").map(Number);
+    const [hours, minutes] = bulkTime.split(":").map(Number);
+    const scheduledStart = new Date(year, month - 1, day, hours, minutes, 0, 0);
+    const response = await fetch("/api/schedule-needs/bulk", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        needIds: selectedIds,
+        technicianId: bulkTechnicianId || undefined,
+        scheduledStart: scheduledStart.toISOString(),
+        staggerMin: 60,
+      }),
+    });
+    const data = (await response.json()) as { error?: string };
+    setBulkSaving(false);
+    if (!response.ok) {
+      setBulkError(data.error ?? "Could not schedule the selected stops.");
+      return;
+    }
+    setSelectedIds([]);
+    setBulkError("");
+    router.refresh();
+  }
 
   if (needs.length === 0) return null;
 
@@ -61,7 +104,7 @@ export function NeedsPool({
         <ChevronDown size={18} className={`shrink-0 text-stone-500 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
-        <div className="space-y-3 border-t border-line px-4 pb-4 pt-3">
+        <div className="relative space-y-3 border-t border-line px-4 pb-4 pt-3">
           <p className="text-sm text-stone-500">Pick a customer, put them on a tech and a time. Nothing is pre-loaded on the calendar.</p>
           <div className="flex w-full rounded-full border border-line p-1 text-xs font-semibold sm:w-auto">
             {(
@@ -87,12 +130,80 @@ export function NeedsPool({
                 <p className="mb-2 text-xs font-bold uppercase tracking-wider text-stone-500">{section.title}</p>
                 <div className="space-y-2">
                   {section.items.map((need) => (
-                    <NeedRow key={need.id} need={need} technicians={technicians} />
+                    <NeedRow
+                      key={need.id}
+                      need={need}
+                      technicians={technicians}
+                      selected={selectedSet.has(need.id)}
+                      onToggleSelected={() => toggleSelected(need.id)}
+                    />
                   ))}
                 </div>
               </div>
             ),
           )}
+          {selectedIds.length >= 2 ? (
+            <div className="sticky bottom-3 z-10 rounded-xl border border-line bg-panel/95 p-3 shadow-lg backdrop-blur">
+              <p className="mb-2 text-sm font-semibold">{selectedIds.length} selected</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <label className="text-xs">
+                  Day
+                  <input
+                    type="date"
+                    required
+                    value={bulkDate}
+                    onChange={(event) => setBulkDate(event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-line bg-white px-2 py-2 text-sm"
+                  />
+                </label>
+                <label className="text-xs">
+                  Time
+                  <input
+                    type="time"
+                    required
+                    value={bulkTime}
+                    onChange={(event) => setBulkTime(event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-line bg-white px-2 py-2 text-sm"
+                  />
+                </label>
+                <label className="text-xs">
+                  Tech
+                  <select
+                    value={bulkTechnicianId}
+                    onChange={(event) => setBulkTechnicianId(event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-line bg-white px-2 py-2 text-sm"
+                  >
+                    {technicians.map((tech) => (
+                      <option key={tech.id} value={tech.id}>
+                        {tech.firstName} {tech.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              {bulkError ? <p className="mt-2 text-sm text-rose-700">{bulkError}</p> : null}
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedIds([]);
+                    setBulkError("");
+                  }}
+                  className="rounded-lg border border-line px-3 py-2 text-sm font-semibold"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  disabled={bulkSaving || !bulkTechnicianId}
+                  onClick={() => void scheduleSelected()}
+                  className="flex-1 rounded-lg bg-orange py-2 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {bulkSaving ? "Scheduling…" : "Schedule selected (stagger 1h)"}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -102,9 +213,13 @@ export function NeedsPool({
 function NeedRow({
   need,
   technicians,
+  selected,
+  onToggleSelected,
 }: {
   need: Omit<PoolNeed, "dueOn"> & { dueOn: Date };
   technicians: ScheduleTech[];
+  selected: boolean;
+  onToggleSelected: () => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -141,15 +256,24 @@ function NeedRow({
   return (
     <article className="rounded-xl border border-line bg-background p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <p className="font-semibold">{clientName(need.client)}</p>
-          <p className="text-sm text-stone-600">
-            {need.property.address1}, {need.property.city}
-          </p>
-          <p className="text-xs text-stone-500">
-            {need.title} · due {format(need.dueOn, "MMM d")} · asked for ~{need.returnInDays} days
-            {need.preferredTech ? ` · ${need.preferredTech.firstName}` : ""}
-          </p>
+        <div className="flex min-w-0 items-start gap-2">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelected}
+            aria-label={`Select ${clientName(need.client)}`}
+            className="mt-1 size-4 shrink-0 accent-orange"
+          />
+          <div className="min-w-0">
+            <p className="font-semibold">{clientName(need.client)}</p>
+            <p className="text-sm text-stone-600">
+              {need.property.address1}, {need.property.city}
+            </p>
+            <p className="text-xs text-stone-500">
+              {need.title} · due {format(need.dueOn, "MMM d")} · asked for ~{need.returnInDays} days
+              {need.preferredTech ? ` · ${need.preferredTech.firstName}` : ""}
+            </p>
+          </div>
         </div>
         <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${priority === "overdue" ? "bg-rose-100 text-rose-800" : priority === "due" ? "bg-orange/15 text-orange" : "bg-stone-200 text-stone-700"}`}>
           {priority === "overdue" ? "Overdue" : priority === "due" ? "Due today" : "Upcoming"}

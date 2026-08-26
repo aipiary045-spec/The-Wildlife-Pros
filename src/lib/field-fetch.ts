@@ -23,6 +23,16 @@ export async function pendingMutationCount() {
   }
 }
 
+export async function pendingMutationLabels(): Promise<string[]> {
+  if (typeof indexedDB === "undefined") return [];
+  try {
+    const items = await listMutations();
+    return items.map((item) => item.label).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 function queuedResponse() {
   return new Response(JSON.stringify(queuedPayload()), {
     status: 202,
