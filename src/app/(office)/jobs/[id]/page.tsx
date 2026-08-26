@@ -19,13 +19,9 @@ import { canAccessJobInFieldView } from "@/lib/paths";
 import { getAppContext } from "@/lib/app-context";
 import { JOB_TYPE_LABEL } from "@/lib/constants";
 import { visitActionForStatus } from "@/lib/job-visit";
-<<<<<<< HEAD
 import { jobNotifyProps, portalHubUrl } from "@/lib/messaging";
-=======
-import { jobNotifyProps } from "@/lib/messaging";
 import { TripVisitBadge } from "@/components/jobs/TripVisitBadge";
 import { tripRootId, tripVisitForJob } from "@/lib/job-trips";
->>>>>>> origin/cursor/trip-visit-count-7690
 import { clientName, propertyAddress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
