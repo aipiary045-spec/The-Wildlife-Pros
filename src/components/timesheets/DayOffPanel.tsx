@@ -84,6 +84,7 @@ export function DayOffPanel({
         requests={requests}
         showNames={canReview}
         onSelectDate={setDate}
+        basePath="/timesheets"
       />
       <div>
         <h2 className="font-semibold">Request a day</h2>

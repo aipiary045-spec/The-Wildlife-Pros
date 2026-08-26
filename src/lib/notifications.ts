@@ -105,7 +105,7 @@ export function timeOffItems(
     urgency: "normal",
     title: `${request.name} asked for time off`,
     body: [format(new Date(request.date), "EEE, MMM d"), request.reason?.trim()].filter(Boolean).join(" · "),
-    href: "/time-off",
+    href: "/timesheets?tab=time-off",
   }));
 }
 

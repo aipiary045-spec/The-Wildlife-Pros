@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildHoursGrid, hoursByDay, punchMinutes } from "./hours";
+import { buildHoursGrid, hoursByDay, punchMinutes, applyDayOffsToGrid } from "./hours";
 
 test("punchMinutes subtracts unpaid break", () => {
   const punches = [
@@ -80,4 +80,46 @@ test("buildHoursGrid fills daily columns and week totals", () => {
   assert.equal(grid.rows[1]?.weekMinutes, 720);
   assert.equal(grid.dayTotals[0], 930);
   assert.equal(grid.weekTotal, 1170);
+});
+
+test("applyDayOffsToGrid marks Off days and adds off-only people", () => {
+  const mon = new Date(2026, 7, 17);
+  const days = [
+    mon,
+    new Date(2026, 7, 18),
+    new Date(2026, 7, 19),
+    new Date(2026, 7, 20),
+    new Date(2026, 7, 21),
+    new Date(2026, 7, 22),
+    new Date(2026, 7, 23),
+  ];
+  const base = buildHoursGrid(
+    [
+      {
+        userId: "u1",
+        date: mon,
+        status: "CLOCKED_OUT",
+        breakMin: 0,
+        punches: [{ clockInAt: new Date(2026, 7, 17, 8, 0, 0), clockOutAt: new Date(2026, 7, 17, 12, 0, 0) }],
+        user: { id: "u1", firstName: "Jordan", lastName: "Blake" },
+      },
+    ],
+    days,
+  );
+  const { grid, offKeys } = applyDayOffsToGrid(base, [
+    {
+      userId: "u2",
+      date: mon,
+      user: { id: "u2", firstName: "Alex", lastName: "Rivera" },
+    },
+    {
+      userId: "u1",
+      date: new Date(2026, 7, 18),
+      user: { id: "u1", firstName: "Jordan", lastName: "Blake" },
+    },
+  ]);
+  assert.equal(grid.rows.length, 2);
+  assert.deepEqual(offKeys.u1, ["2026-08-18"]);
+  assert.deepEqual(offKeys.u2, ["2026-08-17"]);
+  assert.equal(grid.rows.find((row) => row.user.id === "u2")?.weekMinutes, 0);
 });

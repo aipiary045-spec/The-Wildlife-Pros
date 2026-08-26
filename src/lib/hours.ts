@@ -92,3 +92,38 @@ export function buildHoursGrid<
 
   return { days, rows, dayTotals, weekTotal };
 }
+
+/** Fold approved day-off into the hours grid so Off days show even with no punches. */
+export function applyDayOffsToGrid(
+  grid: HoursGrid,
+  offs: Array<{ userId: string; date: Date | string; user: HoursPerson }>,
+): { grid: HoursGrid; offKeys: Record<string, string[]> } {
+  const dayKeys = new Set(grid.days.map((day) => dateKey(day)));
+  const offKeys: Record<string, string[]> = {};
+  const rowsById = new Map(grid.rows.map((row) => [row.user.id, { ...row, byDay: { ...row.byDay } }]));
+
+  for (const off of offs) {
+    const key = dateKey(new Date(off.date));
+    if (!dayKeys.has(key)) continue;
+    (offKeys[off.userId] ??= []).push(key);
+    if (!rowsById.has(off.userId)) {
+      rowsById.set(off.userId, {
+        user: off.user,
+        byDay: Object.fromEntries(grid.days.map((day) => [dateKey(day), 0])),
+        weekMinutes: 0,
+        open: false,
+      });
+    }
+  }
+
+  const rows = [...rowsById.values()].sort((a, b) => {
+    const left = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
+    const right = `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
+    return left.localeCompare(right);
+  });
+  const keys = grid.days.map((day) => dateKey(day));
+  const dayTotals = keys.map((key) => rows.reduce((sum, row) => sum + (row.byDay[key] ?? 0), 0));
+  const weekTotal = dayTotals.reduce((sum, value) => sum + value, 0);
+
+  return { grid: { days: grid.days, rows, dayTotals, weekTotal }, offKeys };
+}

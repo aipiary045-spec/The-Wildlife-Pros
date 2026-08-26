@@ -62,11 +62,11 @@ test("technicians are kept off dispatch and office pages", () => {
   assert.equal(isOfficeOnlyPath("/calls"), true);
 });
 
-test("technician time off lives under More, not the main tabs", () => {
+test("technician time off lives under the Time tracker tab, not More", () => {
   const tabs = primaryTabs("TECHNICIAN").map((item) => item.href);
   const more = moreItems("TECHNICIAN").map((item) => item.href);
   assert.deepEqual(tabs, ["/field", "/jobs", "/timesheets", "/more"]);
-  assert.ok(more.includes("/time-off"));
+  assert.ok(!more.includes("/time-off"));
   assert.ok(more.includes("/inventory"));
   assert.ok(!primaryTabs("ADMIN").some((item) => item.href === "/time-off"));
 });

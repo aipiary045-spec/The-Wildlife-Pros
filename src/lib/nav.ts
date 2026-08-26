@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   CalendarDays,
-  CalendarOff,
   ClipboardList,
   Clock,
   FileSpreadsheet,
@@ -31,8 +30,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/calls", label: "Call log", icon: Phone, description: "Log a call, then schedule a first trip." },
   { href: "/reports", label: "Reports", icon: BarChart3, description: "Field activity and labor hours." },
   { href: "/routes", label: "Routes", icon: MapPinned, description: "Driving order for the day." },
-  { href: "/timesheets", label: "Timesheets", icon: Clock, description: "Hours by person." },
-  { href: "/time-off", label: "Time off", icon: CalendarOff, description: "Requested and approved days off." },
+  { href: "/timesheets", label: "Time tracker", icon: Clock, description: "Hours by day/week and time off." },
   { href: "/team", label: "Team", icon: HardHat, description: "Logins and roles." },
   { href: "/inventory", label: "Traps & gear", icon: Warehouse, description: "What is in the shop and what is in the field." },
   { href: "/activity", label: "Species log", icon: Squirrel, description: "Captures and dispositions." },
@@ -43,23 +41,23 @@ export const NAV_ITEMS: NavItem[] = [
 const OFFICE_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
   { title: "Day to day", hrefs: ["/dashboard", "/schedule", "/clients", "/jobs", "/calls"] },
   { title: "Field ops", hrefs: ["/routes", "/inventory", "/activity", "/reports"] },
-  { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
+  { title: "Team", hrefs: ["/timesheets", "/team"] },
   { title: "Data", hrefs: ["/exports"] },
 ];
 
 const OFFICE_MORE_GROUPS: Array<{ title: string; hrefs: string[] }> = [
   { title: "Daily office", hrefs: ["/calls", "/clients", "/jobs", "/routes"] },
   { title: "Field records", hrefs: ["/reports", "/inventory", "/activity", "/exports"] },
-  { title: "Team", hrefs: ["/timesheets", "/time-off", "/team"] },
+  { title: "Team", hrefs: ["/timesheets", "/team"] },
 ];
 
 const TECH_SIDEBAR_GROUPS: Array<{ title: string; hrefs: string[] }> = [
   { title: "Today", hrefs: ["/field", "/jobs", "/timesheets"] },
-  { title: "Also on this phone", hrefs: ["/time-off", "/inventory", "/activity"] },
+  { title: "Also on this phone", hrefs: ["/inventory", "/activity"] },
 ];
 
 const TECH_MORE_GROUPS: Array<{ title: string; hrefs: string[] }> = [
-  { title: "Also on this phone", hrefs: ["/time-off", "/inventory", "/activity"] },
+  { title: "Also on this phone", hrefs: ["/inventory", "/activity"] },
 ];
 
 export function primaryTabs(role: string): NavItem[] {
@@ -84,8 +82,7 @@ export function navForRole(role: string): NavItem[] {
     return [
       { href: "/field", label: "My route", icon: Smartphone, description: "Today's stops in driving order." },
       { href: "/jobs", label: "My work orders", icon: ClipboardList, description: "Assigned work, including leftovers." },
-      { href: "/timesheets", label: "Clock & hours", icon: Clock, description: "Clock in and see hours by day." },
-      { href: "/time-off", label: "Time off", icon: CalendarOff, description: "Ask for a day off." },
+      { href: "/timesheets", label: "Time tracker", icon: Clock, description: "Clock in, hours, and time off." },
       { href: "/inventory", label: "Traps & gear", icon: Warehouse, description: "What is in the shop and what is in the field." },
       { href: "/activity", label: "Species log", icon: Squirrel, description: "Captures and dispositions." },
     ];

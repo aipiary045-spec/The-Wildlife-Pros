@@ -13,18 +13,22 @@ export function TimeOffCalendar({
   requests,
   showNames,
   onSelectDate,
+  basePath = "/timesheets",
 }: {
   month: Date;
   selectedDate: string;
   requests: DayOffRow[];
   showNames: boolean;
   onSelectDate: (date: string) => void;
+  /** Keep month links on the combined timesheets tracker. */
+  basePath?: string;
 }) {
   const grid = monthGrid(month);
   const byDate = groupTimeOffByDate(requests);
   const today = new Date();
   const prev = monthKey(adjacentMonth(month, -1));
   const next = monthKey(adjacentMonth(month, 1));
+  const tabQuery = basePath.startsWith("/timesheets") ? "tab=time-off&" : "";
 
   return (
     <div className="space-y-3">
@@ -34,13 +38,22 @@ export function TimeOffCalendar({
           <h2 className="font-display text-2xl">{grid.label}</h2>
         </div>
         <div className="flex gap-2">
-          <Link href={`/time-off?month=${prev}`} className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold">
+          <Link
+            href={`${basePath}?${tabQuery}month=${prev}`}
+            className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold"
+          >
             Prev
           </Link>
-          <Link href={`/time-off?month=${monthKey(new Date())}`} className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold">
+          <Link
+            href={`${basePath}?${tabQuery}month=${monthKey(new Date())}`}
+            className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold"
+          >
             This month
           </Link>
-          <Link href={`/time-off?month=${next}`} className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold">
+          <Link
+            href={`${basePath}?${tabQuery}month=${next}`}
+            className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold"
+          >
             Next
           </Link>
         </div>

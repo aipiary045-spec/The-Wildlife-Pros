@@ -4,7 +4,8 @@ import { formatDuration } from "@/lib/time";
 import type { HoursGrid } from "@/lib/hours";
 import { cn } from "@/lib/utils";
 
-function cellLabel(minutes: number) {
+function cellLabel(minutes: number, isOff: boolean) {
+  if (isOff && minutes === 0) return "Off";
   return minutes > 0 ? formatDuration(minutes) : "—";
 }
 
@@ -12,29 +13,35 @@ export function HoursTotalsTable({
   grid,
   showTech,
   highlightDate,
+  offKeys = {},
 }: {
   grid: HoursGrid;
   showTech: boolean;
   /** Day currently selected in the toolbar — highlighted in the week grid. */
   highlightDate?: Date;
+  /** Approved day-off dates keyed by user id. */
+  offKeys?: Record<string, string[]>;
 }) {
   const highlightKey = highlightDate ? dateKey(highlightDate) : null;
   const empty = grid.rows.length === 0;
+  const offSet = Object.fromEntries(
+    Object.entries(offKeys).map(([userId, keys]) => [userId, new Set(keys)]),
+  );
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
-      <div className="border-b border-line px-4 py-3 sm:px-5">
-        <p className="text-xs font-bold uppercase tracking-widest text-orange">Hours</p>
+    <section className="overflow-hidden rounded-2xl border-2 border-orange/30 bg-panel shadow-sm">
+      <div className="border-b border-orange/20 bg-orange/5 px-4 py-3 sm:px-5">
+        <p className="text-xs font-bold uppercase tracking-widest text-orange">This week</p>
         <h2 className="mt-0.5 font-display text-2xl">Daily & weekly totals</h2>
         <p className="mt-1 text-sm text-stone-600">
           {showTech
-            ? "One row per technician. Week runs Monday–Sunday."
-            : "Your hours by day this week, with the weekly total on the right."}
+            ? "Hours by person, Monday–Sunday. Approved time off shows as Off."
+            : "Your hours by day. Approved time off shows as Off. Week total is on the right."}
         </p>
       </div>
 
       {empty ? (
-        <p className="px-4 py-8 text-center text-sm text-stone-500 sm:px-5">No clock entries this week yet.</p>
+        <p className="px-4 py-8 text-center text-sm text-stone-500 sm:px-5">No clock entries or days off this week yet.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse text-left text-sm">
@@ -89,6 +96,7 @@ export function HoursTotalsTable({
                   {grid.days.map((day) => {
                     const key = dateKey(day);
                     const minutes = row.byDay[key] ?? 0;
+                    const isOff = offSet[row.user.id]?.has(key) ?? false;
                     const active = highlightKey === key;
                     return (
                       <td
@@ -96,10 +104,11 @@ export function HoursTotalsTable({
                         className={cn(
                           "px-2 py-3 text-center tabular-nums sm:px-3",
                           active && "bg-orange/5 font-semibold text-ink",
-                          !active && minutes === 0 && "text-stone-400",
+                          isOff && minutes === 0 && "font-semibold text-amber-800",
+                          !active && !isOff && minutes === 0 && "text-stone-400",
                         )}
                       >
-                        {cellLabel(minutes)}
+                        {cellLabel(minutes, isOff)}
                       </td>
                     );
                   })}
@@ -125,7 +134,7 @@ export function HoursTotalsTable({
                           active && "bg-orange/10 text-orange",
                         )}
                       >
-                        {cellLabel(minutes)}
+                        {cellLabel(minutes, false)}
                       </td>
                     );
                   })}

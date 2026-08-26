@@ -30,7 +30,7 @@ export default async function TeamPage() {
       <PageHeader
         title="Team"
         description="Add technicians and office staff. Disable someone to take them off the calendar without deleting their jobs."
-        related={[{ href: "/time-off", label: "Time off" }, { href: "/timesheets", label: "Timesheets" }]}
+        related={[{ href: "/timesheets", label: "Time tracker" }, { href: "/timesheets?tab=time-off", label: "Time off" }]}
         actions={<AddTeamMemberButton actorRole={session.role} />}
       />
       <MemberList
