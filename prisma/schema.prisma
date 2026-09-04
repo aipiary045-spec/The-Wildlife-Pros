@@ -191,6 +191,12 @@ enum ScheduleNeedStatus {
   CANCELLED
 }
 
+enum VisitPlanStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
 enum DayOffStatus {
   REQUESTED
   APPROVED
@@ -265,6 +271,7 @@ model User {
   routes         RouteDay[]
   formSubmissions FormSubmission[]
   scheduleNeeds  ScheduleNeed[] @relation("ScheduleNeedTech")
+  visitPlans     VisitPlan[]    @relation("VisitPlanPreferredTech")
   availabilityBlocks AvailabilityBlock[]
   reviewedDayOffs AvailabilityBlock[] @relation("DayOffReviewer")
   emergencyDispatchesCreated EmergencyDispatch[] @relation("EmergencyDispatchedBy")
@@ -330,6 +337,7 @@ model Client {
   invoices       Invoice[]
   notesList      Note[]
   scheduleNeeds  ScheduleNeed[]
+  visitPlans     VisitPlan[]
 
   @@index([organizationId, lastName])
   @@index([email])
@@ -363,6 +371,7 @@ model Property {
   photos         Photo[]
   invoices       Invoice[]
   scheduleNeeds  ScheduleNeed[]
+  visitPlans     VisitPlan[]
 
   @@index([clientId])
   @@index([city, state])
@@ -481,6 +490,9 @@ model Job {
   createdBy      User?     @relation("JobCreatedBy", fields: [createdById], references: [id])
   scheduleId     String?
   schedule       RecurringSchedule? @relation(fields: [scheduleId], references: [id])
+  visitPlanId    String?
+  visitPlan      VisitPlan? @relation(fields: [visitPlanId], references: [id], onDelete: SetNull)
+  visitNumber    Int?
   type           JobType   @default(INSPECTION)
   status         JobStatus @default(UNSCHEDULED)
   title          String
@@ -520,6 +532,30 @@ model Job {
   @@index([technicianId, scheduledStart])
   @@index([status, scheduledStart])
   @@index([clientId])
+  @@index([visitPlanId])
+}
+
+model VisitPlan {
+  id              String          @id @default(cuid())
+  clientId        String
+  client          Client          @relation(fields: [clientId], references: [id])
+  propertyId      String
+  property        Property        @relation(fields: [propertyId], references: [id])
+  title           String
+  instructions    String?
+  jobType         JobType         @default(INSPECTION)
+  durationMin     Int             @default(60)
+  totalVisits     Int
+  preferredTechId String?
+  preferredTech   User?           @relation("VisitPlanPreferredTech", fields: [preferredTechId], references: [id])
+  status          VisitPlanStatus @default(ACTIVE)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  jobs            Job[]
+
+  @@index([clientId, status])
+  @@index([status])
 }
 
 model JobLineItem {

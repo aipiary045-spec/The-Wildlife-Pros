@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NeedsPool } from "@/components/schedule/NeedsPool";
+import { SchedulingPoolBanner } from "@/components/schedule/SchedulingPoolBanner";
 import { CalendarFeedLink } from "@/components/schedule/CalendarFeedLink";
 import { ScheduleToolbar } from "@/components/schedule/ScheduleToolbar";
 import { ScheduleWorkspace } from "@/components/schedule/ScheduleWorkspace";
@@ -9,6 +9,7 @@ import { getSchedule } from "@/lib/data";
 import { dateKey, parseDateParam, parseScheduleView, scheduleRange } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { dayAppointmentStats } from "@/lib/schedule-stats";
+import { loadSchedulingPool } from "@/lib/scheduling-pool";
 
 export const dynamic = "force-dynamic";
 
@@ -40,21 +41,13 @@ export default async function SchedulePage({
   const view = parseScheduleView(params.view);
   const date = parseDateParam(params.date);
   const { from, to } = scheduleRange(view, date);
-  const [{ jobs, unscheduled, technicians, clients }, needs, blocks, activeCheckIns] = await Promise.all([
+  const [{ jobs, unscheduled, technicians, clients }, blocks, activeCheckIns, pool] = await Promise.all([
     getSchedule(from, to),
-    prisma.scheduleNeed.findMany({
-      where: { status: "OPEN" },
-      include: {
-        client: true,
-        property: true,
-        preferredTech: { select: { id: true, firstName: true, lastName: true, color: true } },
-      },
-      orderBy: { dueOn: "asc" },
-    }),
     prisma.availabilityBlock.findMany({
       where: { date: { gte: from, lte: to }, status: "APPROVED" },
     }),
     getActiveCheckIns(),
+    loadSchedulingPool(),
   ]);
 
   return (
@@ -66,14 +59,19 @@ export default async function SchedulePage({
           Dispatch lives here: pull from the needs pool, drop a stop on a tech and a time. Open a job to edit the work order, traps, or invoice.
         </p>
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-orange">
+          <Link href="/schedule/pool" className="hover:underline">
+            Scheduling pool
+            {pool.counts.total > 0 ? ` (${pool.counts.total})` : ""}
+          </Link>
           <Link href="/jobs" className="hover:underline">
             Work orders
           </Link>
-          <Link href="/calls" className="hover:underline">
-            Call log
+          <Link href={`/routes?date=${dateKey(date)}`} className="hover:underline">
+            Optimize routes
           </Link>
         </p>
       </div>
+      <SchedulingPoolBanner counts={pool.counts} />
       <ScheduleToolbar
         view={view}
         date={date}
@@ -103,13 +101,6 @@ export default async function SchedulePage({
           technicianId: checkIn.technicianId,
           minutesOnSite: checkIn.minutesOnSite,
         }))}
-      />
-      <NeedsPool
-        needs={needs.map((need) => ({
-          ...need,
-          dueOn: need.dueOn.toISOString(),
-        }))}
-        technicians={technicians}
       />
       {session ? <CalendarFeedLink userId={session.id} /> : null}
     </div>

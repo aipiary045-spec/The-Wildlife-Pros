@@ -68,14 +68,28 @@ type PlanResponse = {
 
 const inputClass = "mt-1 w-full rounded-lg border border-line bg-white px-3 py-2";
 
+type DayJobOption = {
+  id: string;
+  number: string;
+  title: string;
+  clientName: string;
+  address: string;
+  technicianId: string | null;
+  technicianName: string | null;
+  scheduledStart: string | null;
+  visitLabel: string | null;
+};
+
 export function RoutePlanner({
   date,
   technicians,
+  dayJobs,
   roadRoutingConfigured = false,
   roadRoutingLabel = null,
 }: {
   date: string;
   technicians: TechOption[];
+  dayJobs: DayJobOption[];
   roadRoutingConfigured?: boolean;
   roadRoutingLabel?: string | null;
 }) {
@@ -87,6 +101,7 @@ export function RoutePlanner({
   const [mode, setMode] = useState<"reorder" | "rebalance">("reorder");
   const [startHour, setStartHour] = useState(8);
   const [selected, setSelected] = useState<string[]>(() => gpsTechs.map((tech) => tech.id));
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>(() => dayJobs.map((job) => job.id));
   const [loading, setLoading] = useState<"preview" | "apply" | null>(null);
   const [error, setError] = useState("");
   const [plan, setPlan] = useState<PlanResponse | null>(null);
@@ -95,7 +110,8 @@ export function RoutePlanner({
   useEffect(() => {
     setPlan(null);
     setMapTechId(null);
-  }, [date]);
+    setSelectedJobIds(dayJobs.map((job) => job.id));
+  }, [date, dayJobs]);
 
   useEffect(() => {
     if (!plan?.assignments.length) {
@@ -118,6 +134,10 @@ export function RoutePlanner({
       setError("Pick at least one technician with home GPS.");
       return;
     }
+    if (selectedJobIds.length === 0) {
+      setError("Pick at least one stop for this day.");
+      return;
+    }
     setLoading(persist ? "apply" : "preview");
     setError("");
     const response = await fetch("/api/routes/optimize", {
@@ -127,6 +147,7 @@ export function RoutePlanner({
       body: JSON.stringify({
         date,
         technicianIds: selected,
+        jobIds: selectedJobIds,
         mode,
         startHour,
         persist,
@@ -140,6 +161,13 @@ export function RoutePlanner({
     }
     setPlan(data);
     if (persist) router.refresh();
+  }
+
+  function toggleJob(id: string) {
+    invalidate();
+    setSelectedJobIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
   }
 
   function toggleTech(id: string) {
@@ -251,6 +279,57 @@ export function RoutePlanner({
             );
           })}
         </div>
+
+        <p className="mt-4 text-sm font-medium">Stops for this day</p>
+        <p className="text-xs text-stone-500">
+          Choose which jobs to include, then preview driving order. Unselected stops stay on the calendar unchanged.
+        </p>
+        {dayJobs.length === 0 ? (
+          <p className="mt-2 rounded-xl border border-dashed border-line bg-background px-3 py-4 text-sm text-stone-500">
+            No jobs on the calendar for this date yet. Pull stops from the{" "}
+            <a href="/schedule/pool" className="font-semibold text-orange hover:underline">
+              scheduling pool
+            </a>
+            , then come back to optimize.
+          </p>
+        ) : (
+          <div className="mt-2 max-h-64 space-y-2 overflow-y-auto">
+            <label className="flex items-center gap-2 text-xs font-semibold text-stone-600">
+              <input
+                type="checkbox"
+                checked={selectedJobIds.length === dayJobs.length}
+                onChange={() => {
+                  invalidate();
+                  setSelectedJobIds(selectedJobIds.length === dayJobs.length ? [] : dayJobs.map((job) => job.id));
+                }}
+              />
+              Select all ({dayJobs.length})
+            </label>
+            {dayJobs.map((job) => (
+              <label
+                key={job.id}
+                className="flex items-start gap-3 rounded-xl border border-line bg-white px-3 py-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={selectedJobIds.includes(job.id)}
+                  onChange={() => toggleJob(job.id)}
+                />
+                <span className="min-w-0">
+                  <span className="font-medium">
+                    {job.number} · {job.clientName}
+                  </span>
+                  <span className="block text-xs text-stone-500">
+                    {job.address}
+                    {job.technicianName ? ` · ${job.technicianName}` : " · unassigned"}
+                    {job.visitLabel ? ` · ${job.visitLabel}` : ""}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <button

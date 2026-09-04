@@ -8,6 +8,7 @@ import { hasRoadRouting, roadRoutingProvider } from "@/lib/geocode";
 import { prisma } from "@/lib/prisma";
 import { dayWindow } from "@/lib/route-plan";
 import { propertyAddress } from "@/lib/utils";
+import { loadDayRoutableJobs } from "@/lib/scheduling-pool";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function RoutesPage({
         ? "Mapbox"
         : null;
 
-  const [technicians, routes] = await Promise.all([
+  const [technicians, routes, dayJobs] = await Promise.all([
     prisma.user.findMany({
       where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "ADMIN"] } },
       orderBy: { firstName: "asc" },
@@ -47,6 +48,7 @@ export default async function RoutesPage({
       },
       orderBy: { createdAt: "asc" },
     }),
+    loadDayRoutableJobs(date),
   ]);
 
   return (
@@ -55,11 +57,8 @@ export default async function RoutesPage({
         <h1 className="font-display text-2xl tracking-wide md:text-3xl">Route optimization</h1>
         <p className="text-stone-600 sm:hidden">Preview a driving order, then apply it to the schedule.</p>
         <p className="hidden text-stone-600 sm:block">
-          Preview a driving order on the map, then apply it to the schedule. Techs still navigate in Google
-          or Apple Maps by street address.{" "}
-          {roadRoutingConfigured
-            ? `${roadRoutingLabel} is configured — stop order uses real road distance and the map can draw the driving path.`
-            : "Add OPENROUTESERVICE_API_KEY (free, no credit card) or MAPBOX_TOKEN for road-distance optimization and a drawn driving path on the map."}
+          Preview a driving order on the map, then apply it to the schedule. Pick which stops to include for the day —
+          the optimizer fixes driving order and visit times, it does not choose which jobs run.
         </p>
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-orange">
           <Link href="/schedule" className="hover:underline">
@@ -96,6 +95,7 @@ export default async function RoutesPage({
       <RoutePlanner
         date={dateParam}
         technicians={technicians}
+        dayJobs={dayJobs}
         roadRoutingConfigured={roadRoutingConfigured}
         roadRoutingLabel={roadRoutingLabel}
       />

@@ -12,6 +12,8 @@ import {
   ClientRecordRow,
   formatWhen,
 } from "@/components/crm/ClientHub";
+import { ClientVisitPlans } from "@/components/crm/ClientVisitPlans";
+import { VisitPlanForm } from "@/components/schedule/VisitPlanForm";
 import { NavigateLink } from "@/components/maps/NavigateLink";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -32,10 +34,26 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
   });
   if (!client) notFound();
 
-  const [captures, openCalls] = await Promise.all([
+  const [captures, openCalls, visitPlans, technicians] = await Promise.all([
     listCaptureEvents({ clientId: id }),
     prisma.serviceRequest.count({
       where: { clientId: id, status: { in: [...OPEN_REQUEST_STATUSES] } },
+    }),
+    prisma.visitPlan.findMany({
+      where: { clientId: id, status: { in: ["ACTIVE", "COMPLETED"] } },
+      include: {
+        property: true,
+        jobs: {
+          select: { id: true, visitNumber: true, status: true, scheduledStart: true },
+          orderBy: { visitNumber: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.findMany({
+      where: { status: "ACTIVE", role: { in: ["TECHNICIAN", "ADMIN"] } },
+      orderBy: { firstName: "asc" },
+      select: { id: true, firstName: true, lastName: true },
     }),
   ]);
   const speciesSummary = summarizeCapturesBySpecies(captures);
@@ -62,6 +80,13 @@ export default async function ClientDetailPage({ params }: PageProps<"/clients/[
       <ClientPortalLink portalToken={client.portalToken} />
 
       <ClientQuickActions clientId={client.id} phone={client.phone} />
+      <VisitPlanForm
+        clients={[{ ...client, properties: client.properties.map((p) => ({ id: p.id, address1: p.address1, city: p.city })) }]}
+        technicians={technicians}
+        defaultClientId={client.id}
+        defaultPropertyId={client.properties[0]?.id}
+      />
+      <ClientVisitPlans plans={visitPlans} />
       <ClientPipeline openCalls={openCalls} jobs={client.jobs} />
 
       <section id="open-work">
