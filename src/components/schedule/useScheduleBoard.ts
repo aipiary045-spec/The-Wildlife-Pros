@@ -21,6 +21,7 @@ export type BoardDrag = {
   x: number;
   y: number;
   overTechId: string | null;
+  overDayKey: string | null;
   overStartAt: Date | null;
 };
 
@@ -36,12 +37,13 @@ export function dropTargetFromPoint(x: number, y: number) {
   const node = document.elementsFromPoint(x, y).find((el) => el instanceof Element && el.closest("[data-drop-tech]"));
   const host = node instanceof Element ? node.closest("[data-drop-tech]") : null;
   if (!host) return null;
-  const technicianId = host.getAttribute("data-drop-tech");
+  const rawTechId = host.getAttribute("data-drop-tech");
   const day = host.getAttribute("data-drop-day");
-  if (!technicianId || technicianId === "unassigned") return null;
+  if (!rawTechId) return null;
+  const technicianId = rawTechId === "unassigned" ? null : rawTechId;
   const track = host.querySelector("[data-drop-track]");
   let startAt: Date | undefined;
-  if (track instanceof HTMLElement && day) {
+  if (track instanceof HTMLElement && day && technicianId) {
     const rect = track.getBoundingClientRect();
     if (rect.width > 0 && x >= rect.left && x <= rect.right) {
       startAt = startAtFromTrackX(parseDateParam(day), x, rect.left, rect.width);
@@ -68,11 +70,12 @@ export function useScheduleBoard(
   dragRef.current = drag;
 
   const placeJob = useCallback(
-    async (jobId: string, technicianId: string, day: Date, copy = mode === "copy", startAt?: Date) => {
+    async (jobId: string, technicianId: string | null, day: Date, copy = mode === "copy", startAt?: Date) => {
       const existing = jobsRef.current.find((job) => job.id === jobId);
-      if (!existing || !technicianId) return;
+      if (!existing) return;
       const nextStart = startAt ?? tripStartOnDay(existing.scheduledStart, day);
       if (copy) {
+        if (!technicianId) return;
         onCopyRequest?.({ job: existing, technicianId, day, startAt: nextStart });
         return;
       }
@@ -116,7 +119,8 @@ export function useScheduleBoard(
             ...current,
             x,
             y,
-            overTechId: over?.technicianId ?? null,
+            overTechId: over ? (over.technicianId ?? "unassigned") : null,
+            overDayKey: over?.day ?? null,
             overStartAt: over?.startAt ?? null,
           }
         : current,
@@ -147,7 +151,8 @@ export function useScheduleBoard(
       jobId,
       x,
       y,
-      overTechId: over?.technicianId ?? null,
+      overTechId: over ? (over.technicianId ?? "unassigned") : null,
+      overDayKey: over?.day ?? null,
       overStartAt: over?.startAt ?? null,
     };
     dragRef.current = next;

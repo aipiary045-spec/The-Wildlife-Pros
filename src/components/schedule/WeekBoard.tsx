@@ -3,6 +3,7 @@
 import { addDays, format, startOfWeek } from "date-fns";
 import { useState } from "react";
 import { dateKey } from "@/lib/dates";
+import { nextOpenTime } from "@/lib/schedule-slot";
 import { AppointmentChip, DragGhost } from "./AppointmentChip";
 import { WeekCellStack } from "./WeekCellStack";
 import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
@@ -46,7 +47,7 @@ export function WeekBoard({
       dragging: drag?.jobId === job.id,
       onPointerDown: (event: React.PointerEvent, immediate?: boolean) =>
         onChipPointerDown(event, job.id, immediate),
-      onReassign: (technicianId: string) => void placeJob(job.id, technicianId, day),
+      onReassign: (technicianId: string) => void placeJob(job.id, technicianId || null, day),
       onCopyTrip: onCopyRequest
         ? () =>
             onCopyRequest({
@@ -115,7 +116,7 @@ export function WeekBoard({
                 <button
                   type="button"
                   className="shrink-0 rounded-lg bg-orange px-3 py-1.5 text-xs font-bold text-white"
-                  onClick={() => onNewJob?.(technicians[0]?.id ?? "", day, "09:00")}
+                  onClick={() => onNewJob?.(technicians[0]?.id ?? "", day, nextOpenTime(dayJobs))}
                 >
                   + Job
                 </button>
@@ -133,7 +134,9 @@ export function WeekBoard({
                         key={tech.id}
                         data-drop-tech={tech.id}
                         data-drop-day={dateKey(day)}
-                        className={`relative rounded-xl p-1 ${drag?.overTechId === tech.id ? "bg-orange/10" : ""}`}
+                        className={`relative rounded-xl p-1 ${
+                          drag?.overTechId === tech.id && drag?.overDayKey === dateKey(day) ? "bg-orange/10" : ""
+                        }`}
                       >
                         <p className="mb-1 text-xs font-semibold text-stone-600">
                           {tech.firstName} {tech.lastName}
@@ -195,7 +198,9 @@ export function WeekBoard({
                         data-drop-tech={tech.id}
                         data-drop-day={dateKey(day)}
                         className={`relative min-h-16 rounded-xl p-1 ${
-                          drag?.overTechId === tech.id ? "bg-orange/15" : "bg-background/70"
+                          drag?.overTechId === tech.id && drag?.overDayKey === dateKey(day)
+                            ? "bg-orange/15"
+                            : "bg-background/70"
                         }`}
                       >
                         {cellJobs.length > 0 ? (
@@ -209,7 +214,7 @@ export function WeekBoard({
                           <button
                             type="button"
                             className="w-16 shrink-0 rounded-lg border border-dashed border-line text-[11px] font-semibold text-stone-500 hover:border-orange hover:text-orange"
-                            onClick={() => onNewJob?.(tech.id, day, "09:00")}
+                            onClick={() => onNewJob?.(tech.id, day, nextOpenTime(cellJobs))}
                           >
                             + Job
                           </button>

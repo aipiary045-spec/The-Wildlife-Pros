@@ -36,3 +36,25 @@ test("jobNeedsMove is true when the start time changes on the same tech", () => 
   );
   assert.equal(jobNeedsMove({ technicianId: "t1", scheduledStart: start }, "t1", "2026-08-15", start), false);
 });
+
+test("jobNeedsMove is true when unassigning a scheduled tech", () => {
+  assert.equal(
+    jobNeedsMove(
+      { technicianId: "t1", scheduledStart: new Date(2026, 7, 15, 9, 0, 0) },
+      null,
+      "2026-08-15",
+    ),
+    true,
+  );
+});
+
+test("jobNeedsMove is false when already unassigned on that day", () => {
+  assert.equal(
+    jobNeedsMove(
+      { technicianId: null, scheduledStart: new Date(2026, 7, 15, 9, 0, 0) },
+      null,
+      "2026-08-15",
+    ),
+    false,
+  );
+});

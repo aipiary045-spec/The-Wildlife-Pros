@@ -35,6 +35,7 @@ export function AppointmentChip({
   const timeline = layout === "timeline";
   const list = layout === "list";
   const stack = layout === "stack";
+  const compactControls = timeline || stack;
   return (
     <article
       data-job-chip
@@ -120,30 +121,30 @@ export function AppointmentChip({
             {job.client.lastName}
             {job.property.address1 ? ` · ${job.property.address1}` : ""}
           </p>
-          <label className="mt-1 block">
-            <span className="sr-only">Move to technician</span>
-            <select
-              className={cn(
-                "w-full rounded-md border border-line bg-white px-1 py-1 text-[11px]",
-                list && "min-h-10 px-2 py-2 text-sm",
-              )}
-              value={job.technicianId ?? ""}
-              onPointerDown={(event) => event.stopPropagation()}
-              onChange={(event) => {
-                if (event.target.value) onReassign(event.target.value);
-              }}
-            >
-              <option value="">{job.technicianId ? "Move to…" : "Assign to…"}</option>
-              {technicians.map((tech) => (
-                <option key={tech.id} value={tech.id}>
-                  {tech.firstName} {tech.lastName}
-                </option>
-              ))}
-            </select>
-          </label>
+          {compactControls ? null : (
+            <label className="mt-1 block">
+              <span className="sr-only">Move to technician</span>
+              <select
+                className={cn(
+                  "w-full rounded-md border border-line bg-white px-1 py-1 text-[11px]",
+                  list && "min-h-10 px-2 py-2 text-sm",
+                )}
+                value={job.technicianId ?? ""}
+                onPointerDown={(event) => event.stopPropagation()}
+                onChange={(event) => onReassign(event.target.value)}
+              >
+                <option value="">{job.technicianId ? "Unassign" : "Assign to…"}</option>
+                {technicians.map((tech) => (
+                  <option key={tech.id} value={tech.id}>
+                    {tech.firstName} {tech.lastName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </>
       )}
-      {onCopyTrip && !stack ? (
+      {onCopyTrip && !compactControls ? (
         <button
           type="button"
           onPointerDown={(event) => event.stopPropagation()}
@@ -151,11 +152,7 @@ export function AppointmentChip({
             event.stopPropagation();
             onCopyTrip();
           }}
-          className={cn(
-            "mt-1 text-left font-semibold text-orange",
-            timeline ? "text-[10px] leading-tight" : "text-xs",
-            list && "min-h-10",
-          )}
+          className={cn("mt-1 text-left text-xs font-semibold text-orange", list && "min-h-10")}
         >
           Copy trip
         </button>

@@ -13,6 +13,7 @@ import {
   sameDay,
   slotTimeValue,
 } from "@/lib/dates";
+import { nextOpenTime } from "@/lib/schedule-slot";
 import { AppointmentChip, DragGhost } from "./AppointmentChip";
 import type { CopyRequest, ScheduleMode } from "./useScheduleBoard";
 import type { ScheduleJobCard, ScheduleTech } from "./job-card";
@@ -89,7 +90,7 @@ export function DayBoard({
       dragging: drag?.jobId === job.id,
       onPointerDown: (event: React.PointerEvent, immediate?: boolean) =>
         onChipPointerDown(event, job.id, immediate),
-      onReassign: (technicianId: string) => void placeJob(job.id, technicianId, day),
+      onReassign: (technicianId: string) => void placeJob(job.id, technicianId || null, day),
       onCopyTrip: onCopyRequest
         ? () =>
             onCopyRequest({
@@ -338,7 +339,8 @@ export function DayBoard({
                 )}
                 technicianId="unassigned"
                 dayKey={dayKey}
-                onAdd={() => onNewJob?.(technicians[0]?.id ?? "", day, "09:00")}
+                onAdd={() => onNewJob?.(technicians[0]?.id ?? "", day, nextOpenTime([...unassigned, ...unscheduled]))}
+                active={drag?.overTechId === "unassigned"}
               >
                 <div className="flex min-w-[16rem] flex-1 items-stretch gap-2 px-2 py-2.5">
                   {[...unassigned, ...unscheduled].map((job) => (
@@ -463,15 +465,6 @@ function Lane({
       {children}
     </div>
   );
-}
-
-function nextOpenTime(jobs: ScheduleJobCard[]) {
-  if (jobs.length === 0) return "09:00";
-  const last = jobs[jobs.length - 1];
-  if (!last.scheduledStart) return "09:00";
-  const end = new Date(last.scheduledStart);
-  end.setMinutes(end.getMinutes() + (last.durationMin || 60));
-  return format(end, "HH:mm");
 }
 
 function stackTimelineJobs(jobs: ScheduleJobCard[]) {
