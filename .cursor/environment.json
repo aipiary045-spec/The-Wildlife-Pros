@@ -1,0 +1,12 @@
+{
+  "name": "CritterOps",
+  "install": "./scripts/cloud-agent-install.sh",
+  "start": "./scripts/cloud-agent-start.sh",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "set -a; . ./.env; set +a; npm run dev"
+    }
+  ],
+  "ports": [3000]
+}
